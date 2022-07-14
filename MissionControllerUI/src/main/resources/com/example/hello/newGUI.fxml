@@ -65,10 +65,18 @@
     </MenuBar>
     <AnchorPane fx:id="AnchorPane" maxHeight="-1.0" maxWidth="-1.0" prefHeight="-1.0" prefWidth="-1.0" VBox.vgrow="ALWAYS">
       <children>
-            <ComboBox fx:id="availableRobots" layoutX="17.0" layoutY="25.0" prefHeight="26.0" prefWidth="217.0" promptText="Choose a robot" />
+            <ComboBox fx:id="availableRobots" layoutX="17.0" layoutY="25.0" prefHeight="26.0" prefWidth="217.0" promptText="Choose a robot"/>
             <ComboBox fx:id="type" layoutX="84.0" layoutY="67.0" prefHeight="26.0" prefWidth="95.0" promptText="Direction" />
-            <TextField fx:id="command" layoutX="193.0" layoutY="67.0" prefHeight="26.0" prefWidth="59.0" promptText="Seconds" />
-            <Button fx:id="enter" layoutX="265.0" layoutY="67.0" mnemonicParsing="false" onMouseClicked="#sendPressed" text="Send" />
+            <TextField fx:id="command" layoutX="193.0" layoutY="67.0" prefHeight="26.0" prefWidth="59.0" promptText="Seconds">
+              <font>
+                  <Font name="Verdana" size="12.0" />
+              </font>
+            </TextField>
+            <Button fx:id="enter" layoutX="265.0" layoutY="67.0" mnemonicParsing="false" onMouseClicked="#sendPressed" text="Send">
+              <font>
+                  <Font name="Verdana" size="12.0" />
+              </font>
+            </Button>
             <Label fx:id="sentText" layoutX="73.0" layoutY="146.0" text="Commands Sent">
                <font>
                   <Font name="Verdana Bold" size="15.0" />
@@ -82,11 +90,27 @@
             <ListView fx:id="sentListView" layoutX="17.0" layoutY="169.0" prefHeight="270.0" prefWidth="280.0" />
             <ListView fx:id="recListView" layoutX="344.0" layoutY="169.0" prefHeight="270.0" prefWidth="280.0" />
             <Separator layoutX="320.0" layoutY="38.0" orientation="VERTICAL" prefHeight="320.0" prefWidth="6.0" />
-            <CheckBox fx:id="doNotDisturb" layoutX="358.0" layoutY="71.0" mnemonicParsing="false" onMouseClicked="#checkBoxClicked" text="Do Not Disturb" />
-            <TextField fx:id="Power" layoutX="14.0" layoutY="67.0" prefHeight="26.0" prefWidth="59.0" promptText="Power" />
-            <ComboBox fx:id="localRobotConnection" layoutX="358.0" layoutY="25.0" prefHeight="26.0" prefWidth="174.0" promptText="Connect to a local robot" />
-            <Button fx:id="pairButton" layoutX="546.0" layoutY="25.0" mnemonicParsing="false" onMouseClicked="#pairPressed" text="Pair" />
-            <CheckBox fx:id="medium" layoutX="14.0" layoutY="109.0" mnemonicParsing="false" text="Connect Via APRS" />
+            <CheckBox fx:id="doNotDisturb" layoutX="358.0" layoutY="71.0" mnemonicParsing="false" onMouseClicked="#checkBoxClicked" text="Do Not Disturb">
+              <font>
+                  <Font name="Verdana" size="12.0" />
+              </font>
+            </CheckBox>
+            <TextField fx:id="Power" layoutX="14.0" layoutY="67.0" prefHeight="26.0" prefWidth="59.0" promptText="Power">
+              <font>
+                <Font name="Verdana" size="12.0" />
+              </font>
+            </TextField>
+            <ComboBox fx:id="localRobotConnection" layoutX="358.0" layoutY="25.0" prefHeight="26.0" prefWidth="174.0" promptText="Connect to a local robot"/>
+            <Button fx:id="pairButton" layoutX="546.0" layoutY="25.0" mnemonicParsing="false" onMouseClicked="#pairPressed" text="Pair">
+              <font>
+                  <Font name="Verdana" size="12.0" />
+              </font>
+            </Button>
+            <CheckBox fx:id="medium" layoutX="14.0" layoutY="109.0" mnemonicParsing="false" text="Connect Via APRS">
+              <font>
+                  <Font name="Verdana" size="12.0" />
+              </font>
+            </CheckBox>
       </children>
     </AnchorPane>
       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="200.0" prefWidth="320.0" />
