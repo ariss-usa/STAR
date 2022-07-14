@@ -175,7 +175,7 @@ async def on_raw_message_edit(payload):
     #    return
     global myMC
 
-    message = payload.cached_messagee
+    message = payload.cached_message
     if not message and DIR_ID == payload.channel_id:
         channel = client.get_channel(DIR_ID)
         x = payload.message_id
