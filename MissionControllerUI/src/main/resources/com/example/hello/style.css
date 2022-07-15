@@ -1,0 +1,11 @@
+.combo-box{
+    font-family: Verdana;
+    font-size: 12px;
+    -fx-font: 12px "Verdana";
+}
+
+.combo-box .cell{
+    font-family: Verdana;
+    font-size: 12px;
+    -fx-font: 12px "Verdana";
+}
