@@ -3,8 +3,10 @@ import traceback
 import zmq
 import discord
 import os
+import serial
 from dotenv import load_dotenv
 from discord.ext import commands
+import serial.tools.list_ports
 
 intents = discord.Intents.default()
 client = commands.Bot(command_prefix="prefix", intents=intents)
@@ -20,20 +22,6 @@ context = zmq.Context()
 socket = context.socket(zmq.REP)
 socket.bind("tcp://127.0.0.1:5555")
 
-#config variables
-#Get from GUI
-"""
-safeToOpenFile = socket.recv().decode("utf-8")
-socket.send_string("Received")
-with open("important.txt", "r") as f:
-    myMC = f.readline().strip()
-    schoolName = f.readline().strip()       #"Harmony school of Advancement"
-    city = f.readline().strip()             #"Houston"
-    state = f.readline().strip()            #"TX"
-    sdrDonglePresent = f.readline().strip() #"No"
-    localOrRemote =  f.readline().strip()  #"Internet"
-"""
-
 myMC = "TBD"
 schoolName = "TBD"
 city = "TBD"
@@ -42,17 +30,21 @@ sdrDonglePresent = "TBD"
 #localOrRemote =    "TBD"
 online = "Yes"
 connected = "No"
+doNotDisturb = True
+serialPort = serial.Serial()
+
 
 @client.event
 async def on_ready():
     global dirArr
     global messageToID
+    global serialPort
     messageToID = {}
     dirArr = []
     async for message in client.get_channel(DIR_ID).history(limit=200):
         dirArr.insert(0, message)
         messageToID[message.content[:5]] = message.id
-
+    
     while not client.is_closed():
         c = ""
         try:
@@ -66,6 +58,11 @@ async def on_ready():
                 getCommand = spl[0][5:]
                 getSelectedID = spl[1][:]
                 await command(getCommand, getSelectedID)
+            elif "Local" in c:
+                spl = c.split("Local ")
+                var = spl[1]
+                socket.send_string("ACK")
+                serialPort.write(var.encode())
             elif "sendToDIR" in c:
                 command = client.get_command("sendToDIR")
                 socket.send_string("REC")
@@ -86,7 +83,27 @@ async def on_ready():
             elif "getDIRList" in c:
                 contentList = getContent(dirArr)
                 socket.send_string(';'.join(contentList))
-            
+            elif "Pair" in c:
+                connectOrDisc = c.split(" ")
+                portSuccess = True
+                if connectOrDisc[1] == "connect":
+                    try:
+                        portString = connectOrDisc[2]
+                        serialPort = serial.Serial(port=portString, baudrate=115200, bytesize=8, timeout=5, stopbits=serial.STOPBITS_ONE)
+                    except serial.SerialException:
+                        portSuccess = False
+                else:
+                    serialPort.close()
+                if portSuccess:
+                    socket.send_string("pass")
+                else:
+                    socket.send_string("fail")
+            elif "getCOMList" in c:
+                ports = serial.tools.list_ports.comports()
+                p = []
+                for port in sorted(ports):
+                    p.append("{}".format(port))
+                socket.send_string(';'.join(p))
         except zmq.ZMQError as e:
             if e.errno == zmq.EAGAIN:
                 await asyncio.sleep(1)
@@ -110,7 +127,12 @@ async def sendToDIR():
 @client.command()
 async def edit_message_online(onlineStatus, messageID):
     #When user closes application/starts the application
-    #onlineStatus is a string --> yes/no
+    #onlineStatus is a string --> Yes/No
+    global doNotDisturb
+    if onlineStatus == "Yes":
+        doNotDisturb = False
+    else:
+        doNotDisturb = True
     channel = client.get_channel(DIR_ID)
     message = await channel.fetch_message(messageID)
     await message.edit(content = f"{myMC}\nSchool Name: {schoolName}\nSDR Dongle: {sdrDonglePresent}\nState: {state}\nCity: {city}\nOnline: {onlineStatus}\nConnected: {connected}")
@@ -146,15 +168,21 @@ async def checkFile(editMessage):
 async def on_message(message):
     #listening
     #print(message.content)
+    global serialPort
+    global doNotDisturb
     newContext = zmq.Context()
     socket1 = newContext.socket(zmq.REQ)
     socket1.bind("tcp://127.0.0.1:5556")
 
     recMCid = message.content[0:5]
-    if myMC == recMCid and message.channel.id == CHANNEL_ID:
+    if myMC == recMCid and message.channel.id == CHANNEL_ID and not doNotDisturb:
         sendString = f"New Command: {message.content}"
         socket1.send_string(sendString)
         socket1.recv()
+
+        split = message.content.split("command: ")
+        serialPort.write(split[1].encode())
+
     elif message.channel.id == DIR_ID:
         #Keep a list of the messages
         global dirArr
