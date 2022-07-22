@@ -1,7 +1,6 @@
 package com.example.hello;
 
 import javafx.application.Platform;
-import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -14,15 +13,17 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.SelectionModel;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.concurrent.Service;
+import javafx.concurrent.Task;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -79,6 +80,7 @@ public class HelloController {
     private ArrayList<String> possibleConnectionsAPRS = new ArrayList<String>();
     private ArrayList<String> possibleConnectionsBT = new ArrayList<String>();
     private ArrayList<Object> fileValues = new ArrayList<Object>();
+    private volatile boolean isTaskFinished = true;
 
     @FXML
     protected void configButtonPress(ActionEvent event) throws IOException {
@@ -141,25 +143,30 @@ public class HelloController {
             //Determine whether internet/APRS
             String str = availableRobots.getSelectionModel().getSelectedItem();
             String [] spl = str.split("\n");
-            if(!medium.isSelected() && spl.length > 1){
+            if(!medium.isSelected()){
                 try(ZContext ctx = new ZContext()){
                     ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
                     socket.connect("tcp://127.0.0.1:5555");
                     String s = command.getText();
                     command.clear();
+                    
                     String selectedItem = availableRobots.getSelectionModel().getSelectedItem();
-                    String selectedMCID = selectedItem.substring(0, selectedItem.indexOf("\n"));
                     String selectedDirection = type.getSelectionModel().getSelectedItem();
-                    String command = "SEND " + Power.getText() + " " + selectedDirection + " "
-                                    + s + " Selected MCid: " + selectedMCID;
-                    socket.send(command);
-                    socket.recv();
-                    sentListView.getItems().add(command);
+                    String command = "";
+                    if(spl.length > 1){
+                        String selectedMCID = selectedItem.substring(0, selectedItem.indexOf("\n"));
+                        command = "SEND " + Power.getText() + " " + selectedDirection + " "
+                        + s + " Selected MCid: " + selectedMCID;
+                    }
+                    else{
+                        command = "Local " + Power.getText() + " " + selectedDirection + " "+ s;
+                    }
 
+                    socket.send(command);
+                    String str1 = socket.recvStr();
+                    sentListView.getItems().add(command);
+                    ctx.destroy();
                 }
-            }
-            else{
-                //for connection via APRS
             }
         }
     }
@@ -171,8 +178,9 @@ public class HelloController {
                 try(ZContext ctx = new ZContext()){
                     ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
                     socket.connect("tcp://127.0.0.1:5555");
-                    socket.send("editOnline, ChangeTo: No");
+                    socket.send("editOnline, ChangeTo: No ");
                     socket.recv();
+                    ctx.destroy();
                 }
             }
             else{
@@ -181,6 +189,7 @@ public class HelloController {
                     socket.connect("tcp://127.0.0.1:5555");
                     socket.send("editOnline, ChangeTo: Yes");
                     socket.recv();
+                    ctx.destroy();
                 }
             }
         }
@@ -194,12 +203,24 @@ public class HelloController {
             String pairText = pairButton.getText();
             if(pairText.equals("Pair")){
                 //Attempt to pair
-                
-                //
-                availableRobots.getItems().add(0, localRobotConnection.getValue());
-                localRobotConnection.setDisable(true);
-                doNotDisturb.setDisable(false);
-                pairButton.setText("Disconnect");
+                String passfail = "";
+                try(ZContext ctx = new ZContext()){
+                    ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
+                    socket.connect("tcp://127.0.0.1:5555");
+                    socket.send("Pair connect " + localRobotConnection.getSelectionModel().getSelectedItem());
+                    passfail = socket.recvStr();
+                    ctx.destroy();
+                }
+
+                if (passfail.equals("pass")){
+                    availableRobots.getItems().add(0, localRobotConnection.getValue());
+                    localRobotConnection.setDisable(true);
+                    doNotDisturb.setDisable(false);
+                    pairButton.setText("Disconnect");
+                }
+                else if(passfail.equals("fail")){
+                    //Show user pairing failed
+                }
             }
             else{
                 localRobotConnection.setValue(null);
@@ -207,6 +228,13 @@ public class HelloController {
                 doNotDisturb.setDisable(true);
                 availableRobots.getItems().remove(0);
                 pairButton.setText("Pair");
+                try(ZContext ctx = new ZContext()){
+                    ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
+                    socket.connect("tcp://127.0.0.1:5555");
+                    socket.send("Pair disconnect");
+                    socket.recvStr();
+                    ctx.destroy();
+                }
             }
         }
     }
@@ -215,12 +243,6 @@ public class HelloController {
         type.getItems().addAll("N/A", "forward", "backward", "right", "left", "pause");
         possibleConnectionsAPRS.add("APRS Compatible Device 1"); 
         possibleConnectionsAPRS.add("APRS Compatible Device 2");
-
-        possibleConnectionsBT.add("BT Compatible Device 1"); 
-        possibleConnectionsBT.add("BT Compatible Device 2");
-        possibleConnectionsBT.add("BT Compatible Device 3"); 
-
-        localRobotConnection.getItems().addAll(possibleConnectionsBT);
 
         doNotDisturb.setSelected(true);
         doNotDisturb.setDisable(true);
@@ -244,7 +266,10 @@ public class HelloController {
                 medium.setDisable(true);
             }
          });
-         medium.setDisable(true);
+        localRobotConnection.showingProperty().addListener((obs, wasShowing, isNowShowing) -> {
+            comList.restart();
+        });
+        medium.setDisable(true);
 
         File tempFile = new File("important.txt");
         if (tempFile.exists()){
@@ -290,6 +315,50 @@ public class HelloController {
             }
         }, 0, 100, TimeUnit.MILLISECONDS);
     }
+    /* 
+    Task<Void> task = new Task<Void>() {
+        @Override protected Void call() throws Exception {
+
+            return null;
+        }
+    };
+    */
+    Service<Void> comList = new Service<Void>() {
+        @Override
+        protected Task<Void> createTask() {
+            return new Task<Void>() {
+                @Override
+                public Void call() {
+                    try(ZContext ctx = new ZContext()){
+                        ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
+                        socket.connect("tcp://127.0.0.1:5555");
+                        socket.send("getCOMList");
+                        String comports = socket.recvStr();
+                        String [] split = comports.split(";");
+                        ctx.destroy();
+                        final CountDownLatch latch = new CountDownLatch(1);
+                        Platform.runLater(new Runnable() {                          
+                            @Override
+                            public void run() {
+                                try{
+                                    localRobotConnection.getItems().removeAll(localRobotConnection.getItems());
+                                    localRobotConnection.getItems().addAll(split);
+                                    isTaskFinished = true;
+                                }finally{
+                                    latch.countDown();
+                                }
+                            }
+                        });
+                        latch.await();
+                    } catch (InterruptedException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                    return null;
+                }
+            };
+        }
+    };
 }
 class onUpdateV2{
     private String newUpdate = "";
@@ -361,3 +430,4 @@ class filter{
         return "";
     }
 }
+
