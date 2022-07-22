@@ -46,6 +46,7 @@ public class returnEntries {
                 boolean b1 = socket.send("Check file false");
                 String str = socket.recvStr();
             }
+            ctx.destroy();
         }
     }
 }
@@ -56,6 +57,7 @@ class dirV1 implements Callable<String>{
             socket.connect("tcp://127.0.0.1:5555");
             socket.send("getDIRList");
             String str = socket.recvStr();
+            ctx.destroy();
             return str;
         }
     }
