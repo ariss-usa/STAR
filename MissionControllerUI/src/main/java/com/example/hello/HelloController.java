@@ -220,6 +220,7 @@ public class HelloController {
                 }
                 else if(passfail.equals("fail")){
                     //Show user pairing failed
+                    AlertBox.display("Pairing failed, try again");
                 }
             }
             else{
@@ -267,7 +268,9 @@ public class HelloController {
             }
          });
         localRobotConnection.showingProperty().addListener((obs, wasShowing, isNowShowing) -> {
-            comList.restart();
+            if(isNowShowing){
+                comList.restart();
+            }
         });
         medium.setDisable(true);
 
@@ -315,14 +318,6 @@ public class HelloController {
             }
         }, 0, 100, TimeUnit.MILLISECONDS);
     }
-    /* 
-    Task<Void> task = new Task<Void>() {
-        @Override protected Void call() throws Exception {
-
-            return null;
-        }
-    };
-    */
     Service<Void> comList = new Service<Void>() {
         @Override
         protected Task<Void> createTask() {
@@ -359,75 +354,5 @@ public class HelloController {
             };
         }
     };
-}
-class onUpdateV2{
-    private String newUpdate = "";
-    private String editedDirEntry = "";
-    public void call(){
-        try(ZContext ctx = new ZContext()){
-            Socket client = ctx.createSocket(SocketType.REP);
-            Socket editSocket = ctx.createSocket(SocketType.REP);
-            assert (client != null);
-            client.connect("tcp://127.0.0.1:5556");
-            editSocket.connect("tcp://127.0.0.1:5557");
-
-            org.zeromq.ZMQ.Poller poller = ctx.createPoller(2);
-            poller.register(client, ZMQ.Poller.POLLIN);
-            poller.register(editSocket, ZMQ.Poller.POLLIN);
-
-            Object var = poller.poll(2);
-
-            if(poller.pollin(0)){
-                String reply = client.recvStr(ZMQ.DONTWAIT);
-                client.send("Recieved");
-                newUpdate = reply;
-            }
-            if (poller.pollin(1)) {
-                String reply = editSocket.recvStr(ZMQ.DONTWAIT);
-                editSocket.send("Recieved");
-                editedDirEntry = reply;
-            }
-        }
-    }
-    public String getNewUpdate(){
-        return newUpdate;
-    }
-    public String getEditedEntry(){
-        return editedDirEntry;
-    }
-    public void resetEditedEntry(){
-        editedDirEntry = "";
-    }
-    public void reset(){
-        newUpdate = "";
-    }
-}
-class filter{
-    public static ArrayList<String> filterInternetInput(ArrayList<String> list, String myMC){
-        ArrayList<String> filteredArray = new ArrayList<String>();
-        for(int i = 0; i < list.size(); i++){
-            String [] split = list.get(i).split("\n|Online: |Connected: ");
-            String online = split[6];
-            String connected = split[8];
-            if(online.equals("Yes")
-                && connected.equals("No") && !split[0].equals(myMC)){
-                    String entry = split[0] + "\n" + split[1] + "\n" + split[2] + "\n" + split[4];
-                    filteredArray.add(entry);
-            }
-        }
-        return filteredArray;
-    }
-    public static String filterEntry(String str, String myMC){
-        String [] split = str.split("\n|Online: |Connected: ");
-        String mc = split[0].substring(11, 16);
-        String online = split[6];
-        String connected = split[8];
-        if(online.equals("Yes")
-            && connected.equals("No") && !mc.equals(myMC)){
-                String entry = mc + "\n" + split[1] + "\n" + split[2] + "\n" + split[4];
-                return entry;
-        }
-        return "";
-    }
 }
 
