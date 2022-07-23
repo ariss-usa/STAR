@@ -240,10 +240,14 @@ public class HelloController {
         }
     }
     @FXML
-    public void initialize(){
+    public void initialize() throws IOException{
         type.getItems().addAll("N/A", "forward", "backward", "right", "left", "pause");
-        possibleConnectionsAPRS.add("APRS Compatible Device 1"); 
-        possibleConnectionsAPRS.add("APRS Compatible Device 2");
+        Thread t = new Thread(){
+            ProcessBuilder pb = new ProcessBuilder("python", "discordServer.py");
+            Process p = pb.start();
+        };
+        t.setDaemon(true);
+        t.start();
 
         doNotDisturb.setSelected(true);
         doNotDisturb.setDisable(true);
