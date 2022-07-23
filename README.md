@@ -5,4 +5,4 @@ The STAR project allows for an easy way for a user to control the Makeblock mBot
 ## Installation ##
 1. Download or clone this repository
 2. Open this project in Visual Studio Code
-3. Then run `pip install -r requirements.txt`
+3. Then enter `pip install -r requirements.txt` into the command line
