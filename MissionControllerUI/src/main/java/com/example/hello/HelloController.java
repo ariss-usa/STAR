@@ -279,7 +279,6 @@ public class HelloController {
             Reader.read(fileValues);
             if (fileValues.size() != 0){
                 returnEntries.checkfile(true);
-                //String med = fileValues.get(5).toString();
                 possibleConnections = returnEntries.getDirList();
                 availableRobots.setVisibleRowCount(3);
                 availableRobots.getItems().addAll(filter.filterInternetInput(possibleConnections, fileValues.get(0).toString()));
