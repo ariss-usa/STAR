@@ -3,7 +3,7 @@ The ARISS STAR Project code and docs are contained within this repo.
 The STAR project allows for an easy way for a user to control the Makeblock mBot remotely and locally through a simple user interface.
 
 ## Use ##
-If you would like to control your mBot locally, you must follow the instructions in the firmware folder then complete the installation instructions below.
+If you would like to control your mBot locally, you must follow the instructions in the firmware folder; then complete the installation instructions below.
 If you would just like to control remote mBots, just follow the installation instructions below.
 
 ## Installation ##
