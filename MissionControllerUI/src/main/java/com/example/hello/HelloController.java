@@ -139,7 +139,7 @@ public class HelloController {
         else if (Double.parseDouble(command.getText()) < 1 || Double.parseDouble(command.getText()) > 120){
             AlertBox.display("Enter values between 1 and 120");
         }
-        else if(fileValues.size() != 0){
+        else{
             //Determine whether internet/APRS
             String str = availableRobots.getSelectionModel().getSelectedItem();
             String [] spl = str.split("\n");
