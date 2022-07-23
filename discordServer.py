@@ -105,7 +105,7 @@ async def on_ready():
                     p.append("{}".format(port))
                 socket.send_string(';'.join(p))
         except zmq.ZMQError as e:
-            if e.errno == zmq.EAGAIN:
+            if e.errno == zmq.EAGAIN or e.errno == zmq.Again:
                 await asyncio.sleep(1)
                 pass
             else:
