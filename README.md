@@ -1,5 +1,6 @@
 # STAR
-The ARISS STAR Project code and docs are contained within this repo
+The ARISS STAR Project code and docs are contained within this repo.
+The STAR project allows for an easy way for a user to control the Makeblock mBot remotely and locally through a simple user interface.
 
 ## Installation ##
 1. Download or clone this repository
