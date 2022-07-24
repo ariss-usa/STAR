@@ -30,7 +30,6 @@ import java.util.concurrent.TimeUnit;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
-import org.zeromq.ZMQ.Socket;
 
 public class HelloController {
     @FXML
@@ -78,9 +77,7 @@ public class HelloController {
     private Parent root;
     private ArrayList<String> possibleConnections = new ArrayList<String>();
     private ArrayList<String> possibleConnectionsAPRS = new ArrayList<String>();
-    private ArrayList<String> possibleConnectionsBT = new ArrayList<String>();
     private ArrayList<Object> fileValues = new ArrayList<Object>();
-    private volatile boolean isTaskFinished = true;
 
     @FXML
     protected void configButtonPress(ActionEvent event) throws IOException {
@@ -242,12 +239,8 @@ public class HelloController {
     @FXML
     public void initialize() throws IOException{
         type.getItems().addAll("N/A", "forward", "backward", "right", "left", "pause");
-        Thread t = new Thread(){
-            ProcessBuilder pb = new ProcessBuilder("python", "discordServer.py");
-            Process p = pb.start();
-        };
-        t.setDaemon(true);
-        t.start();
+        possibleConnectionsAPRS.add("APRS Compatible Device 1"); 
+        possibleConnectionsAPRS.add("APRS Compatible Device 2");
 
         doNotDisturb.setSelected(true);
         doNotDisturb.setDisable(true);
@@ -341,7 +334,6 @@ public class HelloController {
                                 try{
                                     localRobotConnection.getItems().removeAll(localRobotConnection.getItems());
                                     localRobotConnection.getItems().addAll(split);
-                                    isTaskFinished = true;
                                 }finally{
                                     latch.countDown();
                                 }

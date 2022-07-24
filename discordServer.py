@@ -104,10 +104,17 @@ async def on_ready():
                 for port in sorted(ports):
                     p.append("{}".format(port))
                 socket.send_string(';'.join(p))
+            """
+            elif "END" in c:
+                socket.send_string("ACK")
+                socket.recv()
+                context.destroy()
+                exit()
+            """
+                
         except zmq.ZMQError as e:
             if e.errno == zmq.EAGAIN or e.errno == zmq.Again:
                 await asyncio.sleep(1)
-                pass
             else:
                 traceback.print_exc()
 @client.command()

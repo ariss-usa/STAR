@@ -4,7 +4,6 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-
 import java.io.IOException;
 
 public class HelloApplication extends Application {
@@ -15,6 +14,22 @@ public class HelloApplication extends Application {
         stage.setTitle("Mission Controller");
         stage.setScene(scene);
         stage.show();
+
+        /* 
+        stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+            public void handle(WindowEvent we) {
+                try(ZContext ctx = new ZContext()){
+                    ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
+                    socket.connect("tcp://127.0.0.1:5555");
+                    socket.send("END");
+                    socket.recv();
+                    socket.send("ACK");
+                    ctx.destroy();
+                }
+                System.exit(0);
+            }
+        });
+        */
     }
     
 

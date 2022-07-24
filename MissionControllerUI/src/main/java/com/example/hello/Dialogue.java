@@ -102,7 +102,7 @@ public class Dialogue {
         state.getItems().addAll(states);
         sdr.setOnAction(this::getSdr);
         state.setOnAction(this::getState);
-
+        
         File file = new File("important.txt");
         if (file.isFile()){
             Reader.read(list);
