@@ -1,10 +1,17 @@
 package com.example.hello;
 
 import javafx.application.Application;
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
+
 import java.io.IOException;
+
+import org.zeromq.SocketType;
+import org.zeromq.ZContext;
+import org.zeromq.ZMQ;
 
 public class HelloApplication extends Application {
     @Override
@@ -15,7 +22,6 @@ public class HelloApplication extends Application {
         stage.setScene(scene);
         stage.show();
 
-        /* 
         stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
             public void handle(WindowEvent we) {
                 try(ZContext ctx = new ZContext()){
@@ -23,17 +29,14 @@ public class HelloApplication extends Application {
                     socket.connect("tcp://127.0.0.1:5555");
                     socket.send("END");
                     socket.recv();
-                    socket.send("ACK");
                     ctx.destroy();
                 }
                 System.exit(0);
             }
         });
-        */
+        
     }
-    
-
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         launch();
     }
 }
