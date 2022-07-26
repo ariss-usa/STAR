@@ -10,7 +10,7 @@
 <?import javafx.scene.text.Font?>
 
 <DialogPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="250.0" prefWidth="400.0" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1"
-    fx:controller="com.example.hello.Dialogue">
+    fx:controller="com.example.hello.Dialogue" stylesheets="@dialogue.css">
     <header>
       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="248.0" prefWidth="487.0">
          <children>

@@ -9,3 +9,17 @@
     font-size: 12px;
     -fx-font: 12px "Verdana";
 }
+.menu-item .label{
+    -fx-font: 12px "Verdana";
+}
+.menu-bar .label{
+    -fx-font: 12px "Verdana";
+}
+.list-cell{
+    font-family: Verdana;
+    font-size: 12px;
+    -fx-font: 12px "Verdana";
+}
+.root{
+    font-family: Verdana;
+}
