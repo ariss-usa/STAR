@@ -165,6 +165,29 @@ public class HelloController {
                     ctx.destroy();
                 }
             }
+            else{
+                try(ZContext ctx = new ZContext()){
+                    ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
+                    socket.connect("tcp://127.0.0.1:5554");
+                    String s = command.getText();
+                    command.clear();
+                    
+                    String selectedItem = availableRobots.getSelectionModel().getSelectedItem();
+                    String selectedDirection = type.getSelectionModel().getSelectedItem();
+                    String command = "";
+                    String selectedMCID = selectedItem.substring(0, selectedItem.indexOf("\n"));
+                    //command = "APRS " + Power.getText() + " " + selectedDirection + " "
+                    //+ s + " Selected MCid: " + selectedMCID + " Frequency: " + frequency;
+                    
+                    command = "APRS " + Power.getText() + " " + selectedDirection + " "
+                    + s + " Selected MCid: " + selectedMCID;
+
+                    socket.send(command);
+                    String str1 = socket.recvStr();
+                    sentListView.getItems().add(command);
+                    ctx.destroy();
+                }
+            }
         }
     }
     @FXML
