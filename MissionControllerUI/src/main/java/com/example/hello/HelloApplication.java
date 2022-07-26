@@ -27,9 +27,13 @@ public class HelloApplication extends Application {
             public void handle(WindowEvent we) {
                 try(ZContext ctx = new ZContext()){
                     ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
+                    ZMQ.Socket socket2 = ctx.createSocket(SocketType.REQ);
                     socket.connect("tcp://127.0.0.1:5555");
+                    socket2.connect("tcp://127.0.0.1:5554");
                     socket.send("END");
+                    socket2.send("END"); 
                     socket.recv();
+                    socket2.recv();
                     ctx.destroy();
                 }
                 System.exit(0);
