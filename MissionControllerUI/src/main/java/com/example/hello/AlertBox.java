@@ -18,7 +18,9 @@ public class AlertBox {
 
         Label label = new Label();
         label.setText(message);
+        label.setFont(new Font("Verdana", 12.0));
         Button closeButton = new Button("Close");
+        closeButton.setFont(new Font("Verdana", 12.0));
         closeButton.setOnAction(e -> window.close());
 
         VBox layout = new VBox(10);
