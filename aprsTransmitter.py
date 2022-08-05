@@ -2,7 +2,7 @@ import asyncio
 import traceback
 import zmq
 import os
-from playsound import playsound
+#from playsound import playsound
 
 context = zmq.Context()
 socket = context.socket(zmq.REP)
@@ -34,10 +34,10 @@ async def on_ready():
 
 async def transmit(command, id, freq):
     socket.send_string("ACK")
-    os.system("cd ~")
     str = "echo 'WB2OSZ>WORLD:" + command + "' | gen_packets -o x.wav -b 1200 -"
     os.system(str)
-    playsound('x.wav')
+    #playsound('x.wav')
+    os.system('aplay x.wav')
     os.system("atest x.wav >> x.txt")
     await asyncio.sleep(0.01)
 
