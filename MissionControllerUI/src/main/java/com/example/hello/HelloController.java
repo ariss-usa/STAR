@@ -145,7 +145,6 @@ public class HelloController {
                     ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
                     socket.connect("tcp://127.0.0.1:5555");
                     String s = command.getText();
-                    command.clear();
                     
                     String selectedItem = availableRobots.getSelectionModel().getSelectedItem();
                     String selectedDirection = type.getSelectionModel().getSelectedItem();
@@ -170,7 +169,6 @@ public class HelloController {
                     ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
                     socket.connect("tcp://127.0.0.1:5554");
                     String s = command.getText();
-                    command.clear();
                     
                     String selectedItem = availableRobots.getSelectionModel().getSelectedItem();
                     String selectedDirection = type.getSelectionModel().getSelectedItem();
@@ -188,6 +186,9 @@ public class HelloController {
                     ctx.destroy();
                 }
             }
+            Power.clear();
+            type.setValue("N/A");
+            command.clear();
         }
     }
     @FXML
