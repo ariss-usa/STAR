@@ -1,5 +1,5 @@
 .vscode/
-pythonEnv/
+pyEnv/
 MissionControllerUI/.idea/
 MissionControllerUI/javafx-sdk-18.0.1 2/
 MissionControllerUI/target/
