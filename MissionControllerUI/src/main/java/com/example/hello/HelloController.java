@@ -101,6 +101,7 @@ public class HelloController {
 
         parent = (Stage) VBox.getScene().getWindow();
         Stage dialogStage = new Stage();
+        dialogStage.setResizable(false);
         dialogStage.setTitle("Setup Dialog");
         dialogStage.initModality(Modality.WINDOW_MODAL);
         dialogStage.initOwner(parent);

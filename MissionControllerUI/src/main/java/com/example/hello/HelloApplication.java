@@ -20,6 +20,7 @@ public class HelloApplication extends Application {
         Scene scene = new Scene(fxmlLoader.load(), 640, 480);
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
         stage.setTitle("Mission Controller");
+        stage.setResizable(false);
         stage.setScene(scene);
         stage.show();
 

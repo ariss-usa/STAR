@@ -12,7 +12,7 @@ import javafx.stage.Stage;
 public class AlertBox {
     public static void display(String message)    {
         Stage window = new Stage();
-        
+        window.setResizable(false);
         window.initModality(Modality.APPLICATION_MODAL);
         window.setTitle("Alert");
         window.setMinWidth(250);
