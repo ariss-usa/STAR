@@ -22,6 +22,8 @@ import javafx.concurrent.Task;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -30,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
+import java.awt.*;
 
 public class HelloController {
     @FXML
@@ -72,6 +75,8 @@ public class HelloController {
     private ComboBox<String> localRobotConnection;
     @FXML
     private Button pairButton;
+    @FXML
+    private MenuItem link;
 
     private Stage parent;
     private Parent root;
@@ -79,6 +84,15 @@ public class HelloController {
     private ArrayList<String> possibleConnectionsAPRS = new ArrayList<String>();
     private ArrayList<Object> fileValues = new ArrayList<Object>();
 
+    @FXML
+    protected void onLinkPressed(ActionEvent event) throws IOException, URISyntaxException{
+        Desktop.getDesktop().browse(new URI("https://www.ariss.org/"));
+    }
+    
+    @FXML
+    protected void onhelpPressed(ActionEvent event) throws IOException, URISyntaxException{
+        Desktop.getDesktop().browse(new URI("https://sites.google.com/view/ariss-starproject/home"));
+    }
     @FXML
     protected void configButtonPress(ActionEvent event) throws IOException {
         FXMLLoader loader = new FXMLLoader();
@@ -90,7 +104,8 @@ public class HelloController {
         dialogStage.setTitle("Setup Dialog");
         dialogStage.initModality(Modality.WINDOW_MODAL);
         dialogStage.initOwner(parent);
-        Scene scene = new Scene(root, 400, 250);
+        Scene scene = new Scene(root, 400, 210);
+        scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
         dialogStage.setScene(scene);
 
         dialogStage.showAndWait();
@@ -140,6 +155,27 @@ public class HelloController {
             //Determine whether internet/APRS
             String str = availableRobots.getSelectionModel().getSelectedItem();
             String [] spl = str.split("\n");
+
+             /* 
+            if(!medium.isSelected()){
+                String s = command.getText();
+                
+                String selectedItem = availableRobots.getSelectionModel().getSelectedItem();
+                String selectedDirection = type.getSelectionModel().getSelectedItem();
+                String command = "";
+                if(spl.length > 1){
+                    String selectedMCID = selectedItem.substring(0, selectedItem.indexOf("\n"));
+                    command = "SEND " + Power.getText() + " " + selectedDirection + " "
+                    + s + " Selected MCid: " + selectedMCID;
+                }
+                else{
+                    command = "Local " + Power.getText() + " " + selectedDirection + " "+ s;
+                }
+                transfer t = new transfer(command);
+                t.run();
+                sentListView.getItems().add(command);
+            }
+            */
             if(!medium.isSelected()){
                 try(ZContext ctx = new ZContext()){
                     ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
@@ -164,6 +200,7 @@ public class HelloController {
                     ctx.destroy();
                 }
             }
+
             else{
                 try(ZContext ctx = new ZContext()){
                     ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
@@ -174,8 +211,6 @@ public class HelloController {
                     String selectedDirection = type.getSelectionModel().getSelectedItem();
                     String command = "";
                     String selectedMCID = selectedItem.substring(0, selectedItem.indexOf("\n"));
-                    //command = "APRS " + Power.getText() + " " + selectedDirection + " "
-                    //+ s + " Selected MCid: " + selectedMCID + " Frequency: " + frequency;
                     
                     command = "APRS " + Power.getText() + " " + selectedDirection + " "
                     + s + " Selected MCid: " + selectedMCID;
@@ -195,7 +230,7 @@ public class HelloController {
     void checkBoxClicked(MouseEvent event) {
         if(fileValues.size() != 0){
             if(doNotDisturb.isSelected()){
-                recListView.getItems().clear();
+                 
                 try(ZContext ctx = new ZContext()){
                     ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
                     socket.connect("tcp://127.0.0.1:5555");
@@ -203,8 +238,12 @@ public class HelloController {
                     socket.recv();
                     ctx.destroy();
                 }
+                
+                //transfer t = new transfer("editOnline, ChangeTo: No");
+                //t.run();
             }
             else{
+                
                 try(ZContext ctx = new ZContext()){
                     ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
                     socket.connect("tcp://127.0.0.1:5555");
@@ -212,6 +251,9 @@ public class HelloController {
                     socket.recv();
                     ctx.destroy();
                 }
+                
+                //transfer t = new transfer("editOnline, ChangeTo: Yes");
+                //t.run();
             }
         }
     }
@@ -225,6 +267,7 @@ public class HelloController {
             if(pairText.equals("Pair")){
                 //Attempt to pair
                 String passfail = "";
+
                 try(ZContext ctx = new ZContext()){
                     ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
                     socket.connect("tcp://127.0.0.1:5555");
@@ -263,8 +306,8 @@ public class HelloController {
     @FXML
     public void initialize() throws IOException{
         type.getItems().addAll("N/A", "forward", "backward", "right", "left", "pause");
-        possibleConnectionsAPRS.add("APRS Compatible Device 1"); 
-        possibleConnectionsAPRS.add("APRS Compatible Device 2");
+        sentListView.getItems().add("~");
+        recListView.getItems().add("~");
 
         doNotDisturb.setSelected(true);
         doNotDisturb.setDisable(true);

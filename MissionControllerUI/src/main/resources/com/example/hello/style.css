@@ -1,25 +1,184 @@
-.combo-box{
-    font-family: Verdana;
-    font-size: 12px;
+.list-cell:odd {
+    -fx-background-color: #343434;
+}
+.list-cell:even {
+    -fx-background-color: 	#28282B;
+}
+.list-cell{
     -fx-font: 12px "Verdana";
+    -fx-text-fill: #a4a8ad;
+    -fx-background-insets: 0;
+}
+
+.list-view .scroll-bar:vertical {
+    -fx-background-color:#343434
+}
+.scroll-bar:horizontal .thumb,
+.scroll-bar:vertical .thumb {
+    -fx-background-color:rgb(0, 0, 0);
+    -fx-background-insets : 2.0, 0.0, 0.0;
+    -fx-background-radius : 2.0em;
+}
+
+.scroll-bar:horizontal .thumb:hover,
+.scroll-bar:vertical .thumb:hover {
+    -fx-background-color :derive(#4D4C4F,10.0%);
+    -fx-background-insets : 2.0, 0.0, 0.0;
+    -fx-background-radius : 2.0em;
+}
+
+.combo-box-base{
+    -fx-font: 12px "Verdana";
+    -fx-background-color: #1d2125;
 }
 
 .combo-box .cell{
-    font-family: Verdana;
-    font-size: 12px;
     -fx-font: 12px "Verdana";
+    -fx-background-color: #1d2125;
+    -fx-text-fill: #a4a8ad;
 }
+
+.combo-box-popup .list-view .list-cell:hover {
+    -fx-background-color: #3457D5;
+}
+
 .menu-item .label{
     -fx-font: 12px "Verdana";
 }
 .menu-bar .label{
     -fx-font: 12px "Verdana";
 }
-.list-cell{
-    font-family: Verdana;
-    font-size: 12px;
-    -fx-font: 12px "Verdana";
-}
+
 .root{
-    font-family: Verdana;
+    -fx-font-family: Verdana;
+    -fx-background-color: #24292e
 }
+
+.text-field {
+    -fx-background-color: #1d2125;
+    -fx-text-fill: #DCDCDC;
+}
+.label {
+    -fx-text-fill: #DCDCDC;
+}
+
+.button{
+    -fx-background-color: #0366d6;
+    -fx-text-fill: white;
+}
+.button:hover{
+    -fx-background-color: #0372ef;
+}
+.button:pressed {
+    -fx-background-color: #053e80;
+}
+#enter{
+    -fx-content-display: right;
+    -fx-graphic: url(../images/recolor.png);
+}
+#pairButton{
+    -fx-content-display: right;
+    -fx-graphic: url(../images/bluetooth.png);
+}
+#sdr{
+    -fx-background-color: #1d2125;
+}
+#cancel{
+    -fx-contenet-display: right;
+    -fx-graphic: url(../images/cancel.png);
+}
+.check-box{
+    -fx-text-fill: #DCDCDC;
+}
+.check-box .box {
+
+    -fx-background-color: #DCDCDC;
+    -fx-border-radius:3px; 
+}
+    
+.check-box:selected .mark {
+
+    -fx-background-color: white;
+    -fx-shape: "M9.998,13.946L22.473,1.457L26.035,5.016L10.012,21.055L0.618,11.688L4.178,8.127L9.998,13.946Z";
+
+}
+
+.check-box:selected .box {
+
+    -fx-background-color: #6F2DA8;
+}
+
+* {
+    -fx-my-menu-color: #1b1b1b;                  /* Change according to your needs */
+    -fx-my-menu-color-highlighted: #455a64;      /* Change according to your needs */
+    -fx-my-menu-font-color: #FFFFFF;             /* Change according to your needs */
+    -fx-my-menu-font-color-highlighted: #FFFFFF; /* Change according to your needs */
+}
+
+/* MENU BAR + Top-level MENU BUTTONS */
+/*** The menu bar itself ***/    
+.menu-bar {
+    -fx-background-color: -fx-my-menu-color;
+}
+
+/*** Top-level menu itself (not selected / hovered) ***/
+.menu-bar > .container > .menu-button {
+    -fx-background-color: -fx-my-menu-color;
+}
+
+/*** Top-level menu's label (not selected / hovered) ***/
+.menu-bar > .container > .menu-button > .label {
+    -fx-text-fill: -fx-my-menu-font-color;
+}
+
+/*** Top-level menu's label (disabled) ***/
+.menu-bar > .container > .menu-button > .label:disabled {
+    -fx-opacity: 1.0;
+}
+
+/*** Top-level menu itself (selected / hovered) ***/
+.menu-bar > .container > .menu-button:hover,
+.menu-bar > .container > .menu-button:focused,
+.menu-bar > .container > .menu-button:showing {
+    -fx-background-color: -fx-my-menu-color-highlighted;
+}
+
+/*** Top-level menu's label (selected / hovered) ***/
+.menu-bar > .container > .menu-button:hover > .label,
+.menu-bar > .container > .menu-button:focused > .label,
+.menu-bar > .container > .menu-button:showing > .label {
+    -fx-text-fill: -fx-my-menu-font-color-highlighted;
+}
+
+/* MENU ITEM (children of a MENU BUTTON) */
+/*** The item itself (not hovered / focused) ***/    
+.menu-item {
+    -fx-background-color: -fx-my-menu-color; 
+}
+
+/*** The item's label (not hovered / focused) ***/   
+.menu-item .label {
+    -fx-text-fill: -fx-my-menu-font-color;
+}
+
+/*** The item's label (disabled) ***/   
+.menu-item .label:disabled {
+    -fx-opacity: 1.0;
+}    
+
+/*** The item itself (hovered / focused) ***/    
+.menu-item:focused, .menu-item:hovered {
+    -fx-background-color: -fx-my-menu-color-highlighted; 
+}
+
+/*** The item's label (hovered / focused) ***/  
+.menu-item:focused .label, .menu-item:hovered .label {
+    -fx-text-fill: -fx-my-menu-font-color-highlighted;
+}
+
+/* CONTEXT MENU */
+/*** The context menu that contains a menu's menu items ***/  
+.context-menu {
+    -fx-background-color: -fx-my-menu-color; 
+}
+
