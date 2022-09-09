@@ -157,7 +157,7 @@ public class HelloController {
             String str = availableRobots.getSelectionModel().getSelectedItem();
             String [] spl = str.split("\n");
 
-             /* 
+             
             if(!medium.isSelected()){
                 String s = command.getText();
                 
@@ -173,10 +173,12 @@ public class HelloController {
                     command = "Local " + Power.getText() + " " + selectedDirection + " "+ s;
                 }
                 transfer t = new transfer(command);
-                t.run();
+                Thread th = new Thread(t);
+                th.setDaemon(true);
+                th.start();
                 sentListView.getItems().add(command);
             }
-            */
+            /* 
             if(!medium.isSelected()){
                 try(ZContext ctx = new ZContext()){
                     ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
@@ -201,7 +203,7 @@ public class HelloController {
                     ctx.destroy();
                 }
             }
-
+            */
             else{
                 try(ZContext ctx = new ZContext()){
                     ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
@@ -231,7 +233,7 @@ public class HelloController {
     void checkBoxClicked(MouseEvent event) {
         if(fileValues.size() != 0){
             if(doNotDisturb.isSelected()){
-                 
+                /* 
                 try(ZContext ctx = new ZContext()){
                     ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
                     socket.connect("tcp://127.0.0.1:5555");
@@ -239,12 +241,18 @@ public class HelloController {
                     socket.recv();
                     ctx.destroy();
                 }
-                
-                //transfer t = new transfer("editOnline, ChangeTo: No");
-                //t.run();
+                */
+                doNotDisturb.setDisable(true);
+                transfer tr = new transfer("editOnline, ChangeTo: No");
+                tr.setOnSucceeded(e -> {
+                    doNotDisturb.setDisable(false);
+                });
+                Thread th = new Thread(tr);
+                th.setDaemon(true);
+                th.start();
             }
             else{
-                
+                /* 
                 try(ZContext ctx = new ZContext()){
                     ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
                     socket.connect("tcp://127.0.0.1:5555");
@@ -252,10 +260,17 @@ public class HelloController {
                     socket.recv();
                     ctx.destroy();
                 }
-                
-                //transfer t = new transfer("editOnline, ChangeTo: Yes");
-                //t.run();
+                */
+                doNotDisturb.setDisable(true);
+                transfer tr = new transfer("editOnline, ChangeTo: Yes");
+                tr.setOnSucceeded(e -> {
+                    doNotDisturb.setDisable(false);
+                });
+                Thread th = new Thread(tr);
+                th.setDaemon(true);
+                th.start();
             }
+            
         }
     }
     @FXML
@@ -267,8 +282,9 @@ public class HelloController {
             String pairText = pairButton.getText();
             if(pairText.equals("Pair")){
                 //Attempt to pair
-                String passfail = "";
-
+                //String passfail = "";
+                
+                /* 
                 try(ZContext ctx = new ZContext()){
                     ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
                     socket.connect("tcp://127.0.0.1:5555");
@@ -287,6 +303,25 @@ public class HelloController {
                     //Show user pairing failed
                     AlertBox.display("Pairing failed, try again");
                 }
+                */
+                String send = "Pair connect " + localRobotConnection.getSelectionModel().getSelectedItem();
+                transfer tr = new transfer(send);
+                tr.setOnSucceeded(e -> {
+                    String passfail = tr.getValue();
+                    if (passfail.equals("pass")){
+                        availableRobots.getItems().add(0, localRobotConnection.getValue());
+                        localRobotConnection.setDisable(true);
+                        doNotDisturb.setDisable(false);
+                        pairButton.setText("Disconnect");
+                    }
+                    else if(passfail.equals("fail")){
+                        //Show user pairing failed
+                        AlertBox.display("Pairing failed, try again");
+                    }
+                });
+                Thread th = new Thread(tr);
+                th.setDaemon(true);
+                th.start();
             }
             else{
                 localRobotConnection.setValue(null);

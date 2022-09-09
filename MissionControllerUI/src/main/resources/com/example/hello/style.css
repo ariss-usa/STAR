@@ -104,7 +104,6 @@
 }
 
 .check-box:selected .box {
-
     -fx-background-color: #6F2DA8;
 }
 

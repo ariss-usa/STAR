@@ -23,6 +23,7 @@ public class HelloApplication extends Application {
         stage.setResizable(false);
         stage.setScene(scene);
         stage.show();
+        
 
         stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
             public void handle(WindowEvent we) {
@@ -43,6 +44,12 @@ public class HelloApplication extends Application {
         
     }
     public static void main(String[] args) throws IOException {
+        /* 
+        ProcessBuilder pb = new ProcessBuilder(
+        "cmd", "/c", "path/to/exe.exe", 
+        "/removeDrive", "driveLocation");
+        pb.start();
+        */
         launch();
     }
 }

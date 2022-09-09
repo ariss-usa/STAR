@@ -13,13 +13,14 @@ public class transfer extends Task<String>{
     }
     @Override
     protected String call() throws Exception {
+        String returnStr = "";
         try(ZContext ctx = new ZContext()){
             ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
             socket.connect("tcp://127.0.0.1:5555");
             socket.send(str);
-            socket.recvStr();
+            returnStr = socket.recvStr();
             ctx.destroy();
         }
-        return null;
+        return returnStr;
     }
 }
