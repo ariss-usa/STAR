@@ -26,6 +26,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -81,8 +82,8 @@ public class HelloController {
     private Stage parent;
     private Parent root;
     private ArrayList<String> possibleConnections = new ArrayList<String>();
-    private ArrayList<String> possibleConnectionsAPRS = new ArrayList<String>();
     private ArrayList<Object> fileValues = new ArrayList<Object>();
+    private ExecutorService threadExecutor = Executors.newSingleThreadExecutor();
 
     @FXML
     protected void onLinkPressed(ActionEvent event) throws IOException, URISyntaxException{
@@ -270,7 +271,6 @@ public class HelloController {
                 th.setDaemon(true);
                 th.start();
             }
-            
         }
     }
     @FXML
@@ -306,6 +306,7 @@ public class HelloController {
                 */
                 String send = "Pair connect " + localRobotConnection.getSelectionModel().getSelectedItem();
                 transfer tr = new transfer(send);
+                pairButton.setDisable(true);
                 tr.setOnSucceeded(e -> {
                     String passfail = tr.getValue();
                     if (passfail.equals("pass")){
@@ -318,6 +319,7 @@ public class HelloController {
                         //Show user pairing failed
                         AlertBox.display("Pairing failed, try again");
                     }
+                    pairButton.setDisable(false);
                 });
                 Thread th = new Thread(tr);
                 th.setDaemon(true);
@@ -329,6 +331,7 @@ public class HelloController {
                 doNotDisturb.setDisable(true);
                 availableRobots.getItems().remove(0);
                 pairButton.setText("Pair");
+                /* 
                 try(ZContext ctx = new ZContext()){
                     ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
                     socket.connect("tcp://127.0.0.1:5555");
@@ -336,6 +339,11 @@ public class HelloController {
                     socket.recvStr();
                     ctx.destroy();
                 }
+                */
+                transfer tr = new transfer("Pair disconnect");
+                Thread th = new Thread(tr);
+                th.setDaemon(true);
+                th.start();
             }
         }
     }
