@@ -70,6 +70,9 @@ public class Dialogue {
         else if (sdr.getSelectionModel().isEmpty())  {
             AlertBox.display("Enter a response in the SDR Dongle present? dropdown");
         }
+        else if(school.getText().contains(";") || city.getText().contains(";")){
+            AlertBox.display("Remove all semi-colons");
+        }
         else{
             File file = new File("important.txt");
             String generateID = "";
