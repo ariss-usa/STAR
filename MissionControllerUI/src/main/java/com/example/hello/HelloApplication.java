@@ -4,10 +4,12 @@ import javafx.application.Application;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
@@ -27,6 +29,16 @@ public class HelloApplication extends Application {
 
         stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
             public void handle(WindowEvent we) {
+                HelloController.threadExecutor.shutdown();
+                try{
+                    if (!HelloController.threadExecutor.awaitTermination(10, TimeUnit.SECONDS)){
+                        HelloController.threadExecutor.shutdownNow();
+                    }
+                }
+                catch(InterruptedException e){
+                    HelloController.threadExecutor.shutdownNow();
+                }
+                
                 try(ZContext ctx = new ZContext()){
                     ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
                     ZMQ.Socket socket2 = ctx.createSocket(SocketType.REQ);
@@ -41,10 +53,9 @@ public class HelloApplication extends Application {
                 System.exit(0);
             }
         });
-        
     }
     public static void main(String[] args) throws IOException {
-        /* 
+        /*
         ProcessBuilder pb = new ProcessBuilder(
         "cmd", "/c", "path/to/exe.exe", 
         "/removeDrive", "driveLocation");

@@ -1,5 +1,7 @@
 package com.example.hello;
 
+import javafx.animation.Timeline;
+import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -15,8 +17,10 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.shape.Circle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 
@@ -78,12 +82,18 @@ public class HelloController {
     private Button pairButton;
     @FXML
     private MenuItem link;
+    @FXML
+    private Circle circle1;
+    @FXML
+    private Circle circle2;
+    @FXML
+    private Circle circle3;
 
     private Stage parent;
     private Parent root;
     private ArrayList<String> possibleConnections = new ArrayList<String>();
     private ArrayList<Object> fileValues = new ArrayList<Object>();
-    private ExecutorService threadExecutor = Executors.newSingleThreadExecutor();
+    public static ExecutorService threadExecutor = Executors.newSingleThreadExecutor();
 
     @FXML
     protected void onLinkPressed(ActionEvent event) throws IOException, URISyntaxException{
@@ -174,9 +184,10 @@ public class HelloController {
                     command = "Local " + Power.getText() + " " + selectedDirection + " "+ s;
                 }
                 transfer t = new transfer(command);
-                Thread th = new Thread(t);
-                th.setDaemon(true);
-                th.start();
+                threadExecutor.submit(t);
+                //Thread th = new Thread(t);
+                //th.setDaemon(true);
+                //th.start();
                 sentListView.getItems().add(command);
             }
             /* 
@@ -244,13 +255,16 @@ public class HelloController {
                 }
                 */
                 doNotDisturb.setDisable(true);
+                showLoadingAnimation();
                 transfer tr = new transfer("editOnline, ChangeTo: No");
                 tr.setOnSucceeded(e -> {
+                    hideLoadingAnimation();
                     doNotDisturb.setDisable(false);
                 });
-                Thread th = new Thread(tr);
-                th.setDaemon(true);
-                th.start();
+                threadExecutor.submit(tr);
+                //Thread th = new Thread(tr);
+                //th.setDaemon(true);
+                //th.start();
             }
             else{
                 /* 
@@ -263,13 +277,16 @@ public class HelloController {
                 }
                 */
                 doNotDisturb.setDisable(true);
+                showLoadingAnimation();
                 transfer tr = new transfer("editOnline, ChangeTo: Yes");
                 tr.setOnSucceeded(e -> {
                     doNotDisturb.setDisable(false);
+                    hideLoadingAnimation();
                 });
-                Thread th = new Thread(tr);
-                th.setDaemon(true);
-                th.start();
+                threadExecutor.submit(tr);
+                //Thread th = new Thread(tr);
+                //th.setDaemon(true);
+                //th.start();
             }
         }
     }
@@ -321,9 +338,10 @@ public class HelloController {
                     }
                     pairButton.setDisable(false);
                 });
-                Thread th = new Thread(tr);
-                th.setDaemon(true);
-                th.start();
+                threadExecutor.submit(tr);
+                //Thread th = new Thread(tr);
+                //th.setDaemon(true);
+                //th.start();
             }
             else{
                 localRobotConnection.setValue(null);
@@ -341,9 +359,10 @@ public class HelloController {
                 }
                 */
                 transfer tr = new transfer("Pair disconnect");
-                Thread th = new Thread(tr);
-                th.setDaemon(true);
-                th.start();
+                threadExecutor.submit(tr);
+                //Thread th = new Thread(tr);
+                //th.setDaemon(true);
+                //th.start();
             }
         }
     }
@@ -352,9 +371,11 @@ public class HelloController {
         type.getItems().addAll("N/A", "forward", "backward", "right", "left", "pause");
         sentListView.getItems().add("~");
         recListView.getItems().add("~");
-
         doNotDisturb.setSelected(true);
         doNotDisturb.setDisable(true);
+
+        hideLoadingAnimation();
+        loadingAnimation();
 
         availableRobots.getSelectionModel().selectedItemProperty().addListener((options, oldValue, newValue) -> {
             if(newValue == null || newValue.isEmpty()){
@@ -425,6 +446,43 @@ public class HelloController {
             }
         }, 0, 100, TimeUnit.MILLISECONDS);
     }
+    private void loadingAnimation(){
+        TranslateTransition dot1 = new TranslateTransition();
+        dot1.setDuration(Duration.millis(300));
+        dot1.setNode(circle1);
+        dot1.setByY(-5);
+        dot1.setCycleCount(Timeline.INDEFINITE);
+        dot1.setAutoReverse(true);
+        dot1.play();
+
+        TranslateTransition dot2 = new TranslateTransition();
+        dot2.setDelay(Duration.millis(100));
+        dot2.setDuration(Duration.millis(300));
+        dot2.setNode(circle2);
+        dot2.setByY(-5);
+        dot2.setCycleCount(Timeline.INDEFINITE);
+        dot2.setAutoReverse(true);
+        dot2.play();
+
+        TranslateTransition dot3 = new TranslateTransition();
+        dot3.setDelay(Duration.millis(200));
+        dot3.setDuration(Duration.millis(300));
+        dot3.setNode(circle3);
+        dot3.setByY(-5);
+        dot3.setCycleCount(Timeline.INDEFINITE);
+        dot3.setAutoReverse(true);
+        dot3.play();
+    }
+    private void hideLoadingAnimation(){
+        circle1.setVisible(false);
+        circle2.setVisible(false);
+        circle3.setVisible(false);
+    }
+    private void showLoadingAnimation(){
+        circle1.setVisible(true);
+        circle2.setVisible(true);
+        circle3.setVisible(true);
+    }
     Service<Void> comList = new Service<Void>() {
         @Override
         protected Task<Void> createTask() {
@@ -444,6 +502,9 @@ public class HelloController {
                             public void run() {
                                 try{
                                     localRobotConnection.getItems().removeAll(localRobotConnection.getItems());
+                                    if(split.length == 0){
+                                        return;
+                                    }
                                     localRobotConnection.getItems().addAll(split);
                                 }finally{
                                     latch.countDown();
