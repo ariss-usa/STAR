@@ -1,10 +1,7 @@
 package com.example.hello;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 public class Writer {
     /*
