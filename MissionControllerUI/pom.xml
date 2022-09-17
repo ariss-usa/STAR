@@ -14,7 +14,6 @@
         <junit.version>5.7.1</junit.version>
     </properties>
 
-    <!-- If you can't find the latest snapshot -->
     <repositories>
       <repository>
         <id>sonatype-nexus-snapshots</id>
@@ -56,7 +55,6 @@
             <artifactId>jeromq</artifactId>
             <version>0.5.2</version>
         </dependency>
-        <!-- for the latest SNAPSHOT -->
         <dependency>
             <groupId>org.zeromq</groupId>
             <artifactId>jeromq</artifactId>
@@ -81,13 +79,34 @@
                 <version>0.0.6</version>
                 <executions>
                     <execution>
-                        <!-- Default configuration for running with: mvn clean javafx:run -->
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>com.example.hello/com.example.hello.HelloApplication</mainClass>
+                            <mainClass>com.example.hello.HelloApplication</mainClass>
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <archive>
+                        <manifest>
+                        <addClasspath>true</addClasspath>
+                        <mainClass>com.example.hello.HelloApplication</mainClass>
+                        </manifest>
+                    </archive>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
             </plugin>
         </plugins>
     </build>
