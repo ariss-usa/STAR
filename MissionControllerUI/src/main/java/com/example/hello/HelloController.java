@@ -34,6 +34,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import javax.swing.text.StyledEditorKit.BoldAction;
+
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
@@ -94,6 +97,8 @@ public class HelloController {
     private ArrayList<String> possibleConnections = new ArrayList<String>();
     private ArrayList<Object> fileValues = new ArrayList<Object>();
     public static ExecutorService threadExecutor = Executors.newSingleThreadExecutor();
+    private static String currRobot = "";
+    private static boolean pairingStatus = false;
 
     @FXML
     protected void onLinkPressed(ActionEvent event) throws IOException, URISyntaxException{
@@ -103,6 +108,25 @@ public class HelloController {
     @FXML
     protected void onhelpPressed(ActionEvent event) throws IOException, URISyntaxException{
         Desktop.getDesktop().browse(new URI("https://sites.google.com/view/ariss-starproject/home"));
+    }
+    @FXML
+    protected void onCBPressed(ActionEvent event) throws IOException{
+        FXMLLoader loader = new FXMLLoader();
+        loader.setLocation(getClass().getResource("commandBuilder.fxml"));
+        root = loader.load();
+
+        parent = (Stage) VBox.getScene().getWindow();
+        Stage dialogStage = new Stage();
+        dialogStage.setResizable(false);
+        dialogStage.setTitle("Setup Dialog");
+        dialogStage.initModality(Modality.WINDOW_MODAL);
+        dialogStage.initOwner(parent);
+        Scene scene = new Scene(root, 273, 207);
+        scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
+        dialogStage.setTitle("Command Builder");
+        dialogStage.setScene(scene);
+
+        dialogStage.showAndWait();
     }
     @FXML
     protected void configButtonPress(ActionEvent event) throws IOException {
@@ -185,37 +209,8 @@ public class HelloController {
                 }
                 transfer t = new transfer(command);
                 threadExecutor.submit(t);
-                //Thread th = new Thread(t);
-                //th.setDaemon(true);
-                //th.start();
                 sentListView.getItems().add(command);
             }
-            /* 
-            if(!medium.isSelected()){
-                try(ZContext ctx = new ZContext()){
-                    ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
-                    socket.connect("tcp://127.0.0.1:5555");
-                    String s = command.getText();
-                    
-                    String selectedItem = availableRobots.getSelectionModel().getSelectedItem();
-                    String selectedDirection = type.getSelectionModel().getSelectedItem();
-                    String command = "";
-                    if(spl.length > 1){
-                        String selectedMCID = selectedItem.substring(0, selectedItem.indexOf("\n"));
-                        command = "SEND " + Power.getText() + " " + selectedDirection + " "
-                        + s + " Selected MCid: " + selectedMCID;
-                    }
-                    else{
-                        command = "Local " + Power.getText() + " " + selectedDirection + " "+ s;
-                    }
-
-                    socket.send(command);
-                    String str1 = socket.recvStr();
-                    sentListView.getItems().add(command);
-                    ctx.destroy();
-                }
-            }
-            */
             else{
                 try(ZContext ctx = new ZContext()){
                     ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
@@ -245,15 +240,6 @@ public class HelloController {
     void checkBoxClicked(MouseEvent event) {
         if(fileValues.size() != 0){
             if(doNotDisturb.isSelected()){
-                /* 
-                try(ZContext ctx = new ZContext()){
-                    ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
-                    socket.connect("tcp://127.0.0.1:5555");
-                    socket.send("editOnline, ChangeTo: No ");
-                    socket.recv();
-                    ctx.destroy();
-                }
-                */
                 doNotDisturb.setDisable(true);
                 showLoadingAnimation();
                 transfer tr = new transfer("editOnline, ChangeTo: No");
@@ -262,20 +248,8 @@ public class HelloController {
                     doNotDisturb.setDisable(false);
                 });
                 threadExecutor.submit(tr);
-                //Thread th = new Thread(tr);
-                //th.setDaemon(true);
-                //th.start();
             }
             else{
-                /* 
-                try(ZContext ctx = new ZContext()){
-                    ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
-                    socket.connect("tcp://127.0.0.1:5555");
-                    socket.send("editOnline, ChangeTo: Yes");
-                    socket.recv();
-                    ctx.destroy();
-                }
-                */
                 doNotDisturb.setDisable(true);
                 showLoadingAnimation();
                 transfer tr = new transfer("editOnline, ChangeTo: Yes");
@@ -284,9 +258,6 @@ public class HelloController {
                     hideLoadingAnimation();
                 });
                 threadExecutor.submit(tr);
-                //Thread th = new Thread(tr);
-                //th.setDaemon(true);
-                //th.start();
             }
         }
     }
@@ -298,29 +269,6 @@ public class HelloController {
         else{
             String pairText = pairButton.getText();
             if(pairText.equals("Pair")){
-                //Attempt to pair
-                //String passfail = "";
-                
-                /* 
-                try(ZContext ctx = new ZContext()){
-                    ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
-                    socket.connect("tcp://127.0.0.1:5555");
-                    socket.send("Pair connect " + localRobotConnection.getSelectionModel().getSelectedItem());
-                    passfail = socket.recvStr();
-                    ctx.destroy();
-                }
-
-                if (passfail.equals("pass")){
-                    availableRobots.getItems().add(0, localRobotConnection.getValue());
-                    localRobotConnection.setDisable(true);
-                    doNotDisturb.setDisable(false);
-                    pairButton.setText("Disconnect");
-                }
-                else if(passfail.equals("fail")){
-                    //Show user pairing failed
-                    AlertBox.display("Pairing failed, try again");
-                }
-                */
                 String send = "Pair connect " + localRobotConnection.getSelectionModel().getSelectedItem();
                 transfer tr = new transfer(send);
                 pairButton.setDisable(true);
@@ -339,9 +287,7 @@ public class HelloController {
                     pairButton.setDisable(false);
                 });
                 threadExecutor.submit(tr);
-                //Thread th = new Thread(tr);
-                //th.setDaemon(true);
-                //th.start();
+                pairingStatus = true;
             }
             else{
                 localRobotConnection.setValue(null);
@@ -349,20 +295,9 @@ public class HelloController {
                 doNotDisturb.setDisable(true);
                 availableRobots.getItems().remove(0);
                 pairButton.setText("Pair");
-                /* 
-                try(ZContext ctx = new ZContext()){
-                    ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
-                    socket.connect("tcp://127.0.0.1:5555");
-                    socket.send("Pair disconnect");
-                    socket.recvStr();
-                    ctx.destroy();
-                }
-                */
                 transfer tr = new transfer("Pair disconnect");
                 threadExecutor.submit(tr);
-                //Thread th = new Thread(tr);
-                //th.setDaemon(true);
-                //th.start();
+                pairingStatus = false;
             }
         }
     }
@@ -378,6 +313,7 @@ public class HelloController {
         loadingAnimation();
 
         availableRobots.getSelectionModel().selectedItemProperty().addListener((options, oldValue, newValue) -> {
+            currRobot = newValue;
             if(newValue == null || newValue.isEmpty()){
                 return;
             }
@@ -445,6 +381,12 @@ public class HelloController {
                 });
             }
         }, 0, 100, TimeUnit.MILLISECONDS);
+    }
+    public static String getSelectedRobot(){
+        return currRobot;
+    }
+    public static boolean getPairingStatus(){
+        return pairingStatus;
     }
     private void loadingAnimation(){
         TranslateTransition dot1 = new TranslateTransition();

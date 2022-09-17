@@ -60,9 +60,12 @@ async def on_ready():
                 await command(getCommand, getSelectedID)
             elif "Local" in c:
                 spl = c.split("Local ")
-                var = spl[1]
+                #var = spl[1]
+                words = spl[1].split()
+                grouped_words = [' '.join(words[i: i + 3]) for i in range(0, len(words), 3)]
                 socket.send_string("ACK")
-                serialPort.write(var.encode())
+                postToSerial(grouped_words)
+                #serialPort.write(var.encode())
             elif "sendToDIR" in c:
                 command = client.get_command("sendToDIR")
                 socket.send_string("REC")
@@ -232,5 +235,14 @@ def getContent(dirArr):
     for i in dirArr:
         arr.append(i.content)
     return arr
+
+def postToSerial(commandList):
+    for i in range(0, len(commandList)):
+        response = ""
+        serialPort.write(commandList[i].encode())
+        while "FIN" not in response:
+            response = serialPort.readline().decode('utf-8').strip()
+            print(response)
+
 
 client.run(token)

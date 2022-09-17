@@ -66,6 +66,11 @@
             <MenuItem fx:id="link" mnemonicParsing="false" onAction="#onLinkPressed" text="About ARISS" />
           </items>
         </Menu>
+        <Menu fx:id="otherFeatures" mnemonicParsing="false" text="Other Features">
+          <items>
+            <MenuItem fx:id="commandBuilder" mnemonicParsing="false" onAction="#onCBPressed" text="Command Builder" />
+          </items>
+        </Menu>
       </menus>
     </MenuBar>
     <AnchorPane fx:id="AnchorPane" maxHeight="-1.0" maxWidth="-1.0" prefHeight="427.0" prefWidth="618.0" VBox.vgrow="ALWAYS">
