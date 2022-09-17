@@ -229,7 +229,7 @@ async def on_raw_message_edit(payload):
     socket2.recv()
 
     newEditContext.destroy()
-
+ 
 def getContent(dirArr):
     arr = []
     for i in dirArr:
@@ -242,7 +242,5 @@ def postToSerial(commandList):
         serialPort.write(commandList[i].encode())
         while "FIN" not in response:
             response = serialPort.readline().decode('utf-8').strip()
-            print(response)
-
 
 client.run(token)

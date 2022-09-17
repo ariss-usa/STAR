@@ -3,10 +3,6 @@ package com.example.hello;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import org.zeromq.SocketType;
-import org.zeromq.ZContext;
-import org.zeromq.ZMQ;
-
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -23,23 +19,30 @@ public class commandBuilderController {
         String txt = CBTextBox.getText();
         boolean formatCheck = checkFormat(txt);
         String currRobot = HelloController.getSelectedRobot();
-        String [] spl = currRobot.split("\n");
-        if(!formatCheck){
-            return;
-        }
-        else if(!HelloController.getPairingStatus()){
-            return;
-        }
-        String command = "";
-        if(spl.length > 1){
-            //Multi-commands through discord
+        if(currRobot == null){
+            AlertBox.display("pair to a robot");
         }
         else{
-            //Multi-commands through BT
-            command = "Local " + txt;
+            String [] spl = currRobot.split("\n");
+            if(currRobot.equals("")){
+                AlertBox.display("Select a robot");
+            }
+            else if(!HelloController.getPairingStatus()){
+                AlertBox.display("Pair to a robot");
+            }
+            else if(formatCheck){
+                String command = "";
+                if(spl.length > 1){
+                    //Multi-commands through discord
+                }
+                else{
+                    //Multi-commands through BT
+                    command = "Local " + txt;
+                }
+                transfer t = new transfer(command);
+                HelloController.threadExecutor.submit(t);
+            }
         }
-        transfer t = new transfer(command);
-        HelloController.threadExecutor.submit(t);
     }
 
     @FXML
