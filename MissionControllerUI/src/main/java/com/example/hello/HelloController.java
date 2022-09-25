@@ -35,8 +35,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import javax.swing.text.StyledEditorKit.BoldAction;
-
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
@@ -110,6 +108,10 @@ public class HelloController {
         Desktop.getDesktop().browse(new URI("https://sites.google.com/view/ariss-starproject/home"));
     }
     @FXML
+    protected void visualize(ActionEvent event) throws IOException{
+
+    }
+    @FXML
     protected void onCBPressed(ActionEvent event) throws IOException{
         FXMLLoader loader = new FXMLLoader();
         loader.setLocation(getClass().getResource("commandBuilder.fxml"));
@@ -118,12 +120,11 @@ public class HelloController {
         parent = (Stage) VBox.getScene().getWindow();
         Stage dialogStage = new Stage();
         dialogStage.setResizable(false);
-        dialogStage.setTitle("Setup Dialog");
+        dialogStage.setTitle("Command Builder");
         dialogStage.initModality(Modality.WINDOW_MODAL);
         dialogStage.initOwner(parent);
         Scene scene = new Scene(root, 273, 207);
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
-        dialogStage.setTitle("Command Builder");
         dialogStage.setScene(scene);
 
         dialogStage.showAndWait();

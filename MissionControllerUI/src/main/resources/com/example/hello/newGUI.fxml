@@ -143,6 +143,11 @@
                   <Font name="Verdana" size="12.0" />
               </font>
             </CheckBox>
+            <CheckBox fx:id="visualizerCheck" layoutX="358.0" layoutY="109.0" mnemonicParsing="false" onAction="#visualize" text="Enable Visualizer">
+              <font>
+                  <Font name="Verdana" size="12.0" />
+              </font>
+            </CheckBox>
             <Circle fx:id="circle1" fill="DODGERBLUE" layoutX="488.0" layoutY="79.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
             <Circle fx:id="circle2" fill="#1fc4ff" layoutX="496.0" layoutY="79.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
             <Circle fx:id="circle3" fill="#1fffda" layoutX="504.0" layoutY="79.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
