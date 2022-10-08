@@ -1,5 +1,6 @@
 package com.example.hello;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -13,7 +14,13 @@ import javafx.stage.Stage;
 public class commandBuilderController {
     @FXML
     private TextArea CBTextBox;
-
+    @FXML
+    public void initialize() throws IOException{
+        CBTextBox.appendText("100 forward 3\r\n");
+        CBTextBox.appendText("50 backward 2\r\n");
+        CBTextBox.appendText("150 left 4\r\n");
+        CBTextBox.appendText("255 right 1\r\n");
+    }
     @FXML
     void multiCommand(ActionEvent event) {
         String txt = CBTextBox.getText();
@@ -34,6 +41,22 @@ public class commandBuilderController {
                 String command = "";
                 if(spl.length > 1){
                     //Multi-commands through discord
+                    String selectedMCID = currRobot.substring(0, currRobot.indexOf("\n"));
+                    //100 forward 5
+                    //50 backward 2
+                    //25 left 3
+                    String [] split = txt.split("\n| ");
+                    ArrayList<String> powers = new ArrayList<String>();
+                    ArrayList<String> direction = new ArrayList<String>();
+                    ArrayList<String> time = new ArrayList<String>();
+                    for(int i = 0; i < split.length; i+=3){
+                        powers.add(split[i]);
+                        direction.add(split[i + 1]);
+                        time.add(split[i + 2]);
+                    }
+                    command = "SEND " + powers.toString() + " " + direction.toString() + " "
+                    + time.toString() + " Selected MCid: " + selectedMCID;
+                    
                 }
                 else{
                     //Multi-commands through BT

@@ -7,6 +7,7 @@ import serial
 from dotenv import load_dotenv
 from discord.ext import commands
 import serial.tools.list_ports
+import re
 
 intents = discord.Intents.default()
 client = commands.Bot(command_prefix="prefix", intents=intents)
@@ -187,9 +188,20 @@ async def on_message(message):
         socket1.send_string(sendString)
         socket1.recv()
 
-        split = message.content.split("command: ")
-        serialPort.write(split[1].encode())
-
+        split = re.split('command: |\[|\]|\[]', message.content)      
+        if(len(split) == 2):
+            serialPort.write(split[1].encode())
+        else:
+            l = []
+            amtOfCommands = len(split[2].split(", "))
+            powerArr = split[2].split(", ")
+            directionArr = split[4].split(", ")
+            timeArr = split[6].split(", ")
+            for i in range(0, amtOfCommands):
+                l.append(f"{powerArr[i]} {directionArr[i]} {timeArr[i]}")
+                
+            postToSerial(l)
+            
     elif message.channel.id == DIR_ID:
         #Keep a list of the messages
         global dirArr
@@ -206,8 +218,6 @@ async def on_message(message):
 async def on_raw_message_edit(payload):
     #Called when message is edited
     #Update the directory list
-    #if(localOrRemote != "INTERNET"):
-    #    return
     global myMC
 
     message = payload.cached_message
