@@ -53,12 +53,6 @@ public class HelloApplication extends Application {
         });
     }
     public static void main(String[] args) throws IOException {
-        /* 
-        ProcessBuilder pb = new ProcessBuilder(
-        "cmd", "/c", "path/to/exe.exe", 
-        "/removeDrive", "driveLocation");
-        pb.start();
-        */
         launch();
     }
 }

@@ -15,8 +15,11 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
+import javafx.scene.image.Image;
 import javafx.scene.control.TextField;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Pane;
 import javafx.scene.shape.Circle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -25,15 +28,21 @@ import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import javax.imageio.ImageIO;
 
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
@@ -89,7 +98,9 @@ public class HelloController {
     private Circle circle2;
     @FXML
     private Circle circle3;
-
+    @FXML
+    private MenuItem otherFeatures;
+    
     private Stage parent;
     private Parent root;
     private ArrayList<String> possibleConnections = new ArrayList<String>();
@@ -109,7 +120,22 @@ public class HelloController {
     }
     @FXML
     protected void visualize(ActionEvent event) throws IOException{
+        FXMLLoader loader = new FXMLLoader();
+        loader.setLocation(getClass().getResource("visualize.fxml"));
+        root = loader.load();
 
+        parent = (Stage) VBox.getScene().getWindow();
+        Stage dialogStage = new Stage();
+        dialogStage.setResizable(false);
+        dialogStage.setTitle("Visualizer");
+        dialogStage.initOwner(parent);
+        Scene scene = new Scene(root, 800, 600);
+        scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
+
+        //Image image = new Image(Paths.get("defaultMarsImage.jpg").toAbsolutePath().toUri().toURL().toExternalForm());
+
+        dialogStage.setScene(scene);
+        dialogStage.showAndWait();
     }
     @FXML
     protected void onCBPressed(ActionEvent event) throws IOException{
@@ -299,6 +325,7 @@ public class HelloController {
                 transfer tr = new transfer("Pair disconnect");
                 threadExecutor.submit(tr);
                 pairingStatus = false;
+                otherFeatures.setDisable(true);
             }
         }
     }
@@ -309,7 +336,8 @@ public class HelloController {
         recListView.getItems().add("~");
         doNotDisturb.setSelected(true);
         doNotDisturb.setDisable(true);
-
+        otherFeatures.setDisable(true);
+        
         hideLoadingAnimation();
         loadingAnimation();
 
@@ -332,6 +360,7 @@ public class HelloController {
             else{
                 medium.setDisable(true);
             }
+            otherFeatures.setDisable(false);
          });
         localRobotConnection.showingProperty().addListener((obs, wasShowing, isNowShowing) -> {
             if(isNowShowing){

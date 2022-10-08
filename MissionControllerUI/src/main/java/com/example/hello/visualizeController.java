@@ -1,34 +1,46 @@
 package com.example.hello;
 
+import java.io.IOException;
+
+import javax.swing.Action;
+
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
+import javafx.animation.PathTransition;
 import javafx.animation.Timeline;
+import javafx.animation.TranslateTransition;
+import javafx.animation.PathTransition.OrientationType;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.CubicCurveTo;
+import javafx.scene.shape.MoveTo;
+import javafx.scene.shape.Path;
+import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 
 public class visualizeController {
     @FXML
-    public Region content;
+    private Pane content;
     public void initialize() {
-        DoubleProperty xPosition = new SimpleDoubleProperty(0);
-        xPosition.addListener((observable, oldValue, newValue) -> setBackgroundPositions(content, xPosition.get()));
-        Timeline timeline = new Timeline(
-                new KeyFrame(Duration.ZERO, new KeyValue(xPosition, 0)),
-                new KeyFrame(Duration.seconds(200), new KeyValue(xPosition, -15000))
-        );
-        timeline.play();
+        for(int i = 24; i < 600; i += 20){
+            for(int j = 0; j < 800; j += 20){
+                Rectangle rect = new Rectangle(j, i, 20, 20);
+                rect.setFill(Color.TRANSPARENT);
+                rect.setStroke(Color.BLACK);
+                rect.setStrokeWidth(0.5);
+                content.getChildren().add(rect);
+            }
+        }
     }
-    void setBackgroundPositions(Region region, double xPosition) {
-        String style = "-fx-background-position: " +
-                "left " + xPosition/6 + "px bottom," +
-                "left " + xPosition/5 + "px bottom," +
-                "left " + xPosition/4 + "px bottom," +
-                "left " + xPosition/3 + "px bottom," +
-                "left " + xPosition/2 + "px bottom," +
-                "left " + xPosition + "px bottom;";
-        region.setStyle(style);
+    @FXML
+    protected void imageChange(ActionEvent event) throws IOException{
+        
     }
 }
+

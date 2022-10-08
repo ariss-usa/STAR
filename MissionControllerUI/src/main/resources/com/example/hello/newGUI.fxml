@@ -46,10 +46,10 @@
 <?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.text.Font?>
 <?import javafx.scene.shape.Circle?>
+<?import javafx.scene.text.Font?>
 
-<VBox fx:id="VBox" prefHeight="400.0" prefWidth="640.0" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="com.example.hello.HelloController">
+<VBox fx:id="VBox" prefHeight="400.0" prefWidth="640.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="com.example.hello.HelloController">
   <children>
     <MenuBar fx:id="MenuBar" VBox.vgrow="NEVER">
       <menus>
@@ -75,7 +75,7 @@
     </MenuBar>
     <AnchorPane fx:id="AnchorPane" maxHeight="-1.0" maxWidth="-1.0" prefHeight="427.0" prefWidth="618.0" VBox.vgrow="ALWAYS">
       <children>
-            <ComboBox fx:id="availableRobots" layoutX="17.0" layoutY="25.0" prefHeight="26.0" prefWidth="217.0" promptText="Choose a robot" styleClass="combo-box" stylesheets="@style.css">
+            <ComboBox fx:id="availableRobots" layoutX="17.0" layoutY="25.0" prefHeight="26.0" prefWidth="217.0" promptText="Choose a robot" styleClass="combo-box">
                <contextMenu>
                   <ContextMenu>
                     <items>
@@ -86,7 +86,7 @@
                <tooltip>
                   <Tooltip text="Connect to a remote robot or select your own local robot" />
                </tooltip></ComboBox>
-            <ComboBox fx:id="type" layoutX="77.0" layoutY="67.0" prefHeight="26.0" prefWidth="95.0" promptText="Direction" styleClass="combo-box" stylesheets="@style.css">
+            <ComboBox fx:id="type" layoutX="77.0" layoutY="67.0" prefHeight="26.0" prefWidth="95.0" promptText="Direction" styleClass="combo-box">
                <tooltip>
                   <Tooltip text="Enter a direction" />
                </tooltip></ComboBox>
@@ -129,7 +129,7 @@
                   <Tooltip text="Speed of robot (1, 120)" />
                </tooltip>
             </TextField>
-            <ComboBox fx:id="localRobotConnection" layoutX="358.0" layoutY="25.0" prefHeight="26.0" prefWidth="141.0" promptText="BT Connections" styleClass="combo-box" stylesheets="@style.css">
+            <ComboBox fx:id="localRobotConnection" layoutX="358.0" layoutY="25.0" prefHeight="26.0" prefWidth="141.0" promptText="BT Connections" styleClass="combo-box">
                <tooltip>
                   <Tooltip text="Pair with your local robot" />
                </tooltip></ComboBox>
@@ -138,12 +138,12 @@
                   <Font name="Verdana" size="12.0" />
               </font>
             </Button>
-            <CheckBox fx:id="medium" layoutX="14.0" layoutY="109.0" mnemonicParsing="false" text="Connect Via APRS">
+            <CheckBox fx:id="medium" layoutX="17.0" layoutY="108.0" mnemonicParsing="false" text="Connect Via APRS">
               <font>
                   <Font name="Verdana" size="12.0" />
               </font>
             </CheckBox>
-            <CheckBox fx:id="visualizerCheck" layoutX="358.0" layoutY="109.0" mnemonicParsing="false" onAction="#visualize" text="Enable Visualizer">
+            <CheckBox fx:id="visualizerCheck" layoutX="358.0" layoutY="108.0" mnemonicParsing="false" onAction="#visualize" text="Enable Visualizer">
               <font>
                   <Font name="Verdana" size="12.0" />
               </font>
