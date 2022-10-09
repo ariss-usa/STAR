@@ -1,46 +1,172 @@
 package com.example.hello;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 
-import javax.swing.Action;
-
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.PathTransition;
-import javafx.animation.Timeline;
+import javafx.animation.RotateTransition;
 import javafx.animation.TranslateTransition;
-import javafx.animation.PathTransition.OrientationType;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
+import javafx.scene.control.TextArea;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.CubicCurveTo;
-import javafx.scene.shape.MoveTo;
-import javafx.scene.shape.Path;
 import javafx.scene.shape.Rectangle;
+import javafx.stage.FileChooser;
 import javafx.util.Duration;
+import javafx.scene.control.MenuItem;
 
 public class visualizeController {
     @FXML
     private Pane content;
+    @FXML
+    private Button submit;
+    @FXML
+    private TextArea commandBuilder;
+    @FXML
+    private ImageView imgView;
+    private Rectangle robot;
+    private double heading = 0;
+    private String [] arr;
+    private int counter=0;
     public void initialize() {
-        for(int i = 24; i < 600; i += 20){
-            for(int j = 0; j < 800; j += 20){
-                Rectangle rect = new Rectangle(j, i, 20, 20);
-                rect.setFill(Color.TRANSPARENT);
-                rect.setStroke(Color.BLACK);
-                rect.setStrokeWidth(0.5);
-                content.getChildren().add(rect);
-            }
+        robot = new Rectangle(400, 300, 20, 20);
+        robot.setFill(Color.RED);
+        robot.setStroke(Color.BLACK);
+        robot.setStrokeWidth(0.5);
+        content.getChildren().add(robot);
+    }
+    private void move(double time, double power, boolean forwardOrBack){
+        TranslateTransition tt = new TranslateTransition();
+        tt.setNode(robot);
+        tt.setDuration(Duration.seconds(time));
+        double byY;
+        double byX;
+        if(forwardOrBack){
+            byY = -Math.cos(heading * Math.PI/180) * time * power;
+            byX = Math.sin(heading * Math.PI/180) * time * power;
         }
+        else{
+            byY = Math.cos(heading * Math.PI/180) * time * power/2;
+            byX = -Math.sin(heading * Math.PI/180) * time * power/2; 
+        }
+        tt.setByX(byX);
+        tt.setByY(byY);
+        tt.play();
+
+        tt.setOnFinished(e -> {
+            counter++;
+            if(counter >= arr.length){ counter = 0; return;}
+            String [] newArr = arr[counter].split(" ");
+            transitionCaller(newArr);
+        });
+    }
+    private void rotate(double time, double power, boolean leftOrRight){
+        RotateTransition rt = new RotateTransition(Duration.seconds(time));
+        rt.setNode(robot);
+        //true for left
+        //rt.setRate(Math.min(power/177.5, 2));
+        if(leftOrRight){
+            rt.setByAngle(-180 * time);
+        }
+        else{
+            rt.setByAngle(180 * time);
+        }
+        heading += rt.getByAngle();
+        rt.play();
+
+        rt.setOnFinished(e -> {
+            counter++;
+            if(counter >= arr.length){ counter = 0; return;}
+            String [] newArr = arr[counter].split(" ");
+            transitionCaller(newArr);
+        });
     }
     @FXML
     protected void imageChange(ActionEvent event) throws IOException{
-        
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Open image file");
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Image Files", "*.png", "*jpg"));
+        File file = fileChooser.showOpenDialog(((MenuItem)event.getTarget()).getParentPopup().getOwnerWindow());
+        if(file == null) return;
+        Image image = new Image(file.toURI().toString());
+        imgView.setImage(image);
+    }
+    @FXML
+    protected void pathSave(ActionEvent event) throws IOException{
+        String str = commandBuilder.getText();
+        PrintWriter pw = new PrintWriter(new FileWriter("commands.txt", false));
+        pw.write(str);
+        pw.close();
+        AlertBox.display("File successfully saved!");
+    }
+    @FXML
+    protected void submit(ActionEvent event) throws IOException{
+        String str = commandBuilder.getText();
+        checkFormat(str);
+        arr = str.split("\n");
+        String [] splitArr = arr[0].split(" ");
+        transitionCaller(splitArr);
+    }
+    private void transitionCaller(String [] splitArr){
+        if(splitArr[1].equals("forward")){
+            move(Double.parseDouble(splitArr[2]), Double.parseDouble(splitArr[0]), true);        
+        }
+        else if(splitArr[1].equals("backward")){
+            move(Double.parseDouble(splitArr[2]), Double.parseDouble(splitArr[0]), false);
+        }
+        else if(splitArr[1].equals("left")){
+            rotate(Double.parseDouble(splitArr[2]), Double.parseDouble(splitArr[0]), true);
+        }
+        else{
+            rotate(Double.parseDouble(splitArr[2]), Double.parseDouble(splitArr[0]), false);
+        }
+    }
+    public boolean checkFormat(String str){
+        String [] arr = str.split("\n");
+        for(int i = 0; i < arr.length; i++){
+            String [] split = arr[i].split(" ");
+            if(split.length != 3){
+                AlertBox.display("Wrong format");
+                return false;
+            }
+            try{
+                double power = Double.parseDouble(split[0]);
+                if (power < 1 || power > 255 )  {
+                    AlertBox.display("Enter the power (from 1 to 255)");
+                    return false;
+                }
+                String dir = split[1];
+                dir = dir.toLowerCase();
+                ArrayList<String> dirCheck = new ArrayList<String>(Arrays.asList("forward", "backward", "right", "left", "pause"));
+                if (!dirCheck.contains(dir)){
+                    AlertBox.display("Enter a valid direction");
+                    return false;
+                }
+                try{
+                    double time = Double.parseDouble(split[2]);
+                    if(time < 0 || time > 100){
+                        AlertBox.display("Enter the time (from 0 to 100)");
+                        return false;
+                    }
+                }
+                catch(Exception e){
+                    AlertBox.display("Time is in an incorrect format");
+                }
+            }
+            catch(Exception e){
+                AlertBox.display("Power is in an incorrect format");
+                return false;
+            }
+        }
+        return true;
     }
 }
 
