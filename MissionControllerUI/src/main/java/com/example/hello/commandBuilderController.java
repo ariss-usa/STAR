@@ -72,7 +72,7 @@ public class commandBuilderController {
     void onCancelPressed(ActionEvent event) {
         ((Stage)(((Button)event.getSource()).getScene().getWindow())).close();
     }
-    private boolean checkFormat(String str){
+    public boolean checkFormat(String str){
         String [] arr = str.split("\n");
         for(int i = 0; i < arr.length; i++){
             String [] split = arr[i].split(" ");
