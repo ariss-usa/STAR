@@ -42,6 +42,12 @@ public class visualizeController {
         robot.setStroke(Color.BLACK);
         robot.setStrokeWidth(0.5);
         content.getChildren().add(robot);
+        robot.setManaged(false);
+
+        commandBuilder.appendText("100 forward 3\r\n");
+        commandBuilder.appendText("50 backward 2\r\n");
+        commandBuilder.appendText("150 left 4\r\n");
+        commandBuilder.appendText("255 right 1\r\n");
     }
     private void move(double time, double power, boolean forwardOrBack){
         TranslateTransition tt = new TranslateTransition();
@@ -50,8 +56,8 @@ public class visualizeController {
         double byY;
         double byX;
         if(forwardOrBack){
-            byY = -Math.cos(heading * Math.PI/180) * time * power;
-            byX = Math.sin(heading * Math.PI/180) * time * power;
+            byY = -Math.cos(heading * Math.PI/180) * time * power/2;
+            byX = Math.sin(heading * Math.PI/180) * time * power/2;
         }
         else{
             byY = Math.cos(heading * Math.PI/180) * time * power/2;
@@ -109,11 +115,28 @@ public class visualizeController {
     }
     @FXML
     protected void submit(ActionEvent event) throws IOException{
-        String str = commandBuilder.getText();
-        checkFormat(str);
-        arr = str.split("\n");
-        String [] splitArr = arr[0].split(" ");
-        transitionCaller(splitArr);
+        TranslateTransition tt = new TranslateTransition();
+        tt.setNode(robot);
+        tt.setDuration(Duration.millis(10));
+        tt.setByX(-robot.getTranslateX());
+        tt.setByY(-robot.getTranslateY());
+        tt.play();
+        RotateTransition rt = new RotateTransition(Duration.millis(1));
+        rt.setNode(robot);
+        if(heading < 0){
+            rt.setByAngle(heading);
+        }else{
+            rt.setByAngle(360-heading);
+        }
+        heading = 0;
+        rt.play();
+        tt.setOnFinished(e -> {
+            String str = commandBuilder.getText();
+            checkFormat(str);
+            arr = str.split("\n");
+            String [] splitArr = arr[0].split(" ");
+            transitionCaller(splitArr);
+        });
     }
     private void transitionCaller(String [] splitArr){
         if(splitArr[1].equals("forward")){

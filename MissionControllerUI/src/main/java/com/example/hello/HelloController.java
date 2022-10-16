@@ -100,6 +100,8 @@ public class HelloController {
     private Circle circle3;
     @FXML
     private MenuItem otherFeatures;
+    @FXML
+    private CheckBox visualizerCheck;
     
     private Stage parent;
     private Parent root;
@@ -120,6 +122,7 @@ public class HelloController {
     }
     @FXML
     protected void visualize(ActionEvent event) throws IOException{
+        if(!visualizerCheck.isSelected()) return;
         FXMLLoader loader = new FXMLLoader();
         loader.setLocation(getClass().getResource("visualize.fxml"));
         root = loader.load();
@@ -129,13 +132,13 @@ public class HelloController {
         dialogStage.setResizable(false);
         dialogStage.setTitle("Visualizer");
         dialogStage.initOwner(parent);
+        dialogStage.initModality(Modality.WINDOW_MODAL);
         Scene scene = new Scene(root, 800, 600);
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
 
-        //Image image = new Image(Paths.get("defaultMarsImage.jpg").toAbsolutePath().toUri().toURL().toExternalForm());
-
         dialogStage.setScene(scene);
         dialogStage.showAndWait();
+        visualizerCheck.setSelected(false);
     }
     @FXML
     protected void onCBPressed(ActionEvent event) throws IOException{

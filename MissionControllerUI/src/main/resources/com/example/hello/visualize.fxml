@@ -24,11 +24,6 @@
               <MenuItem mnemonicParsing="false" onAction="#pathSave" text="Save as" />
             </items>
           </Menu>
-          <Menu mnemonicParsing="false" text="Help">
-            <items>
-              <MenuItem mnemonicParsing="false" text="About" />
-            </items>
-          </Menu>
         </menus>
       </MenuBar>
       <ImageView fx:id="imgView" fitHeight="575.0" fitWidth="807.0" layoutX="-6.0" layoutY="25.0" pickOnBounds="true">
