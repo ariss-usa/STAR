@@ -15,11 +15,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
-import javafx.scene.image.Image;
 import javafx.scene.control.TextField;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Pane;
 import javafx.scene.shape.Circle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -28,21 +25,15 @@ import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
-import javax.imageio.ImageIO;
 
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
@@ -125,9 +116,8 @@ public class HelloController {
         if(!visualizerCheck.isSelected()) return;
         FXMLLoader loader = new FXMLLoader();
         loader.setLocation(getClass().getResource("visualize.fxml"));
+        
         root = loader.load();
-
-        parent = (Stage) VBox.getScene().getWindow();
         Stage dialogStage = new Stage();
         dialogStage.setResizable(false);
         dialogStage.setTitle("Visualizer");
@@ -135,8 +125,8 @@ public class HelloController {
         dialogStage.initModality(Modality.WINDOW_MODAL);
         Scene scene = new Scene(root, 800, 600);
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
-
         dialogStage.setScene(scene);
+        
         dialogStage.showAndWait();
         visualizerCheck.setSelected(false);
     }

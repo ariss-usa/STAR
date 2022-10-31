@@ -3,11 +3,13 @@ package com.example.hello;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import javafx.animation.PauseTransition;
 import javafx.animation.RotateTransition;
 import javafx.animation.TranslateTransition;
 import javafx.event.ActionEvent;
@@ -43,8 +45,8 @@ public class visualizeController {
         robot.setStrokeWidth(0.5);
         content.getChildren().add(robot);
         robot.setManaged(false);
-
         commandBuilder.appendText("100 forward 3\r\n");
+        commandBuilder.appendText("0 delay 2\r\n");
         commandBuilder.appendText("50 backward 2\r\n");
         commandBuilder.appendText("150 left 4\r\n");
         commandBuilder.appendText("255 right 1\r\n");
@@ -63,6 +65,7 @@ public class visualizeController {
             byY = Math.cos(heading * Math.PI/180) * time * power/2;
             byX = -Math.sin(heading * Math.PI/180) * time * power/2; 
         }
+
         tt.setByX(byX);
         tt.setByY(byY);
         tt.play();
@@ -95,6 +98,16 @@ public class visualizeController {
             transitionCaller(newArr);
         });
     }
+    private void pause(double time){
+        PauseTransition pt = new PauseTransition(Duration.seconds(time));
+        pt.setOnFinished(e -> {
+            counter++;
+            if(counter >= arr.length){ counter = 0; return;}
+            String [] newArr = arr[counter].split(" ");
+            transitionCaller(newArr);
+        });
+        pt.play();
+    }
     @FXML
     protected void imageChange(ActionEvent event) throws IOException{
         FileChooser fileChooser = new FileChooser();
@@ -104,6 +117,24 @@ public class visualizeController {
         if(file == null) return;
         Image image = new Image(file.toURI().toString());
         imgView.setImage(image);
+    }
+    @FXML
+    protected void reset(ActionEvent event) throws IOException{
+        TranslateTransition tt = new TranslateTransition();
+        tt.setNode(robot);
+        tt.setDuration(Duration.millis(10));
+        tt.setByX(-robot.getTranslateX());
+        tt.setByY(-robot.getTranslateY());
+        tt.play();
+        RotateTransition rt = new RotateTransition(Duration.millis(1));
+        rt.setNode(robot);
+        if(heading < 0){
+            rt.setByAngle(heading);
+        }else{
+            rt.setByAngle(360-heading);
+        }
+        heading = 0;
+        rt.play();
     }
     @FXML
     protected void pathSave(ActionEvent event) throws IOException{
@@ -132,7 +163,8 @@ public class visualizeController {
         rt.play();
         tt.setOnFinished(e -> {
             String str = commandBuilder.getText();
-            checkFormat(str);
+            boolean bool = checkFormat(str);
+            if(!bool){return;}
             arr = str.split("\n");
             String [] splitArr = arr[0].split(" ");
             transitionCaller(splitArr);
@@ -148,6 +180,9 @@ public class visualizeController {
         else if(splitArr[1].equals("left")){
             rotate(Double.parseDouble(splitArr[2]), Double.parseDouble(splitArr[0]), true);
         }
+        else if(splitArr[1].equals("delay")){
+            pause(Double.parseDouble(splitArr[2]));
+        }
         else{
             rotate(Double.parseDouble(splitArr[2]), Double.parseDouble(splitArr[0]), false);
         }
@@ -161,20 +196,20 @@ public class visualizeController {
                 return false;
             }
             try{
-                double power = Double.parseDouble(split[0]);
-                if (power < 1 || power > 255 )  {
-                    AlertBox.display("Enter the power (from 1 to 255)");
+                int power = Integer.parseInt(split[0]);
+                if (power < 0 || power > 255 )  {
+                    AlertBox.display("Enter the power (from 0 to 255)");
                     return false;
                 }
                 String dir = split[1];
                 dir = dir.toLowerCase();
-                ArrayList<String> dirCheck = new ArrayList<String>(Arrays.asList("forward", "backward", "right", "left", "pause"));
+                ArrayList<String> dirCheck = new ArrayList<String>(Arrays.asList("forward", "backward", "right", "left", "delay"));
                 if (!dirCheck.contains(dir)){
                     AlertBox.display("Enter a valid direction");
                     return false;
                 }
                 try{
-                    double time = Double.parseDouble(split[2]);
+                    int time = Integer.parseInt(split[2]);
                     if(time < 0 || time > 100){
                         AlertBox.display("Enter the time (from 0 to 100)");
                         return false;
@@ -192,4 +227,3 @@ public class visualizeController {
         return true;
     }
 }
-

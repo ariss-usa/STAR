@@ -82,13 +82,13 @@ public class commandBuilderController {
             }
             try{
                 int power = Integer.parseInt(split[0]);
-                if (power < 1 || power > 255 )  {
-                    AlertBox.display("Enter the power (from 1 to 255)");
+                if (power < 0 || power > 255 )  {
+                    AlertBox.display("Enter the power (from 0 to 255)");
                     return false;
                 }
                 String dir = split[1];
                 dir = dir.toLowerCase();
-                ArrayList<String> dirCheck = new ArrayList<String>(Arrays.asList("forward", "backward", "right", "left", "pause"));
+                ArrayList<String> dirCheck = new ArrayList<String>(Arrays.asList("forward", "backward", "right", "left", "delay"));
                 if (!dirCheck.contains(dir)){
                     AlertBox.display("Enter a valid direction");
                     return false;
