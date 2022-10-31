@@ -31,6 +31,6 @@ public class AlertBox {
         Scene scene = new Scene(layout);
         scene.getStylesheets().add(HelloApplication.class.getResource("style.css").toExternalForm());
         window.setScene(scene);
-        window.showAndWait();
+        window.show();
     }
 }
