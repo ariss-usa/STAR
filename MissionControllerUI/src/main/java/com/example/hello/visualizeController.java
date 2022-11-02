@@ -5,15 +5,19 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.net.URL;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import javax.swing.ImageIcon;
 
 import javafx.animation.PauseTransition;
 import javafx.animation.RotateTransition;
 import javafx.animation.TranslateTransition;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Bounds;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
@@ -38,6 +42,9 @@ public class visualizeController {
     private double heading = 0;
     private String [] arr;
     private int counter=0;
+    private TranslateTransition tt = new TranslateTransition();
+    private RotateTransition rt = new RotateTransition();
+    private boolean end = false;
     public void initialize() {
         robot = new Rectangle(400, 300, 20, 20);
         robot.setFill(Color.RED);
@@ -52,7 +59,7 @@ public class visualizeController {
         commandBuilder.appendText("255 right 1\r\n");
     }
     private void move(double time, double power, boolean forwardOrBack){
-        TranslateTransition tt = new TranslateTransition();
+        tt = new TranslateTransition();
         tt.setNode(robot);
         tt.setDuration(Duration.seconds(time));
         double byY;
@@ -65,12 +72,28 @@ public class visualizeController {
             byY = Math.cos(heading * Math.PI/180) * time * power/2;
             byX = -Math.sin(heading * Math.PI/180) * time * power/2; 
         }
+        Bounds bounds = robot.localToScene(robot.getBoundsInLocal());
+        System.out.println(bounds.getMaxX());
 
+        if(bounds.getMaxX() + byX > 800){
+            byX = 800-bounds.getMaxX();
+        }
+        else if(bounds.getMinX() + byX < 0){
+            byX = -bounds.getMinX();
+        }
+        else if(bounds.getMaxY() + byY > 600){
+            byY = 600-bounds.getMaxY();
+        }
+        else if(bounds.getMinY() + byY < 25){
+            byY = 25-bounds.getMinY();
+        }
+        
         tt.setByX(byX);
         tt.setByY(byY);
         tt.play();
 
         tt.setOnFinished(e -> {
+            if(end){return;}
             counter++;
             if(counter >= arr.length){ counter = 0; return;}
             String [] newArr = arr[counter].split(" ");
@@ -78,7 +101,7 @@ public class visualizeController {
         });
     }
     private void rotate(double time, double power, boolean leftOrRight){
-        RotateTransition rt = new RotateTransition(Duration.seconds(time));
+        rt = new RotateTransition(Duration.seconds(time));
         rt.setNode(robot);
         //true for left
         //rt.setRate(Math.min(power/177.5, 2));
@@ -92,6 +115,7 @@ public class visualizeController {
         rt.play();
 
         rt.setOnFinished(e -> {
+            if(end){return;}
             counter++;
             if(counter >= arr.length){ counter = 0; return;}
             String [] newArr = arr[counter].split(" ");
@@ -120,13 +144,16 @@ public class visualizeController {
     }
     @FXML
     protected void reset(ActionEvent event) throws IOException{
-        TranslateTransition tt = new TranslateTransition();
+        end = true;
+        tt.stop();
+        rt.stop();
+        end = false;
         tt.setNode(robot);
         tt.setDuration(Duration.millis(10));
         tt.setByX(-robot.getTranslateX());
         tt.setByY(-robot.getTranslateY());
         tt.play();
-        RotateTransition rt = new RotateTransition(Duration.millis(1));
+        rt = new RotateTransition(Duration.millis(1));
         rt.setNode(robot);
         if(heading < 0){
             rt.setByAngle(heading);
@@ -134,6 +161,11 @@ public class visualizeController {
             rt.setByAngle(360-heading);
         }
         heading = 0;
+        counter = 0;
+
+        Image image = new Image("file:.\\MissionControllerUI\\src\\main\\resources\\com\\example\\images\\defaultMarsImage.jpg", true);
+        imgView.setImage(image);
+
         rt.play();
     }
     @FXML
@@ -146,13 +178,17 @@ public class visualizeController {
     }
     @FXML
     protected void submit(ActionEvent event) throws IOException{
-        TranslateTransition tt = new TranslateTransition();
+        end = true;
+        tt.stop();
+        rt.stop();
+        end = false;
+        tt = new TranslateTransition();
         tt.setNode(robot);
         tt.setDuration(Duration.millis(10));
         tt.setByX(-robot.getTranslateX());
         tt.setByY(-robot.getTranslateY());
         tt.play();
-        RotateTransition rt = new RotateTransition(Duration.millis(1));
+        rt = new RotateTransition(Duration.millis(1));
         rt.setNode(robot);
         if(heading < 0){
             rt.setByAngle(heading);
@@ -160,6 +196,7 @@ public class visualizeController {
             rt.setByAngle(360-heading);
         }
         heading = 0;
+        counter = 0;
         rt.play();
         tt.setOnFinished(e -> {
             String str = commandBuilder.getText();
@@ -196,7 +233,7 @@ public class visualizeController {
                 return false;
             }
             try{
-                int power = Integer.parseInt(split[0]);
+                double power = Double.parseDouble(split[0]);
                 if (power < 0 || power > 255 )  {
                     AlertBox.display("Enter the power (from 0 to 255)");
                     return false;
@@ -209,7 +246,7 @@ public class visualizeController {
                     return false;
                 }
                 try{
-                    int time = Integer.parseInt(split[2]);
+                    double time = Double.parseDouble(split[2]);
                     if(time < 0 || time > 100){
                         AlertBox.display("Enter the time (from 0 to 100)");
                         return false;

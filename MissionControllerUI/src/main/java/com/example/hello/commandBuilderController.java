@@ -18,6 +18,7 @@ public class commandBuilderController {
     public void initialize() throws IOException{
         CBTextBox.appendText("100 forward 3\r\n");
         CBTextBox.appendText("50 backward 2\r\n");
+        CBTextBox.appendText("0 delay 5\r\n");
         CBTextBox.appendText("150 left 4\r\n");
         CBTextBox.appendText("255 right 1\r\n");
     }
