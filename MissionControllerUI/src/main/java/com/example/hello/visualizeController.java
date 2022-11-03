@@ -3,14 +3,9 @@ package com.example.hello;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintWriter;
-import java.net.URL;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-
-import javax.swing.ImageIcon;
 
 import javafx.animation.PauseTransition;
 import javafx.animation.RotateTransition;
@@ -44,7 +39,6 @@ public class visualizeController {
     private int counter=0;
     private TranslateTransition tt = new TranslateTransition();
     private RotateTransition rt = new RotateTransition();
-    private boolean end = false;
     private boolean defaultImageChanged = false;
     private Image defaultImage;
     public void initialize() {
@@ -76,8 +70,7 @@ public class visualizeController {
             byX = -Math.sin(heading * Math.PI/180) * time * power/2; 
         }
         Bounds bounds = robot.localToScene(robot.getBoundsInLocal());
-        System.out.println(bounds.getMaxX());
-
+        System.out.println(robot.getRotate());
         if(bounds.getMaxX() + byX > 800){
             byX = 800-bounds.getMaxX();
         }
@@ -96,7 +89,7 @@ public class visualizeController {
         tt.play();
 
         tt.setOnFinished(e -> {
-            if(end){return;}
+            //if(end){return;}
             counter++;
             if(counter >= arr.length){ counter = 0; return;}
             String [] newArr = arr[counter].split(" ");
@@ -118,7 +111,6 @@ public class visualizeController {
         rt.play();
 
         rt.setOnFinished(e -> {
-            if(end){return;}
             counter++;
             if(counter >= arr.length){ counter = 0; return;}
             String [] newArr = arr[counter].split(" ");
@@ -148,10 +140,9 @@ public class visualizeController {
     }
     @FXML
     protected void reset(ActionEvent event) throws IOException{
-        end = true;
         tt.stop();
         rt.stop();
-        end = false;
+        tt = new TranslateTransition();
         tt.setNode(robot);
         tt.setDuration(Duration.millis(10));
         tt.setByX(-robot.getTranslateX());
@@ -159,11 +150,7 @@ public class visualizeController {
         tt.play();
         rt = new RotateTransition(Duration.millis(1));
         rt.setNode(robot);
-        if(heading < 0){
-            rt.setByAngle(heading);
-        }else{
-            rt.setByAngle(360-heading);
-        }
+        rt.setByAngle(robot.getRotate());
         heading = 0;
         counter = 0;
         rt.play();
@@ -180,10 +167,8 @@ public class visualizeController {
     }
     @FXML
     protected void submit(ActionEvent event) throws IOException{
-        end = true;
         tt.stop();
         rt.stop();
-        end = false;
         tt = new TranslateTransition();
         tt.setNode(robot);
         tt.setDuration(Duration.millis(10));
@@ -192,11 +177,7 @@ public class visualizeController {
         tt.play();
         rt = new RotateTransition(Duration.millis(1));
         rt.setNode(robot);
-        if(heading < 0){
-            rt.setByAngle(heading);
-        }else{
-            rt.setByAngle(360-heading);
-        }
+        rt.setByAngle(robot.getRotate());
         heading = 0;
         counter = 0;
         rt.play();
