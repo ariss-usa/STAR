@@ -45,6 +45,8 @@ public class visualizeController {
     private TranslateTransition tt = new TranslateTransition();
     private RotateTransition rt = new RotateTransition();
     private boolean end = false;
+    private boolean defaultImageChanged = false;
+    private Image defaultImage;
     public void initialize() {
         robot = new Rectangle(400, 300, 20, 20);
         robot.setFill(Color.RED);
@@ -57,6 +59,7 @@ public class visualizeController {
         commandBuilder.appendText("50 backward 2\r\n");
         commandBuilder.appendText("150 left 4\r\n");
         commandBuilder.appendText("255 right 1\r\n");
+        defaultImage = new Image("file:.\\MissionControllerUI\\src\\main\\resources\\com\\example\\images\\defaultMarsImage.jpg", true);
     }
     private void move(double time, double power, boolean forwardOrBack){
         tt = new TranslateTransition();
@@ -141,6 +144,7 @@ public class visualizeController {
         if(file == null) return;
         Image image = new Image(file.toURI().toString());
         imgView.setImage(image);
+        defaultImageChanged = true;
     }
     @FXML
     protected void reset(ActionEvent event) throws IOException{
@@ -162,11 +166,9 @@ public class visualizeController {
         }
         heading = 0;
         counter = 0;
-
-        Image image = new Image("file:.\\MissionControllerUI\\src\\main\\resources\\com\\example\\images\\defaultMarsImage.jpg", true);
-        imgView.setImage(image);
-
         rt.play();
+        if(!defaultImageChanged){return;} 
+        imgView.setImage(defaultImage);
     }
     @FXML
     protected void pathSave(ActionEvent event) throws IOException{
