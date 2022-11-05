@@ -29,11 +29,13 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
@@ -312,6 +314,7 @@ public class HelloController {
             else{
                 localRobotConnection.setValue(null);
                 localRobotConnection.setDisable(false);
+                localRobotConnection.setPromptText("BT Connections");
                 doNotDisturb.setDisable(true);
                 availableRobots.getItems().remove(0);
                 pairButton.setText("Pair");
@@ -324,7 +327,7 @@ public class HelloController {
     }
     @FXML
     public void initialize() throws IOException{
-        type.getItems().addAll("N/A", "forward", "backward", "right", "left", "pause");
+        type.getItems().addAll("forward", "backward", "right", "left");
         sentListView.getItems().add("~");
         recListView.getItems().add("~");
         doNotDisturb.setSelected(true);
@@ -466,11 +469,15 @@ public class HelloController {
                             @Override
                             public void run() {
                                 try{
-                                    localRobotConnection.getItems().removeAll(localRobotConnection.getItems());
-                                    if(split.length == 0){
-                                        return;
+                                    ArrayList<String> output = new ArrayList<String>();
+                                    for(int i = 0; i < split.length; i++){
+                                        if(split[i].isBlank()){
+                                            continue;
+                                        }
+                                        output.add(split[i]);
                                     }
-                                    localRobotConnection.getItems().addAll(split);
+                                    localRobotConnection.getItems().removeAll(localRobotConnection.getItems());
+                                    localRobotConnection.getItems().addAll(output);
                                 }finally{
                                     latch.countDown();
                                 }

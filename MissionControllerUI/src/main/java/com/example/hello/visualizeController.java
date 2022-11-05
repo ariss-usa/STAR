@@ -53,7 +53,10 @@ public class visualizeController {
         commandBuilder.appendText("50 backward 2\r\n");
         commandBuilder.appendText("150 left 4\r\n");
         commandBuilder.appendText("255 right 1\r\n");
+        
+        //CHANGE DURING PACKAGING
         defaultImage = new Image("file:.\\MissionControllerUI\\src\\main\\resources\\com\\example\\images\\defaultMarsImage.jpg", true);
+        //defaultImage = new Image("file:.\\images\\defaultMarsImage.jpg", true);
     }
     private void move(double time, double power, boolean forwardOrBack){
         tt = new TranslateTransition();
@@ -70,7 +73,6 @@ public class visualizeController {
             byX = -Math.sin(heading * Math.PI/180) * time * power/2; 
         }
         Bounds bounds = robot.localToScene(robot.getBoundsInLocal());
-        System.out.println(robot.getRotate());
         if(bounds.getMaxX() + byX > 800){
             byX = 800-bounds.getMaxX();
         }
@@ -150,7 +152,7 @@ public class visualizeController {
         tt.play();
         rt = new RotateTransition(Duration.millis(1));
         rt.setNode(robot);
-        rt.setByAngle(robot.getRotate());
+        rt.setByAngle(-robot.getRotate() % 360);
         heading = 0;
         counter = 0;
         rt.play();
@@ -177,7 +179,7 @@ public class visualizeController {
         tt.play();
         rt = new RotateTransition(Duration.millis(1));
         rt.setNode(robot);
-        rt.setByAngle(robot.getRotate());
+        rt.setByAngle(-robot.getRotate() % 360);
         heading = 0;
         counter = 0;
         rt.play();

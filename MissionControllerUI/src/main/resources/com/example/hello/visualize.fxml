@@ -26,7 +26,7 @@
           </Menu>
             <Menu mnemonicParsing="false" text="Reset Frame">
                <items>
-                  <MenuItem mnemonicParsing="false" onAction="#reset" text="reset" />
+                  <MenuItem mnemonicParsing="false" onAction="#reset" text="Reset" />
                </items>
             </Menu>
         </menus>

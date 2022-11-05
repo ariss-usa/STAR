@@ -18,7 +18,7 @@ public class HelloApplication extends Application {
     @Override
     public void start(Stage stage) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("newGUI.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 640, 480);
+        Scene scene = new Scene(fxmlLoader.load(), 665, 466);
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
         stage.setTitle("Mission Controller");
         stage.setResizable(false);

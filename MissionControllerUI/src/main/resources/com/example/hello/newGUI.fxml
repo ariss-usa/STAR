@@ -49,7 +49,7 @@
 <?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
 
-<VBox fx:id="VBox" prefHeight="400.0" prefWidth="640.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="com.example.hello.HelloController">
+<VBox fx:id="VBox" prefHeight="466.0" prefWidth="665.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="com.example.hello.HelloController">
   <children>
     <MenuBar fx:id="MenuBar" VBox.vgrow="NEVER">
       <menus>
@@ -73,9 +73,9 @@
         </Menu>
       </menus>
     </MenuBar>
-    <AnchorPane fx:id="AnchorPane" maxHeight="-1.0" maxWidth="-1.0" prefHeight="427.0" prefWidth="618.0" VBox.vgrow="ALWAYS">
+    <AnchorPane fx:id="AnchorPane" maxHeight="-1.0" maxWidth="-1.0" prefHeight="427.0" prefWidth="702.0" VBox.vgrow="ALWAYS">
       <children>
-            <ComboBox fx:id="availableRobots" layoutX="17.0" layoutY="25.0" prefHeight="26.0" prefWidth="217.0" promptText="Choose a robot" styleClass="combo-box">
+            <ComboBox fx:id="availableRobots" layoutX="17.0" layoutY="25.0" prefHeight="26.0" prefWidth="213.0" promptText="Choose a robot" styleClass="combo-box">
                <contextMenu>
                   <ContextMenu>
                     <items>
@@ -86,11 +86,11 @@
                <tooltip>
                   <Tooltip text="Connect to a remote robot or select your own local robot" />
                </tooltip></ComboBox>
-            <ComboBox fx:id="type" layoutX="77.0" layoutY="67.0" prefHeight="26.0" prefWidth="95.0" promptText="Direction" styleClass="combo-box">
+            <ComboBox fx:id="type" layoutX="78.0" layoutY="67.0" prefHeight="26.0" prefWidth="101.0" promptText="Direction" styleClass="combo-box">
                <tooltip>
                   <Tooltip text="Enter a direction" />
                </tooltip></ComboBox>
-            <TextField fx:id="command" layoutX="176.0" layoutY="68.0" prefHeight="26.0" prefWidth="59.0" promptText="Time">
+            <TextField fx:id="command" layoutX="184.0" layoutY="67.0" prefHeight="26.0" prefWidth="46.0" promptText="Time">
               <font>
                   <Font name="Verdana" size="12.0" />
               </font>
@@ -98,7 +98,7 @@
                   <Tooltip text="Time of operation" />
                </tooltip>
             </TextField>
-            <Button fx:id="enter" layoutX="241.0" layoutY="65.0" mnemonicParsing="false" onMouseClicked="#sendPressed" prefHeight="17.0" prefWidth="78.0" text="Send">
+            <Button fx:id="enter" layoutX="241.0" layoutY="64.0" mnemonicParsing="false" onMouseClicked="#sendPressed" prefHeight="17.0" prefWidth="78.0" text="Send">
               <font>
                   <Font name="Verdana" size="12.0" />
               </font>
@@ -108,15 +108,15 @@
                   <Font name="Verdana" size="15.0" />
                </font>
             </Label>
-            <Label fx:id="recText" layoutX="405.0" layoutY="146.0" text="Commands Received">
+            <Label fx:id="recText" layoutX="413.0" layoutY="146.0" text="Commands Received">
                <font>
                   <Font name="Verdana" size="15.0" />
                </font>
             </Label>
             <ListView fx:id="sentListView" layoutX="17.0" layoutY="169.0" prefHeight="270.0" prefWidth="280.0" />
-            <ListView fx:id="recListView" layoutX="348.0" layoutY="169.0" prefHeight="270.0" prefWidth="280.0" />
-            <Separator layoutX="325.0" layoutY="38.0" orientation="VERTICAL" prefHeight="374.0" prefWidth="0.0" />
-            <CheckBox fx:id="doNotDisturb" layoutX="358.0" layoutY="71.0" mnemonicParsing="false" onMouseClicked="#checkBoxClicked" text="Do Not Disturb">
+            <ListView fx:id="recListView" layoutX="369.0" layoutY="169.0" prefHeight="270.0" prefWidth="280.0" />
+            <Separator layoutX="336.0" layoutY="38.0" orientation="VERTICAL" prefHeight="374.0" prefWidth="0.0" />
+            <CheckBox fx:id="doNotDisturb" layoutX="367.0" layoutY="70.0" mnemonicParsing="false" onMouseClicked="#checkBoxClicked" text="Do Not Disturb">
               <font>
                   <Font name="Verdana" size="12.0" />
               </font>
@@ -129,11 +129,11 @@
                   <Tooltip text="Speed of robot (1, 120)" />
                </tooltip>
             </TextField>
-            <ComboBox fx:id="localRobotConnection" layoutX="358.0" layoutY="25.0" prefHeight="26.0" prefWidth="141.0" promptText="BT Connections" styleClass="combo-box">
+            <ComboBox fx:id="localRobotConnection" layoutX="365.0" layoutY="25.0" prefHeight="26.0" prefWidth="158.0" promptText="BT Connections" styleClass="combo-box">
                <tooltip>
                   <Tooltip text="Pair with your local robot" />
                </tooltip></ComboBox>
-            <Button fx:id="pairButton" layoutX="514.0" layoutY="22.0" mnemonicParsing="false" onMouseClicked="#pairPressed" prefHeight="32.0" prefWidth="113.0" text="Pair">
+            <Button fx:id="pairButton" layoutX="534.0" layoutY="22.0" mnemonicParsing="false" onMouseClicked="#pairPressed" prefHeight="32.0" prefWidth="113.0" text="Pair">
               <font>
                   <Font name="Verdana" size="12.0" />
               </font>
@@ -143,14 +143,14 @@
                   <Font name="Verdana" size="12.0" />
               </font>
             </CheckBox>
-            <CheckBox fx:id="visualizerCheck" layoutX="358.0" layoutY="108.0" mnemonicParsing="false" onAction="#visualize" text="Enable Visualizer">
+            <CheckBox fx:id="visualizerCheck" layoutX="367.0" layoutY="108.0" mnemonicParsing="false" onAction="#visualize" text="Enable Visualizer">
               <font>
                   <Font name="Verdana" size="12.0" />
               </font>
             </CheckBox>
-            <Circle fx:id="circle1" fill="DODGERBLUE" layoutX="488.0" layoutY="79.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
-            <Circle fx:id="circle2" fill="#1fc4ff" layoutX="496.0" layoutY="79.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
-            <Circle fx:id="circle3" fill="#1fffda" layoutX="504.0" layoutY="79.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
+            <Circle fx:id="circle1" fill="DODGERBLUE" layoutX="496.0" layoutY="80.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
+            <Circle fx:id="circle2" fill="#1fc4ff" layoutX="507.0" layoutY="80.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
+            <Circle fx:id="circle3" fill="#1fffda" layoutX="519.0" layoutY="80.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
       </children>
     </AnchorPane>
       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="200.0" prefWidth="320.0" />
