@@ -1,4 +1,5 @@
 import asyncio
+import struct
 import traceback
 import zmq
 import discord
@@ -9,6 +10,7 @@ from discord.ext import commands
 import serial.tools.list_ports
 import re
 import time
+import numpy as np
 
 intents = discord.Intents.all()
 client = commands.Bot(command_prefix="prefix", intents=intents)
@@ -113,14 +115,19 @@ async def on_ready():
                     p.append("{}".format(port))
                 socket.send_string(';'.join(p))
             elif "END" in c:
+                if(myMC != "TBD"):
+                    closeConnection = client.get_command("edit_message_connected")
+                    closeActivity = client.get_command("edit_message_online")
+                    await closeConnection("No", messageToID[myMC])
+                    await closeActivity("No", messageToID[myMC])
                 socket.send_string("ACK")
                 context.destroy()
                 await client.close()
-                
+
             if(runOnce and btconfigTimer != None and time.time() - btconfigTimer > 1):
                 serialPort.write(bytearray([255, 85, 7, 0, 2, 5, 0, 0, 0, 0]))
                 runOnce = False
-
+                
         except zmq.ZMQError as e:
             if e.errno == zmq.EAGAIN or e.errno == zmq.Again:
                 await asyncio.sleep(1)
@@ -266,7 +273,7 @@ def postToSerial(commandList):
         splitCommands = commandList[i].split(" ")
         #splitCommands[0] = power, [1] = direction, [2] = time
         ld = 255
-        rs = int(splitCommands[0])
+        rs = int(float(splitCommands[0]))
         timeOfOperation = float(splitCommands[2])
         ls = 256-rs
         rd = 0
@@ -281,7 +288,7 @@ def postToSerial(commandList):
             ld = 0
             rd = 255
             rs, ls = ls, rs
-            
+        
         if(splitCommands[1] != "delay"):
             serialPort.write(bytearray([255, 85, 7, 0, 2, 5, ls, ld, rs, rd]))
         time.sleep(timeOfOperation)
