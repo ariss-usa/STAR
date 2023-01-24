@@ -8,8 +8,9 @@ from dotenv import load_dotenv
 from discord.ext import commands
 import serial.tools.list_ports
 import re
+import time
 
-intents = discord.Intents.default()
+intents = discord.Intents.all()
 client = commands.Bot(command_prefix="prefix", intents=intents)
 
 #Environment variables
@@ -70,7 +71,7 @@ async def on_ready():
             elif "sendToDIR" in c:
                 command = client.get_command("sendToDIR")
                 socket.send_string("REC")
-                await command()
+                await command(0)
             elif "editOnline" in c:
                 command = client.get_command("edit_message_online")
                 var = c.split("ChangeTo: ")[1]
@@ -127,7 +128,7 @@ async def SEND(comm, selectedID):
     await channel.send(content)
   
 @client.command()
-async def sendToDIR():
+async def sendToDIR(x):
     channel = client.get_channel(DIR_ID)
     content = f"{myMC}\nSchool Name: {schoolName}\nSDR Dongle: {sdrDonglePresent}\nState: {state}\nCity: {city}\nOnline: {online}\nConnected: {connected}"
     await channel.send(content)
@@ -199,7 +200,7 @@ async def on_message(message):
             timeArr = split[6].split(", ")
             for i in range(0, amtOfCommands):
                 l.append(f"{powerArr[i]} {directionArr[i]} {timeArr[i]}")
-                
+            
             postToSerial(l)
             
     elif message.channel.id == DIR_ID:
@@ -248,9 +249,34 @@ def getContent(dirArr):
 
 def postToSerial(commandList):
     for i in range(0, len(commandList)):
+        """
         response = ""
         serialPort.write(commandList[i].encode())
         while "FIN" not in response:
             response = serialPort.readline().decode('utf-8').strip()
+        """
+        splitCommands = commandList[i].split(" ")
+        #splitCommands[0] = power, [1] = direction, [2] = time
+        ld = 255
+        rs = int(splitCommands[0])
+        timeOfOperation = float(splitCommands[2])
+        ls = 256-rs
+        rd = 0
+
+        if(splitCommands[1] == "left"):
+            ld = 0
+            rd = 0
+        elif(splitCommands[1] == "right"):
+            ld = 255
+            rd = 255
+        elif(splitCommands[1] == "backward"):
+            ld = 0
+            rd = 255
+            rs, ls = ls, rs
+            
+        if(splitCommands[1] != "delay"):
+            serialPort.write(bytearray([255, 85, 7, 0, 2, 5, ls, ld, rs, rd]))
+        time.sleep(timeOfOperation)
+        serialPort.write(bytearray([255, 85, 7, 0, 2, 5, 0, 0, 0, 0]))
 
 client.run(token)
