@@ -43,6 +43,8 @@ async def on_ready():
     global serialPort
     messageToID = {}
     dirArr = []
+    btconfigTimer = None
+    runOnce = True
     async for message in client.get_channel(DIR_ID).history(limit=200):
         dirArr.insert(0, message)
         messageToID[message.content[:5]] = message.id
@@ -95,6 +97,7 @@ async def on_ready():
                     try:
                         portString = connectOrDisc[2]
                         serialPort = serial.Serial(port=portString, baudrate=115200, bytesize=8, timeout=5, stopbits=serial.STOPBITS_ONE)
+                        btconfigTimer = time.time()
                     except serial.SerialException:
                         portSuccess = False
                 else:
@@ -113,6 +116,11 @@ async def on_ready():
                 socket.send_string("ACK")
                 context.destroy()
                 await client.close()
+                
+            if(runOnce and btconfigTimer != None and time.time() - btconfigTimer > 1):
+                serialPort.write(bytearray([255, 85, 7, 0, 2, 5, 0, 0, 0, 0]))
+                runOnce = False
+
         except zmq.ZMQError as e:
             if e.errno == zmq.EAGAIN or e.errno == zmq.Again:
                 await asyncio.sleep(1)
