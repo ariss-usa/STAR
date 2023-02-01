@@ -56,7 +56,7 @@ public class visualizeController {
         
         //CHANGE DURING PACKAGING
         defaultImage = new Image("file:.\\MissionControllerUI\\src\\main\\resources\\com\\example\\images\\defaultMarsImage.jpg", true);
-        //defaultImage = new Image("file:.\\images\\defaultMarsImage.jpg", true);
+        //defaultImage = new Image("file:.\\images\\defaultMarsImage.jpg", true);*
     }
     private void move(double time, double power, boolean forwardOrBack){
         tt = new TranslateTransition();

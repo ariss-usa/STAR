@@ -49,7 +49,7 @@
 <?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
 
-<VBox fx:id="VBox" prefHeight="466.0" prefWidth="665.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="com.example.hello.HelloController">
+<VBox fx:id="VBox" prefHeight="466.0" prefWidth="665.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.hello.HelloController">
   <children>
     <MenuBar fx:id="MenuBar" VBox.vgrow="NEVER">
       <menus>
@@ -138,7 +138,7 @@
                   <Font name="Verdana" size="12.0" />
               </font>
             </Button>
-            <CheckBox fx:id="medium" layoutX="17.0" layoutY="108.0" mnemonicParsing="false" text="Connect Via APRS">
+            <CheckBox fx:id="medium" layoutX="17.0" layoutY="108.0" mnemonicParsing="false" text="Send Via APRS">
               <font>
                   <Font name="Verdana" size="12.0" />
               </font>
@@ -151,6 +151,7 @@
             <Circle fx:id="circle1" fill="DODGERBLUE" layoutX="496.0" layoutY="80.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
             <Circle fx:id="circle2" fill="#1fc4ff" layoutX="507.0" layoutY="80.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
             <Circle fx:id="circle3" fill="#1fffda" layoutX="519.0" layoutY="80.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
+            <CheckBox fx:id="recAPRSCheckBox" layoutX="167.0" layoutY="108.0" mnemonicParsing="false" onAction="#receive" text="Receive APRS" />
       </children>
     </AnchorPane>
       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="200.0" prefWidth="320.0" />

@@ -17,6 +17,7 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.TransferMode;
 import javafx.scene.shape.Circle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -95,6 +96,8 @@ public class HelloController {
     private MenuItem otherFeatures;
     @FXML
     private CheckBox visualizerCheck;
+    @FXML
+    private CheckBox recAPRSCheckBox;
     
     private Stage parent;
     private Parent root;
@@ -189,15 +192,35 @@ public class HelloController {
             availableRobots.getItems().addAll(filter.filterInternetInput(possibleConnections, fileValues.get(0).toString()));        
             
             availableRobots.setVisibleRowCount(3);
+
+            if(fileValues.get(4).toString().equals("true")){
+                recAPRSCheckBox.setDisable(false);
+            }
+            else{
+                recAPRSCheckBox.setDisable(true);
+            }
         }
     }
+    @FXML
+    protected void receive(ActionEvent event) throws IOException{
+        if(recAPRSCheckBox.isSelected()){
+            transfer t = new transfer("recAPRS");
+            threadExecutor.submit(t);
+            
+        }
+        else{
+            transfer t = new transfer("stopReceivingAPRS");
+            threadExecutor.submit(t);
+        }
+    }
+    
     @FXML
     void sendPressed(MouseEvent event) {
         if (availableRobots.getSelectionModel().isEmpty()) {
             AlertBox.display("Select a robot from the dropdown");
         }
-        else if (Power.getText().isEmpty() || Integer.parseInt(Power.getText()) < 1 || 
-                Integer.parseInt(Power.getText()) > 255 )  {
+        else if (Power.getText().isEmpty() || Double.parseDouble(Power.getText()) < 1 || 
+                Double.parseDouble(Power.getText()) > 255 )  {
             AlertBox.display("Enter the power (from 1 to 255)");
         }
         else if (type.getSelectionModel().isEmpty() || type.getSelectionModel().getSelectedItem().equals("N/A"))  {
@@ -373,6 +396,13 @@ public class HelloController {
                 possibleConnections = returnEntries.getDirList();
                 availableRobots.setVisibleRowCount(3);
                 availableRobots.getItems().addAll(filter.filterInternetInput(possibleConnections, fileValues.get(0).toString()));
+                
+                if(fileValues.get(4).equals("true")){
+                    recAPRSCheckBox.setDisable(false);
+                }
+                else{
+                    recAPRSCheckBox.setDisable(true);
+                }
             }
         }
         onUpdateV2 ouv = new onUpdateV2();
