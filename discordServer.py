@@ -11,6 +11,7 @@ import serial.tools.list_ports
 import re
 import time
 import numpy as np
+import subprocess
 
 intents = discord.Intents.all()
 client = commands.Bot(command_prefix="prefix", intents=intents)
@@ -114,6 +115,12 @@ async def on_ready():
                 for port in sorted(ports):
                     p.append("{}".format(port))
                 socket.send_string(';'.join(p))
+            elif "recAPRS" in c:
+                process = subprocess.Popen("rtl_fm -f 144.390M -s 48000 -g 20 | direwolf -c direwolf.conf -r 48000 -D 1 - | decode_aprs > .\output.txt", shell=True)
+                socket.send_string("ACK")
+            elif "stopReceivingAPRS" in c:
+                socket.send_string("ACK")
+                process.terminate()
             elif "END" in c:
                 if(myMC != "TBD"):
                     closeConnection = client.get_command("edit_message_connected")
@@ -174,7 +181,7 @@ async def checkFile(editMessage):
     global myMC, schoolName, city, state, sdrDonglePresent#, localOrRemote
     with open("important.txt", "r") as f:
         myMC = f.readline().strip()
-        schoolName = f.readline().strip()       #"Harmony school of Advancement"
+        schoolName = f.readline().strip()       #
         city = f.readline().strip()             #"Houston"
         state = f.readline().strip()            #"TX"
         sdrDonglePresent = f.readline().strip() #"No"
