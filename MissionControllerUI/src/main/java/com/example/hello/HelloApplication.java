@@ -27,6 +27,16 @@ public class HelloApplication extends Application {
 
         stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
             public void handle(WindowEvent we) {
+                HelloController.threadExecutor.shutdown();
+                try{
+                    if (!HelloController.threadExecutor.awaitTermination(10, TimeUnit.SECONDS)){
+                        HelloController.threadExecutor.shutdownNow();
+                    }
+                }
+                catch(InterruptedException e){
+                    HelloController.threadExecutor.shutdownNow();
+                }
+                
                 try(ZContext ctx = new ZContext()){
                     ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
                     //ZMQ.Socket socket2 = ctx.createSocket(SocketType.REQ);
@@ -37,15 +47,6 @@ public class HelloApplication extends Application {
                     socket.recv();
                     //socket2.recv();
                     ctx.destroy();
-                }
-                HelloController.threadExecutor.shutdown();
-                try{
-                    if (!HelloController.threadExecutor.awaitTermination(10, TimeUnit.SECONDS)){
-                        HelloController.threadExecutor.shutdownNow();
-                    }
-                }
-                catch(InterruptedException e){
-                    HelloController.threadExecutor.shutdownNow();
                 }
                 System.exit(0);
             }
