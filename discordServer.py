@@ -1,5 +1,6 @@
 import asyncio
 import struct
+from threading import Thread
 import traceback
 import zmq
 import discord
@@ -14,6 +15,7 @@ import numpy as np
 import subprocess
 import helper
 import aprsListener
+import multiprocessing
 
 intents = discord.Intents.all()
 client = commands.Bot(command_prefix="prefix", intents=intents)
@@ -49,6 +51,7 @@ async def on_ready():
     dirArr = []
     btconfigTimer = None
     runOnce = True
+    aprsProcesses = None
     async for message in client.get_channel(DIR_ID).history(limit=200):
         dirArr.insert(0, message)
         messageToID[message.content[:5]] = message.id
@@ -121,10 +124,12 @@ async def on_ready():
             elif "recAPRS" in c:
                 #process = subprocess.Popen("rtl_fm -f 144.390M -s 48000 -g 20 | direwolf -c direwolf.conf -r 48000 -D 1 - | decode_aprs > .\output.txt", shell=True)
                 socket.send_string("ACK")
-                aprsListener.checkAPRSUpdates()
+                aprsProcesses = aprsListener.startAPRSprocesses()
+                thread = Thread(target=aprsListener.checkAPRSUpdates)
+                thread.start()
             elif "stopReceivingAPRS" in c:
                 socket.send_string("ACK")
-                aprsListener.stop()
+                aprsListener.stop(aprsProcesses)
                 #process.terminate()
             elif "END" in c:
                 if(myMC != "TBD"):
@@ -305,5 +310,4 @@ def postToSerial(commandList):
             serialPort.write(bytearray([255, 85, 7, 0, 2, 5, ls, ld, rs, rd]))
         time.sleep(timeOfOperation)
         serialPort.write(bytearray([255, 85, 7, 0, 2, 5, 0, 0, 0, 0]))
-
 client.run(token)
