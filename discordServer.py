@@ -12,6 +12,8 @@ import re
 import time
 import numpy as np
 import subprocess
+import helper
+import aprsListener
 
 intents = discord.Intents.all()
 client = commands.Bot(command_prefix="prefix", intents=intents)
@@ -37,7 +39,6 @@ online = "Yes"
 connected = "No"
 doNotDisturb = True
 serialPort = serial.Serial()
-
 
 @client.event
 async def on_ready():
@@ -71,7 +72,7 @@ async def on_ready():
                 words = spl[1].split()
                 grouped_words = [' '.join(words[i: i + 3]) for i in range(0, len(words), 3)]
                 socket.send_string("ACK")
-                postToSerial(grouped_words)
+                helper.postToSerial(serialPort, grouped_words)
                 #serialPort.write(var.encode())
             elif "sendToDIR" in c:
                 command = client.get_command("sendToDIR")
@@ -100,10 +101,12 @@ async def on_ready():
                     try:
                         portString = connectOrDisc[2]
                         serialPort = serial.Serial(port=portString, baudrate=115200, bytesize=8, timeout=5, stopbits=serial.STOPBITS_ONE)
+                        helper.setSerial(serialPort)
                         btconfigTimer = time.time()
                     except serial.SerialException:
                         portSuccess = False
                 else:
+                    helper.setSerial(None)
                     serialPort.close()
                 if portSuccess:
                     socket.send_string("pass")
@@ -116,11 +119,13 @@ async def on_ready():
                     p.append("{}".format(port))
                 socket.send_string(';'.join(p))
             elif "recAPRS" in c:
-                process = subprocess.Popen("rtl_fm -f 144.390M -s 48000 -g 20 | direwolf -c direwolf.conf -r 48000 -D 1 - | decode_aprs > .\output.txt", shell=True)
+                #process = subprocess.Popen("rtl_fm -f 144.390M -s 48000 -g 20 | direwolf -c direwolf.conf -r 48000 -D 1 - | decode_aprs > .\output.txt", shell=True)
                 socket.send_string("ACK")
+                aprsListener.checkAPRSUpdates()
             elif "stopReceivingAPRS" in c:
                 socket.send_string("ACK")
-                process.terminate()
+                aprsListener.stop()
+                #process.terminate()
             elif "END" in c:
                 if(myMC != "TBD"):
                     closeConnection = client.get_command("edit_message_connected")
@@ -223,7 +228,7 @@ async def on_message(message):
             for i in range(0, amtOfCommands):
                 l.append(f"{powerArr[i]} {directionArr[i]} {timeArr[i]}")
             
-            postToSerial(l)
+            helper.postToSerial(serialPort, l)
             
     elif message.channel.id == DIR_ID:
         #Keep a list of the messages
