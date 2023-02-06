@@ -1,7 +1,6 @@
 import subprocess
 import helper
 import os
-import asyncio
 
 path_to_file = "important.txt"
 while (os.path.exists(path_to_file) == False):

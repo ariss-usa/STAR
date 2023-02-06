@@ -337,7 +337,6 @@ public class HelloController {
             else{
                 localRobotConnection.setValue(null);
                 localRobotConnection.setDisable(false);
-                localRobotConnection.setPromptText("BT Connections");
                 doNotDisturb.setDisable(true);
                 availableRobots.getItems().remove(0);
                 pairButton.setText("Pair");
@@ -501,7 +500,7 @@ public class HelloController {
                                 try{
                                     ArrayList<String> output = new ArrayList<String>();
                                     for(int i = 0; i < split.length; i++){
-                                        if(split[i].isBlank()){
+                                        if(split[i].equals("")){
                                             continue;
                                         }
                                         output.add(split[i]);
