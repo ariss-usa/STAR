@@ -13,7 +13,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
@@ -346,9 +345,6 @@ public class HelloController {
                 threadExecutor.submit(tr);
                 pairingStatus = false;
                 otherFeatures.setDisable(true);
-                Power.clear();
-                command.clear();
-                type.setValue(null);
             }
         }
     }
@@ -363,40 +359,6 @@ public class HelloController {
         
         hideLoadingAnimation();
         loadingAnimation();
-
-        localRobotConnection.setButtonCell(new ListCell<>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (item == null || empty) {
-                    setText(localRobotConnection.getPromptText());
-                } else {
-                    setText(item);
-                }
-            }
-        });
-        availableRobots.setButtonCell(new ListCell<>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (item == null || empty) {
-                    setText(availableRobots.getPromptText());
-                } else {
-                    setText(item);
-                }
-            }
-        });
-        type.setButtonCell(new ListCell<>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (item == null || empty) {
-                    setText(type.getPromptText());
-                } else {
-                    setText(item);
-                }
-            }
-        });
 
         availableRobots.getSelectionModel().selectedItemProperty().addListener((options, oldValue, newValue) -> {
             currRobot = newValue;
