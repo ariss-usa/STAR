@@ -6,6 +6,7 @@ import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -482,31 +483,18 @@ public class HelloController {
         return pairingStatus;
     }
     private void loadingAnimation(){
-        TranslateTransition dot1 = new TranslateTransition();
-        dot1.setDuration(Duration.millis(300));
-        dot1.setNode(circle1);
-        dot1.setByY(-5);
-        dot1.setCycleCount(Timeline.INDEFINITE);
-        dot1.setAutoReverse(true);
-        dot1.play();
-
-        TranslateTransition dot2 = new TranslateTransition();
-        dot2.setDelay(Duration.millis(100));
-        dot2.setDuration(Duration.millis(300));
-        dot2.setNode(circle2);
-        dot2.setByY(-5);
-        dot2.setCycleCount(Timeline.INDEFINITE);
-        dot2.setAutoReverse(true);
-        dot2.play();
-
-        TranslateTransition dot3 = new TranslateTransition();
-        dot3.setDelay(Duration.millis(200));
-        dot3.setDuration(Duration.millis(300));
-        dot3.setNode(circle3);
-        dot3.setByY(-5);
-        dot3.setCycleCount(Timeline.INDEFINITE);
-        dot3.setAutoReverse(true);
-        dot3.play();
+        TranslateTransition [] tta = {new TranslateTransition(), new TranslateTransition(), new TranslateTransition()};
+        Node [] circles = {circle1, circle2, circle3};
+        Duration [] delays = {Duration.millis(0), Duration.millis(100), Duration.millis(200)};
+        for(int i = 0; i < tta.length; i++){
+            tta[i].setDelay(delays[i]);
+            tta[i].setDuration(Duration.millis(300));
+            tta[i].setNode(circles[i]);
+            tta[i].setByY(-5);
+            tta[i].setCycleCount(Timeline.INDEFINITE);
+            tta[i].setAutoReverse(true);
+            tta[i].play();
+        }
     }
     private void hideLoadingAnimation(){
         circle1.setVisible(false);
