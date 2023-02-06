@@ -11,11 +11,8 @@ from discord.ext import commands
 import serial.tools.list_ports
 import re
 import time
-import numpy as np
-import subprocess
 import helper
 import aprsListener
-import multiprocessing
 
 intents = discord.Intents.all()
 client = commands.Bot(command_prefix="prefix", intents=intents)
@@ -80,7 +77,7 @@ async def on_ready():
             elif "sendToDIR" in c:
                 command = client.get_command("sendToDIR")
                 socket.send_string("REC")
-                await command(0)
+                await command()
             elif "editOnline" in c:
                 command = client.get_command("edit_message_online")
                 var = c.split("ChangeTo: ")[1]
@@ -110,7 +107,7 @@ async def on_ready():
                         portSuccess = False
                 else:
                     helper.setSerial(None)
-                    serialPort.close()
+                    serialPort = serial.Serial()
                 if portSuccess:
                     socket.send_string("pass")
                 else:
@@ -141,9 +138,9 @@ async def on_ready():
                 context.destroy()
                 await client.close()
 
-            if(runOnce and btconfigTimer != None and time.time() - btconfigTimer > 1):
-                serialPort.write(bytearray([255, 85, 7, 0, 2, 5, 0, 0, 0, 0]))
-                runOnce = False
+            #if(runOnce and btconfigTimer != None and time.time() - btconfigTimer > 1):
+            #    serialPort.write(bytearray([255, 85, 7, 0, 2, 5, 0, 0, 0, 0]))
+            #    runOnce = False
                 
         except zmq.ZMQError as e:
             if e.errno == zmq.EAGAIN or e.errno == zmq.Again:
@@ -160,7 +157,7 @@ async def SEND(comm, selectedID):
     await channel.send(content)
   
 @client.command()
-async def sendToDIR(x):
+async def sendToDIR():
     channel = client.get_channel(DIR_ID)
     content = f"{myMC}\nSchool Name: {schoolName}\nSDR Dongle: {sdrDonglePresent}\nState: {state}\nCity: {city}\nOnline: {online}\nConnected: {connected}"
     await channel.send(content)
