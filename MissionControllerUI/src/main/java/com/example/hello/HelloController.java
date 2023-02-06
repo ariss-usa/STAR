@@ -6,12 +6,14 @@ import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
@@ -337,13 +339,22 @@ public class HelloController {
             else{
                 localRobotConnection.setValue(null);
                 localRobotConnection.setDisable(false);
-                doNotDisturb.setDisable(true);
                 availableRobots.getItems().remove(0);
+
+                //Unpair and turn status offline
                 pairButton.setText("Pair");
                 transfer tr = new transfer("Pair disconnect");
                 threadExecutor.submit(tr);
+                transfer tr1 = new transfer("changeTo: No");
+                threadExecutor.submit(tr1);
+                
                 pairingStatus = false;
                 otherFeatures.setDisable(true);
+                doNotDisturb.setSelected(true);
+                doNotDisturb.setDisable(true);
+                Power.clear();
+                command.clear();
+                type.setValue(null);
             }
         }
     }
@@ -358,6 +369,40 @@ public class HelloController {
         
         hideLoadingAnimation();
         loadingAnimation();
+
+        localRobotConnection.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (item == null || empty) {
+                    setText(localRobotConnection.getPromptText());
+                } else {
+                    setText(item);
+                }
+            }
+        });
+        availableRobots.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (item == null || empty) {
+                    setText(availableRobots.getPromptText());
+                } else {
+                    setText(item);
+                }
+            }
+        });
+        type.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (item == null || empty) {
+                    setText(type.getPromptText());
+                } else {
+                    setText(item);
+                }
+            }
+        });
 
         availableRobots.getSelectionModel().selectedItemProperty().addListener((options, oldValue, newValue) -> {
             currRobot = newValue;
@@ -444,31 +489,18 @@ public class HelloController {
         return pairingStatus;
     }
     private void loadingAnimation(){
-        TranslateTransition dot1 = new TranslateTransition();
-        dot1.setDuration(Duration.millis(300));
-        dot1.setNode(circle1);
-        dot1.setByY(-5);
-        dot1.setCycleCount(Timeline.INDEFINITE);
-        dot1.setAutoReverse(true);
-        dot1.play();
-
-        TranslateTransition dot2 = new TranslateTransition();
-        dot2.setDelay(Duration.millis(100));
-        dot2.setDuration(Duration.millis(300));
-        dot2.setNode(circle2);
-        dot2.setByY(-5);
-        dot2.setCycleCount(Timeline.INDEFINITE);
-        dot2.setAutoReverse(true);
-        dot2.play();
-
-        TranslateTransition dot3 = new TranslateTransition();
-        dot3.setDelay(Duration.millis(200));
-        dot3.setDuration(Duration.millis(300));
-        dot3.setNode(circle3);
-        dot3.setByY(-5);
-        dot3.setCycleCount(Timeline.INDEFINITE);
-        dot3.setAutoReverse(true);
-        dot3.play();
+        TranslateTransition [] tta = {new TranslateTransition(), new TranslateTransition(), new TranslateTransition()};
+        Node [] circles = {circle1, circle2, circle3};
+        Duration [] delays = {Duration.millis(0), Duration.millis(100), Duration.millis(200)};
+        for(int i = 0; i < tta.length; i++){
+            tta[i].setDelay(delays[i]);
+            tta[i].setDuration(Duration.millis(300));
+            tta[i].setNode(circles[i]);
+            tta[i].setByY(-5);
+            tta[i].setCycleCount(Timeline.INDEFINITE);
+            tta[i].setAutoReverse(true);
+            tta[i].play();
+        }
     }
     private void hideLoadingAnimation(){
         circle1.setVisible(false);
