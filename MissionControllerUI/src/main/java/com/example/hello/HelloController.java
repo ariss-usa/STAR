@@ -28,7 +28,9 @@ import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -100,6 +102,7 @@ public class HelloController {
     private CheckBox visualizerCheck;
     @FXML
     private CheckBox recAPRSCheckBox;
+
     
     private Stage parent;
     private Parent root;
@@ -117,6 +120,25 @@ public class HelloController {
     @FXML
     protected void onhelpPressed(ActionEvent event) throws IOException, URISyntaxException{
         Desktop.getDesktop().browse(new URI("https://sites.google.com/view/ariss-starproject/home"));
+    }
+
+    @FXML
+    protected void callsignEdit(ActionEvent event) throws IOException{
+        FXMLLoader loader = new FXMLLoader();
+        loader.setLocation(getClass().getResource("callsign.fxml"));
+        root = loader.load();
+
+        parent = (Stage) VBox.getScene().getWindow();
+        Stage dialogStage = new Stage();
+        dialogStage.setResizable(false);
+        dialogStage.setTitle("Call sign");
+        dialogStage.initModality(Modality.WINDOW_MODAL);
+        dialogStage.initOwner(parent);
+        Scene scene = new Scene(root, 308, 89);
+        scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
+        dialogStage.setScene(scene);
+
+        dialogStage.showAndWait();
     }
     @FXML
     protected void visualize(ActionEvent event) throws IOException{
@@ -347,7 +369,7 @@ public class HelloController {
                 threadExecutor.submit(tr);
                 transfer tr1 = new transfer("changeTo: No");
                 threadExecutor.submit(tr1);
-                
+
                 pairingStatus = false;
                 otherFeatures.setDisable(true);
                 doNotDisturb.setSelected(true);

@@ -56,19 +56,20 @@
             <Menu fx:id="setupMenu" mnemonicParsing="false" text="Setup">
                <items>
                   <MenuItem fx:id="configItem" mnemonicParsing="false" onAction="#configButtonPress" text="Config" />
+                  <MenuItem fx:id="configItem1" mnemonicParsing="false" onAction="#callsignEdit" text="Add/Edit Call Sign" />
                </items>
             </Menu>
+        <Menu fx:id="otherFeatures" mnemonicParsing="false" text="Other Features">
+          <items>
+            <MenuItem fx:id="commandBuilder" mnemonicParsing="false" onAction="#onCBPressed" text="Command Builder" />
+          </items>
+        </Menu>
         <Menu fx:id="helpMenu" mnemonicParsing="false" text="Help">
           <items>
             <MenuItem fx:id="helpItem" mnemonicParsing="false" onAction="#onhelpPressed" text="About Mission Controller" />
           </items>
           <items>
             <MenuItem fx:id="link" mnemonicParsing="false" onAction="#onLinkPressed" text="About ARISS" />
-          </items>
-        </Menu>
-        <Menu fx:id="otherFeatures" mnemonicParsing="false" text="Other Features">
-          <items>
-            <MenuItem fx:id="commandBuilder" mnemonicParsing="false" onAction="#onCBPressed" text="Command Builder" />
           </items>
         </Menu>
       </menus>
