@@ -1,38 +1,41 @@
 import subprocess
 import helper
 import os
+import threading
 
-path_to_file = "important.txt"
+path_to_file = "callsign.txt"
 while (os.path.exists(path_to_file) == False):
     pass
 
-#TODO: Change to get call signs instead of mcID
 with open('important.txt') as f:
-    mcID = f.readline().strip()
+    callsign = f.readline().strip()
 
 continueFlag = True
 
 def checkAPRSUpdates():
     global continueFlag
+
+    lock = threading.Lock()
     while True:
         if(helper.getSerial() is None):
             continue
         if(continueFlag == False):
             print("END TASK")
             break
-        str = "To " + mcID
-        with open('x.txt', 'r+') as f:
-            if str in f.read():
-                my_file = open("x.txt")
-                lines = my_file.readlines()
-                for line in lines:
-                    if str in line:
-                        index = line.find(str) + 9
-                        endIndex = line.find("<0x0a>")
-                        serialPort = helper.getSerial()
-                        helper.postToSerial(serialPort, [line[index:endIndex]])
-                        break
-                f.truncate(0)
+        str = "To " + callsign
+        with lock:
+            with open('output.txt', 'r+') as f:
+                if str in f.read():
+                    my_file = open("output.txt")
+                    lines = my_file.readlines()
+                    for line in lines:
+                        if str in line:
+                            index = line.find(str) + 9
+                            endIndex = line.find("<0x0a>")
+                            serialPort = helper.getSerial()
+                            helper.postToSerial(serialPort, [line[index:endIndex]])
+                            break
+                    f.truncate(0)
 def startAPRSprocesses():
     rtl_fm = subprocess.Popen(["rtl_fm", "-f", "144.390M", "-s", "48000", "-g", "20"],
                     stdout=subprocess.PIPE)
