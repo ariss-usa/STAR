@@ -1,6 +1,8 @@
 package com.example.hello;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -26,5 +28,14 @@ public class callsignController {
     @FXML
     protected void callSignCancelPressed(ActionEvent event) throws IOException{
         ((Stage)(((Button)event.getSource()).getScene().getWindow())).close();
+    }
+
+    public void initialize() throws IOException{
+        File file = new File("callsign.txt");
+        if (file.isFile()){
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            callsignText.setText(br.readLine());
+            br.close();
+        }
     }
 }

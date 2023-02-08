@@ -7,7 +7,7 @@
 <?import javafx.scene.text.Font?>
 
 
-<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="89.0" prefWidth="308.0" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1"
+<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="89.0" prefWidth="308.0" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
    fx:controller="com.example.hello.callsignController">
    <children>
       <TextField fx:id="callsignText" layoutX="145.0" layoutY="23.0" />
