@@ -62,6 +62,7 @@
         <Menu fx:id="otherFeatures" mnemonicParsing="false" text="Other Features">
           <items>
             <MenuItem fx:id="commandBuilder" mnemonicParsing="false" onAction="#onCBPressed" text="Command Builder" />
+                  <MenuItem fx:id="gpredictMenuItem" mnemonicParsing="false" onAction="#gpredictMenuItemPressed" text="Open GPredict" />
           </items>
         </Menu>
         <Menu fx:id="helpMenu" mnemonicParsing="false" text="Help">

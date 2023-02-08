@@ -123,6 +123,11 @@ public class HelloController {
     }
 
     @FXML
+    protected void gpredictMenuItemPressed(ActionEvent event) throws IOException {
+        Process process = new ProcessBuilder("..\\gpredict-win32-2.2.1\\gpredict-win32-2.2.1\\gpredict.exe").start();
+    }
+
+    @FXML
     protected void callsignEdit(ActionEvent event) throws IOException{
         FXMLLoader loader = new FXMLLoader();
         loader.setLocation(getClass().getResource("callsign.fxml"));
