@@ -26,4 +26,4 @@ Your project structure should look something like this:\
  ┣ 📂.vscode\
  ┣ 📂direwolf-x.x.x-413855e_i686\
  ┣ 📂gpredict-win32-x.x.x\
- ┣ 📂rtl-sdr-64bit-xxxxxxxx\
+ ┣ 📂rtl-sdr-64bit-xxxxxxxx
