@@ -21,9 +21,9 @@ If you don't have your own mBot or you only want to control remote mBots, skip t
 8. Extract these folders and move them to the directory which contains the STAR folder 
 9. Obtain API tokens before use
 
-Your project structure should look something like this:
+Your project structure should look something like this:\
 📦ariss-usa-1\
- ┣ 📂.vscode
- ┣ 📂direwolf-x.x.x-413855e_i686
- ┣ 📂gpredict-win32-x.x.x
- ┣ 📂rtl-sdr-64bit-xxxxxxxx
+ ┣ 📂.vscode\
+ ┣ 📂direwolf-x.x.x-413855e_i686\
+ ┣ 📂gpredict-win32-x.x.x\
+ ┣ 📂rtl-sdr-64bit-xxxxxxxx\
