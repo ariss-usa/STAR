@@ -22,7 +22,7 @@ If you don't have your own mBot or you only want to control remote mBots, skip t
 9. Obtain API tokens before use
 
 Your project structure should look something like this:\
-📦ariss-usa-1\
+📦ariss-usa\
  ┣ 📂.vscode\
  ┣ 📂direwolf-x.x.x-413855e_i686\
  ┣ 📂gpredict-win32-x.x.x\
