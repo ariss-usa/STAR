@@ -18,12 +18,12 @@ If you don't have your own mBot or you only want to control remote mBots, skip t
 5. Then enter `pip install -r requirements.txt` into the command line to install all modules
 6. [Install the drivers for the SDR dongle](https://www.rtl-sdr.com/rtl-sdr-quick-start-guide/)
 7. Download [GPredict](https://github.com/csete/gpredict), [Direwolf](https://github.com/wb2osz/direwolf), [rtl-sdr](https://ftp.osmocom.org/binaries/windows/rtl-sdr/)
-8. Extract these folders and move them to the directory which contains the STAR folder
+8. Extract these folders and move them to the directory which contains the STAR folder 
+9. Obtain API tokens before use
+
 Your project structure should look something like this:
 📦ariss-usa-1
  ┣ 📂.vscode
  ┣ 📂direwolf-x.x.x-413855e_i686
  ┣ 📂gpredict-win32-x.x.x
  ┣ 📂rtl-sdr-64bit-xxxxxxxx
- 
-9. Obtain API tokens before use
