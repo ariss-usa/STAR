@@ -1,5 +1,6 @@
 import asyncio
 import struct
+import subprocess
 from threading import Thread
 import traceback
 import zmq
@@ -13,6 +14,7 @@ import re
 import time
 import helper
 import aprsListener
+from playsound import playsound
 
 intents = discord.Intents.all()
 client = commands.Bot(command_prefix="prefix", intents=intents)
@@ -124,10 +126,20 @@ async def on_ready():
                 aprsProcesses = aprsListener.startAPRSprocesses()
                 thread = Thread(target=aprsListener.checkAPRSUpdates)
                 thread.start()
+            elif "Transmit APRS" in c:
+                socket.send_string("ACK")
+                callsign = c.split()[2]
+                command = c.split()[3]
+                oscommand = f"echo {callsign}^^^>WORLD: " + command + " | gen_packets -a 25 -o x.wav -"
+                if aprsProcesses is None:
+                    direwolf = subprocess.Popen(["direwolf", "-c", "direwolf.conf", "-r", "48000", "-D", "1"])
+                #gen_packets = subprocess.Popen(["gen_packets", "-a", "25", "-o", "x.wav", "-"], stdin=oscommand)
+                os.system(oscommand)
+                playsound('./x.wav')
+                direwolf.kill()
             elif "stopReceivingAPRS" in c:
                 socket.send_string("ACK")
                 aprsListener.stop(aprsProcesses)
-                #process.terminate()
             elif "END" in c:
                 if(myMC != "TBD"):
                     closeConnection = client.get_command("edit_message_connected")
