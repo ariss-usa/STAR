@@ -27,7 +27,9 @@ import javafx.util.Duration;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -244,7 +246,7 @@ public class HelloController {
     }
     
     @FXML
-    void sendPressed(MouseEvent event) {
+    void sendPressed(MouseEvent event) throws IOException {
         if (availableRobots.getSelectionModel().isEmpty()) {
             AlertBox.display("Select a robot from the dropdown");
         }
@@ -266,12 +268,10 @@ public class HelloController {
             String str = availableRobots.getSelectionModel().getSelectedItem();
             String [] spl = str.split("\n");
 
-             
+            String s = command.getText();
+            String selectedItem = availableRobots.getSelectionModel().getSelectedItem();
+            String selectedDirection = type.getSelectionModel().getSelectedItem();
             if(!medium.isSelected()){
-                String s = command.getText();
-                
-                String selectedItem = availableRobots.getSelectionModel().getSelectedItem();
-                String selectedDirection = type.getSelectionModel().getSelectedItem();
                 String command = "";
                 if(spl.length > 1){
                     String selectedMCID = selectedItem.substring(0, selectedItem.indexOf("\n"));
@@ -286,24 +286,16 @@ public class HelloController {
                 sentListView.getItems().add(command);
             }
             else{
-                try(ZContext ctx = new ZContext()){
-                    ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
-                    socket.connect("tcp://127.0.0.1:5554");
-                    String s = command.getText();
-                    
-                    String selectedItem = availableRobots.getSelectionModel().getSelectedItem();
-                    String selectedDirection = type.getSelectionModel().getSelectedItem();
-                    String command = "";
-                    String selectedMCID = selectedItem.substring(0, selectedItem.indexOf("\n"));
-                    
-                    command = "APRS " + Power.getText() + " " + selectedDirection + " "
-                    + s + " Selected MCid: " + selectedMCID;
-
-                    socket.send(command);
-                    String str1 = socket.recvStr();
-                    sentListView.getItems().add(command);
-                    ctx.destroy();
+                File file = new File("callsign.txt");
+                if(!file.exists()){
+                    AlertBox.display("Add a call sign before sending via APRS");
+                    return;
                 }
+                BufferedReader br = new BufferedReader(new FileReader(file));
+                String callsign = br.readLine();
+                br.close();
+                String command = Power.getText() + " " + selectedDirection + " " + s;
+                threadExecutor.submit(new transfer("Transmit APRS " + callsign + " " + command));
             }
             Power.clear();
             type.setValue("N/A");
