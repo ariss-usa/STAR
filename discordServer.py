@@ -129,14 +129,15 @@ async def on_ready():
             elif "Transmit APRS" in c:
                 socket.send_string("ACK")
                 mycallsign = c.split()[2]
-                command = c.split()[3]
-                wantedCall = c.split()[4]
-                oscommand = f"echo {mycallsign}^^^>WORLD: To {wantedCall}" + command + " | gen_packets -a 25 -o x.wav -"
-                if aprsProcesses is None:
-                    direwolf = subprocess.Popen(["direwolf", "-c", "direwolf.conf", "-r", "48000", "-D", "1"])
+                command = c.split()[3] + " " + c.split()[4] + " " + c.split()[5]
+                wantedCall = c.split()[6]
+                oscommand = f"echo {mycallsign}^^^>WORLD: To {wantedCall} " + command + " | gen_packets -a 25 -o x.wav -"
+                
+                direwolf = subprocess.Popen(["direwolf", "-c", "direwolf.conf", "-r", "48000", "-D", "1"])
                 #gen_packets = subprocess.Popen(["gen_packets", "-a", "25", "-o", "x.wav", "-"], stdin=oscommand)
                 os.system(oscommand)
                 playsound('./x.wav')
+                #os.system("atest x.wav >> output.txt")
                 direwolf.kill()
             elif "stopReceivingAPRS" in c:
                 socket.send_string("ACK")
