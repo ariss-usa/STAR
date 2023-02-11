@@ -128,9 +128,10 @@ async def on_ready():
                 thread.start()
             elif "Transmit APRS" in c:
                 socket.send_string("ACK")
-                callsign = c.split()[2]
+                mycallsign = c.split()[2]
                 command = c.split()[3]
-                oscommand = f"echo {callsign}^^^>WORLD: " + command + " | gen_packets -a 25 -o x.wav -"
+                wantedCall = c.split()[4]
+                oscommand = f"echo {mycallsign}^^^>WORLD: To {wantedCall}" + command + " | gen_packets -a 25 -o x.wav -"
                 if aprsProcesses is None:
                     direwolf = subprocess.Popen(["direwolf", "-c", "direwolf.conf", "-r", "48000", "-D", "1"])
                 #gen_packets = subprocess.Popen(["gen_packets", "-a", "25", "-o", "x.wav", "-"], stdin=oscommand)
