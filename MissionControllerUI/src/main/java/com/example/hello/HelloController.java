@@ -141,10 +141,9 @@ public class HelloController {
         dialogStage.setTitle("Call sign");
         dialogStage.initModality(Modality.WINDOW_MODAL);
         dialogStage.initOwner(parent);
-        Scene scene = new Scene(root, 308, 89);
+        Scene scene = new Scene(root, 313, 121);
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
         dialogStage.setScene(scene);
-
         dialogStage.showAndWait();
     }
     @FXML
@@ -292,10 +291,11 @@ public class HelloController {
                     return;
                 }
                 BufferedReader br = new BufferedReader(new FileReader(file));
-                String callsign = br.readLine();
+                String mycallsign = br.readLine();
+                String wantedcall = br.readLine();
                 br.close();
                 String command = Power.getText() + " " + selectedDirection + " " + s;
-                threadExecutor.submit(new transfer("Transmit APRS " + callsign + " " + command));
+                threadExecutor.submit(new transfer("Transmit APRS " + mycallsign + " " + command + " " + wantedcall));
             }
             Power.clear();
             type.setValue("N/A");
