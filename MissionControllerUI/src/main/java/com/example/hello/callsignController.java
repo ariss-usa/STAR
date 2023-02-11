@@ -17,11 +17,15 @@ public class callsignController {
     @FXML
     private TextField callsignText;
     @FXML
+    private TextField callsignListener;
+    @FXML
     protected void callSignSubmitPressed(ActionEvent event) throws IOException{
-        String str = callsignText.getText();
+        String callsign = callsignText.getText();
+        String listeningCall = callsignListener.getText();
         File file = new File("callsign.txt");
         PrintWriter pw = new PrintWriter(new FileWriter("callsign.txt", false));
-        pw.write(str);
+        pw.write(callsign);
+        pw.write("\n" + listeningCall);
         pw.close();
         ((Stage)(((Button)event.getSource()).getScene().getWindow())).close();
     }
@@ -35,6 +39,7 @@ public class callsignController {
         if (file.isFile()){
             BufferedReader br = new BufferedReader(new FileReader(file));
             callsignText.setText(br.readLine());
+            callsignListener.setText(br.readLine());
             br.close();
         }
     }
