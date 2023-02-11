@@ -7,8 +7,8 @@ path_to_file = "callsign.txt"
 while (os.path.exists(path_to_file) == False):
     pass
 
-with open('important.txt') as f:
-    callsign = f.readline().strip()
+with open('callsign.txt') as f:
+    mycall = f.readline()
 
 continueFlag = True
 
@@ -22,7 +22,8 @@ def checkAPRSUpdates():
         if(continueFlag == False):
             print("END TASK")
             break
-        str = "To " + callsign
+        #TODO: account for if callsign is NOCALL
+        str = "To " + mycall
         with lock:
             with open('output.txt', 'r+') as f:
                 if str in f.read():
