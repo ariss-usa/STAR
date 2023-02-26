@@ -7,13 +7,8 @@ class APRSUpdater:
     def __init__(self):
         self.path_to_file = "callsign.txt"
         self.continueFlag = True
+        self.processList = []
         
-    def wait_for_file(self):
-        while not os.path.exists(self.path_to_file):
-            time.sleep(1)
-        with open(self.path_to_file) as f:
-            self.mycall = f.readline().strip()
-
     def checkAPRSUpdates(self):
         while True:
             if(helper.getSerial() is None):
@@ -45,8 +40,8 @@ class APRSUpdater:
 
         return [rtl_fm, direwolf, decode_aprs]
 
-    def stop(self, processList):
+    def stop(self):
         self.continueFlag = False
-        for i in processList:
+        for i in self.processList:
             i.kill()
         print("APRS PROCESSESES KILLED")
