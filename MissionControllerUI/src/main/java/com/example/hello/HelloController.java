@@ -146,8 +146,29 @@ public class HelloController {
         dialogStage.setScene(scene);
         dialogStage.showAndWait();
 
-        
+        File callsignFile = new File("callsign.txt");
+        if(!callsignFile.exists()) return;
+        BufferedReader br = new BufferedReader(new FileReader(callsignFile));
+        String format = "My Call: " + br.readLine() + ", Listen to: " + br.readLine();
+        br.close();
+        if(pairingStatus){
+            if(availableRobots.getItems().get(1).startsWith("My Call")){
+                availableRobots.getItems().set(1, format);
+            }
+            else{
+                availableRobots.getItems().add(1, format);
+            }
+        }
+        else{
+            if(availableRobots.getItems().get(0).startsWith("My Call")){
+                availableRobots.getItems().set(0, format);
+            }
+            else{
+                availableRobots.getItems().add(0, format);
+            }
+        }
     }
+    
     @FXML
     protected void visualize(ActionEvent event) throws IOException{
         if(!visualizerCheck.isSelected()) return;
@@ -225,11 +246,11 @@ public class HelloController {
             
             availableRobots.setVisibleRowCount(3);
 
-            if(fileValues.get(4).toString().equals("true")){
-                recAPRSCheckBox.setDisable(false);
-            }
-            else{
+            if(!fileValues.get(4).toString().equals("true")){
                 recAPRSCheckBox.setDisable(true);
+                medium.setDisable(true);
+                File callsignFile = new File("callsign.txt");
+                callsignFile.delete();
             }
         }
     }
@@ -430,19 +451,13 @@ public class HelloController {
             if(newValue == null || newValue.isEmpty()){
                 return;
             }
-
-            String [] spl = newValue.split("\n");
-            if(spl.length > 1){
-                if(newValue.split("\n")[2].equals("SDR Dongle: false")){
-                    medium.setSelected(false);
-                    medium.setDisable(true);
-                }
-                else{
-                    medium.setDisable(false);
-                }
+            if(currRobot.startsWith("My Call")){
+                medium.setDisable(false);
+                recAPRSCheckBox.setDisable(false);
             }
             else{
-                medium.setDisable(true);
+                medium.setDisable(false);
+                recAPRSCheckBox.setDisable(false);
             }
             otherFeatures.setDisable(false);
          });
@@ -452,6 +467,7 @@ public class HelloController {
             }
         });
         medium.setDisable(true);
+        recAPRSCheckBox.setDisable(true);
 
         File tempFile = new File("important.txt");
         if (tempFile.exists()){
@@ -460,14 +476,13 @@ public class HelloController {
                 returnEntries.checkfile(true);
                 possibleConnections = returnEntries.getDirList();
                 availableRobots.setVisibleRowCount(3);
+                File callsignFile = new File("callsign.txt");
+                if(callsignFile.exists()){
+                    BufferedReader br = new BufferedReader(new FileReader(callsignFile));
+                    availableRobots.getItems().add("My Call: " + br.readLine() + ", Listen to: " + br.readLine());
+                    br.close();
+                }
                 availableRobots.getItems().addAll(filter.filterInternetInput(possibleConnections, fileValues.get(0).toString()));
-                
-                if(fileValues.get(4).equals("true")){
-                    recAPRSCheckBox.setDisable(false);
-                }
-                else{
-                    recAPRSCheckBox.setDisable(true);
-                }
             }
         }
         onUpdateV2 ouv = new onUpdateV2();

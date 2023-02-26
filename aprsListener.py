@@ -1,7 +1,5 @@
 import subprocess
 import helper
-import os
-import time
 
 class APRSUpdater:
     def __init__(self):
