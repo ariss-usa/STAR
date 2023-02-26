@@ -145,6 +145,8 @@ public class HelloController {
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
         dialogStage.setScene(scene);
         dialogStage.showAndWait();
+
+        
     }
     @FXML
     protected void visualize(ActionEvent event) throws IOException{

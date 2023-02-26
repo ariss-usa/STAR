@@ -1,5 +1,4 @@
 import asyncio
-import struct
 import subprocess
 from threading import Thread
 import traceback
@@ -14,6 +13,7 @@ import re
 import time
 import helper
 from playsound import playsound
+from aprsListener import APRSUpdater
 
 intents = discord.Intents.all()
 client = commands.Bot(command_prefix="prefix", intents=intents)
@@ -49,7 +49,7 @@ async def on_ready():
     dirArr = []
     btconfigTimer = None
     runOnce = True
-    aprsProcesses = None
+    APRSupdater = APRSUpdater()
     async for message in client.get_channel(DIR_ID).history(limit=200):
         dirArr.insert(0, message)
         messageToID[message.content[:5]] = message.id
@@ -122,11 +122,17 @@ async def on_ready():
             elif "recAPRS" in c:
                 #process = subprocess.Popen("rtl_fm -f 144.390M -s 48000 -g 20 | direwolf -c direwolf.conf -r 48000 -D 1 - | decode_aprs > .\output.txt", shell=True)
                 socket.send_string("ACK")
-                #aprsProcesses = aprsListener.startAPRSprocesses()
-                #thread = Thread(target=aprsListener.checkAPRSUpdates)
-                #thread.start()
+                if(os.path.exists("callsign.txt") == False):
+                    print("NOT RECEIVING")
+                    continue
+                APRSupdater.startAPRSprocesses()
+                thread = Thread(target=APRSupdater.checkAPRSUpdates)
+                thread.start()
             elif "Transmit APRS" in c:
                 socket.send_string("ACK")
+                if(os.path.exists("callsign.txt") == False):
+                    print("NOT TRANSMITTING")
+                    continue
                 mycallsign = c.split()[2]
                 command = c.split()[3] + " " + c.split()[4] + " " + c.split()[5]
                 wantedCall = c.split()[6]
@@ -140,7 +146,7 @@ async def on_ready():
                 direwolf.kill()
             elif "stopReceivingAPRS" in c:
                 socket.send_string("ACK")
-                #aprsListener.stop(aprsProcesses)
+                APRSupdater.stop()
             elif "END" in c:
                 if(myMC != "TBD"):
                     closeConnection = client.get_command("edit_message_connected")
@@ -150,7 +156,6 @@ async def on_ready():
                 socket.send_string("ACK")
                 context.destroy()
                 await client.close()
-
             #if(runOnce and btconfigTimer != None and time.time() - btconfigTimer > 1):
             #    serialPort.write(bytearray([255, 85, 7, 0, 2, 5, 0, 0, 0, 0]))
             #    runOnce = False
