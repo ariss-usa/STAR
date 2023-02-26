@@ -13,7 +13,6 @@ import serial.tools.list_ports
 import re
 import time
 import helper
-import aprsListener
 from playsound import playsound
 
 intents = discord.Intents.all()
@@ -123,9 +122,9 @@ async def on_ready():
             elif "recAPRS" in c:
                 #process = subprocess.Popen("rtl_fm -f 144.390M -s 48000 -g 20 | direwolf -c direwolf.conf -r 48000 -D 1 - | decode_aprs > .\output.txt", shell=True)
                 socket.send_string("ACK")
-                aprsProcesses = aprsListener.startAPRSprocesses()
-                thread = Thread(target=aprsListener.checkAPRSUpdates)
-                thread.start()
+                #aprsProcesses = aprsListener.startAPRSprocesses()
+                #thread = Thread(target=aprsListener.checkAPRSUpdates)
+                #thread.start()
             elif "Transmit APRS" in c:
                 socket.send_string("ACK")
                 mycallsign = c.split()[2]
@@ -141,7 +140,7 @@ async def on_ready():
                 direwolf.kill()
             elif "stopReceivingAPRS" in c:
                 socket.send_string("ACK")
-                aprsListener.stop(aprsProcesses)
+                #aprsListener.stop(aprsProcesses)
             elif "END" in c:
                 if(myMC != "TBD"):
                     closeConnection = client.get_command("edit_message_connected")

@@ -3,6 +3,7 @@ package com.example.hello;
 import javafx.application.Application;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
@@ -20,7 +21,14 @@ public class HelloApplication extends Application {
     public void start(Stage stage) throws IOException {
         stage.getIcons().add(new Image("file:.\\MissionControllerUI\\src\\main\\resources\\com\\example\\images\\arissLogo.jpg"));
         FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("newGUI.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 665, 466);
+        Parent root = fxmlLoader.load();
+
+        //Parent root = FXMLLoader.load(getClass().getClassLoader().getResource("/example/newGUI.fxml"));
+        //URL test = new URL("file:.\\MissionControllerUI\\src\\main\\resources\\com\\example\\hello\\newGUI.fxml");
+        //Parent root = FXMLLoader.load(test);
+
+        Scene scene = new Scene(root, 665, 466);
+        
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
         stage.setTitle("Mission Controller");
         stage.setResizable(false);
