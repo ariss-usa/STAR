@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.text.Font?>
 
-<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="121.0" prefWidth="313.0" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.hello.callsignController">
+<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="135.0" prefWidth="313.0" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.hello.callsignController">
    <children>
       <TextField fx:id="callsignText" layoutX="143.0" layoutY="23.0" prefHeight="25.0" prefWidth="139.0" />
       <Label layoutX="14.0" layoutY="28.0" prefHeight="15.0" prefWidth="139.0" text="Enter your call sign:">
@@ -14,10 +14,10 @@
             <Font name="Verdana" size="12.0" />
          </font>
       </Label>
-      <Button fx:id="callSignSubmit" layoutX="228.0" layoutY="88.0" mnemonicParsing="false" onAction="#callSignSubmitPressed" text="Submit" />
-      <Button fx:id="callSignCancel" layoutX="143.0" layoutY="88.0" mnemonicParsing="false" onAction="#callSignCancelPressed" text="Cancel" />
+      <Button fx:id="callSignSubmit" layoutX="228.0" layoutY="96.0" mnemonicParsing="false" onAction="#callSignSubmitPressed" text="Submit" />
+      <Button fx:id="callSignCancel" layoutX="143.0" layoutY="96.0" mnemonicParsing="false" onAction="#callSignCancelPressed" text="Cancel" />
       <TextField fx:id="callsignListener" layoutX="143.0" layoutY="57.0" prefHeight="25.0" prefWidth="139.0" text="ALLCALL" />
-      <Label layoutX="14.0" layoutY="62.0" prefHeight="15.0" prefWidth="139.0" text="Call sign to listen to:">
+      <Label layoutX="14.0" layoutY="62.0" prefHeight="15.0" prefWidth="139.0" text="Call sign to send to:">
          <font>
             <Font name="Verdana" size="12.0" />
          </font>
