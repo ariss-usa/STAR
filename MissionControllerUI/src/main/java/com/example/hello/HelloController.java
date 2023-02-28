@@ -149,7 +149,7 @@ public class HelloController {
         File callsignFile = new File("callsign.txt");
         if(!callsignFile.exists()) return;
         BufferedReader br = new BufferedReader(new FileReader(callsignFile));
-        String format = "My Call: " + br.readLine() + ", Listen to: " + br.readLine();
+        String format = "My Call: " + br.readLine() + ", Send to: " + br.readLine();
         br.close();
         if(pairingStatus){
             if(availableRobots.getItems().get(1).startsWith("My Call")){
@@ -315,10 +315,10 @@ public class HelloController {
                 }
                 BufferedReader br = new BufferedReader(new FileReader(file));
                 String mycallsign = br.readLine();
-                String wantedcall = br.readLine();
+                String sendcall = br.readLine();
                 br.close();
                 String command = Power.getText() + " " + selectedDirection + " " + s;
-                threadExecutor.submit(new transfer("Transmit APRS " + mycallsign + " " + command + " " + wantedcall));
+                threadExecutor.submit(new transfer("Transmit APRS " + mycallsign + " " + command + " " + sendcall));
             }
             Power.clear();
             type.setValue("N/A");
@@ -456,8 +456,9 @@ public class HelloController {
                 recAPRSCheckBox.setDisable(false);
             }
             else{
-                medium.setDisable(false);
-                recAPRSCheckBox.setDisable(false);
+                medium.setDisable(true);
+                recAPRSCheckBox.setDisable(true);
+                threadExecutor.submit(new transfer("stopReceivingAPRS"));
             }
             otherFeatures.setDisable(false);
          });
@@ -479,7 +480,7 @@ public class HelloController {
                 File callsignFile = new File("callsign.txt");
                 if(callsignFile.exists()){
                     BufferedReader br = new BufferedReader(new FileReader(callsignFile));
-                    availableRobots.getItems().add("My Call: " + br.readLine() + ", Listen to: " + br.readLine());
+                    availableRobots.getItems().add("My Call: " + br.readLine() + ", Send to: " + br.readLine());
                     br.close();
                 }
                 availableRobots.getItems().addAll(filter.filterInternetInput(possibleConnections, fileValues.get(0).toString()));
