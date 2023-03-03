@@ -252,12 +252,27 @@ public class HelloController {
                 File callsignFile = new File("callsign.txt");
                 callsignFile.delete();
             }
+            else{
+                recAPRSCheckBox.setDisable(false);
+            }
         }
     }
     @FXML
     protected void receive(ActionEvent event) throws IOException{
         if(recAPRSCheckBox.isSelected()){
             transfer t = new transfer("recAPRS");
+            t.setOnSucceeded(e -> {
+                String recv = t.getValue();
+                if(recv.equals("ACK")) return;
+                if(recv.equals("callsign file missing")){
+                    AlertBox.display("Call sign file missing");
+                    recAPRSCheckBox.setSelected(false);
+                }
+                else if(recv.equals("rtl_fm stopped")){
+                    AlertBox.display("RTL-SDR not running, check if the dongle is plugged in");
+                    recAPRSCheckBox.setSelected(false);
+                }
+            });
             threadExecutor.submit(t);
             
         }
@@ -318,7 +333,15 @@ public class HelloController {
                 String sendcall = br.readLine();
                 br.close();
                 String command = Power.getText() + " " + selectedDirection + " " + s;
-                threadExecutor.submit(new transfer("Transmit APRS " + mycallsign + " " + command + " " + sendcall));
+                transfer t = new transfer("Transmit APRS " + mycallsign + " " + command + " " + sendcall);
+                t.setOnSucceeded(e -> {
+                    String recv = t.getValue();
+                    if(recv.equals("callsign file missing")){
+                        AlertBox.display("Call sign file missing");
+                    }
+                });
+                threadExecutor.submit(t);
+                
             }
             Power.clear();
             type.setValue("N/A");
@@ -452,12 +475,12 @@ public class HelloController {
                 return;
             }
             if(currRobot.startsWith("My Call")){
-                medium.setDisable(false);
-                recAPRSCheckBox.setDisable(false);
+                medium.setDisable(true);
+                medium.setSelected(true);
             }
             else{
                 medium.setDisable(true);
-                recAPRSCheckBox.setDisable(true);
+                medium.setSelected(false);
                 threadExecutor.submit(new transfer("stopReceivingAPRS"));
             }
             otherFeatures.setDisable(false);
@@ -468,7 +491,6 @@ public class HelloController {
             }
         });
         medium.setDisable(true);
-        recAPRSCheckBox.setDisable(true);
 
         File tempFile = new File("important.txt");
         if (tempFile.exists()){
@@ -477,6 +499,9 @@ public class HelloController {
                 returnEntries.checkfile(true);
                 possibleConnections = returnEntries.getDirList();
                 availableRobots.setVisibleRowCount(3);
+                if(!fileValues.get(4).toString().equals("true")){
+                    recAPRSCheckBox.setDisable(true);
+                }
                 File callsignFile = new File("callsign.txt");
                 if(callsignFile.exists()){
                     BufferedReader br = new BufferedReader(new FileReader(callsignFile));

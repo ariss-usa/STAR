@@ -1,4 +1,5 @@
 import asyncio
+from queue import Empty, Queue
 import subprocess
 from threading import Thread
 import traceback
@@ -12,6 +13,7 @@ import serial.tools.list_ports
 import re
 import time
 import helper
+import msvcrt
 from playsound import playsound
 from aprsListener import APRSUpdater
 
@@ -121,16 +123,36 @@ async def on_ready():
                 socket.send_string(';'.join(p))
             elif "recAPRS" in c:
                 #process = subprocess.Popen("rtl_fm -f 144.390M -s 48000 -g 20 | direwolf -c direwolf.conf -r 48000 -D 1 - | decode_aprs > .\output.txt", shell=True)
-                socket.send_string("ACK")
                 if(os.path.exists("callsign.txt") == False):
+                    socket.send_string("callsign file missing")
                     print("NOT RECEIVING")
                     continue
-                APRSupdater.startAPRSprocesses()
-                thread = Thread(target=APRSupdater.checkAPRSUpdates)
-                thread.start()
+
+                processes = APRSupdater.startAPRSprocesses()
+                rtl_fm = processes[0]
+
+                q = Queue()
+                t = Thread(target=enqueue_output, args=(rtl_fm.stderr, q))
+                t.daemon = True # thread dies with the program
+                t.start()
+                
+                try:  
+                    line = q.get(timeout=.1) #q.get_nowait() # or q.get(timeout=.1)
+                except Empty:
+                    thread = Thread(target=APRSupdater.checkAPRSUpdates)
+                    thread.start()
+                    print("RUNNING")
+                    socket.send_string("ACK")
+                else:
+                    decoded_line = line.decode()
+                    if "No supported devices found." in decoded_line:
+                        socket.send_string("rtl_fm stopped")
+                        APRSupdater.stop()
+                        continue
+            
             elif "Transmit APRS" in c:
-                socket.send_string("ACK")
                 if(os.path.exists("callsign.txt") == False):
+                    socket.send_string("callsign file missing")
                     print("NOT TRANSMITTING")
                     continue
                 mycallsign = c.split()[2]
@@ -144,6 +166,7 @@ async def on_ready():
                 playsound('./x.wav')
                 #os.system("atest x.wav >> output.txt")
                 direwolf.kill()
+                socket.send_string("ACK")
             elif "stopReceivingAPRS" in c:
                 socket.send_string("ACK")
                 APRSupdater.stop()
@@ -165,6 +188,11 @@ async def on_ready():
                 await asyncio.sleep(1)
             else:
                 traceback.print_exc()
+
+def enqueue_output(errstream, queue):
+    for line in iter(errstream.readline, b''):
+        queue.put(line)
+    errstream.close()
 
 @client.command()
 async def SEND(comm, selectedID):
