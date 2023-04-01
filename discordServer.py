@@ -3,6 +3,7 @@ from queue import Empty, Queue
 import subprocess
 from threading import Thread
 import traceback
+import urllib.request
 import zmq
 import discord
 import os
@@ -13,7 +14,6 @@ import serial.tools.list_ports
 import re
 import time
 import helper
-import msvcrt
 from playsound import playsound
 from aprsListener import APRSUpdater
 
@@ -30,6 +30,8 @@ DIR_ID = int(os.getenv('DIR_ID'))
 context = zmq.Context()
 socket = context.socket(zmq.REP)
 socket.bind("tcp://127.0.0.1:5555")
+errorSocket = context.socket(zmq.REQ)
+errorSocket.bind("tcp://127.0.0.1:5558")
 
 myMC = "TBD"
 schoolName = "TBD"
@@ -129,15 +131,19 @@ async def on_ready():
                     continue
 
                 processes = APRSupdater.startAPRSprocesses()
-                rtl_fm = processes[0]
+                thread = Thread(target=APRSupdater.checkAPRSUpdates)
+                thread.start()
+                
+                socket.send_string("ACK")
 
+                """
                 q = Queue()
                 t = Thread(target=enqueue_output, args=(rtl_fm.stderr, q))
-                t.daemon = True # thread dies with the program
+                t.daemon = True
                 t.start()
                 
                 try:  
-                    line = q.get(timeout=.1) #q.get_nowait() # or q.get(timeout=.1)
+                    line = q.get(timeout=.1)
                 except Empty:
                     thread = Thread(target=APRSupdater.checkAPRSUpdates)
                     thread.start()
@@ -149,6 +155,7 @@ async def on_ready():
                         socket.send_string("rtl_fm stopped")
                         APRSupdater.stop()
                         continue
+                """
             
             elif "Transmit APRS" in c:
                 if(os.path.exists("callsign.txt") == False):
@@ -353,4 +360,18 @@ def postToSerial(commandList):
             serialPort.write(bytearray([255, 85, 7, 0, 2, 5, ls, ld, rs, rd]))
         time.sleep(timeOfOperation)
         serialPort.write(bytearray([255, 85, 7, 0, 2, 5, 0, 0, 0, 0]))
-client.run(token)
+
+def is_connected():
+    try:
+        # Try to open a connection to Google's DNS server
+        urllib.request.urlopen("https://8.8.8.8", timeout=1)
+        return True
+    except urllib.error.URLError:
+        pass
+    return False
+
+while True:
+    if is_connected():
+        client.run(token)
+    else:
+        time.sleep(5)
