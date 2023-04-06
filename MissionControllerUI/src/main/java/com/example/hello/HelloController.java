@@ -413,8 +413,8 @@ public class HelloController {
                 pairButton.setText("Pair");
                 transfer tr = new transfer("Pair disconnect");
                 threadExecutor.submit(tr);
-                transfer tr1 = new transfer("changeTo: No");
-                threadExecutor.submit(tr1);
+                //transfer tr1 = new transfer("changeTo: No");
+                //threadExecutor.submit(tr1);
 
                 pairingStatus = false;
                 otherFeatures.setDisable(true);
