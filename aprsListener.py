@@ -19,11 +19,12 @@ class APRSUpdater:
             print(line)
             clean_str = re.sub(r'\x1b\[.*?[@-~]', '', line)
             clean_str = clean_str.strip()
-            pattern = re.compile(r'{}(.+?)<0x0a>'.format(re.escape(str.encode('utf-8').decode('utf-8'))))
+            pattern = re.compile(r'To\s(.*?)\s<0x0a>')
             match = pattern.search(clean_str)
             if match:
                 contents = match.group(1).split()
-                command = f"{contents[0]} {contents[1]} {contents[2]}"
+                command = f"{contents[1]} {contents[2]} {contents[3]}"
+                print(command)
                 helper.postToSerial(serialPort, [command])
             
 
@@ -39,5 +40,6 @@ class APRSUpdater:
     def stop(self):
         self.continueFlag = False
         for i in self.processList:
-            i.kill()
+            if i.pid is not None:
+                i.terminate()
         print("APRS PROCESSESES KILLED")

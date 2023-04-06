@@ -390,6 +390,7 @@ public class HelloController {
                         availableRobots.getItems().add(0, localRobotConnection.getValue());
                         localRobotConnection.setDisable(true);
                         doNotDisturb.setDisable(false);
+                        recAPRSCheckBox.setDisable(false);
                         pairButton.setText("Disconnect");
                     }
                     else if(passfail.equals("fail")){
@@ -400,11 +401,13 @@ public class HelloController {
                 });
                 threadExecutor.submit(tr);
                 pairingStatus = true;
+                
             }
             else{
                 localRobotConnection.setValue(null);
                 localRobotConnection.setDisable(false);
                 availableRobots.getItems().remove(0);
+                recAPRSCheckBox.setDisable(true);
 
                 //Unpair and turn status offline
                 pairButton.setText("Pair");
@@ -491,7 +494,7 @@ public class HelloController {
             }
         });
         medium.setDisable(true);
-
+        recAPRSCheckBox.setDisable(true);
         File tempFile = new File("important.txt");
         if (tempFile.exists()){
             Reader.read(fileValues);
@@ -502,14 +505,14 @@ public class HelloController {
                 if(!fileValues.get(4).toString().equals("true")){
                     recAPRSCheckBox.setDisable(true);
                 }
-                File callsignFile = new File("callsign.txt");
-                if(callsignFile.exists()){
-                    BufferedReader br = new BufferedReader(new FileReader(callsignFile));
-                    availableRobots.getItems().add("My Call: " + br.readLine() + ", Send to: " + br.readLine());
-                    br.close();
-                }
                 availableRobots.getItems().addAll(filter.filterInternetInput(possibleConnections, fileValues.get(0).toString()));
             }
+        }
+        File callsignFile = new File("callsign.txt");
+        if(callsignFile.exists()){
+            BufferedReader br = new BufferedReader(new FileReader(callsignFile));
+            availableRobots.getItems().add("My Call: " + br.readLine() + ", Send to: " + br.readLine());
+            br.close();
         }
         onUpdateV2 ouv = new onUpdateV2();
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
