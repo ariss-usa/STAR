@@ -77,7 +77,7 @@
     </MenuBar>
     <AnchorPane fx:id="AnchorPane" maxHeight="-1.0" maxWidth="-1.0" prefHeight="427.0" prefWidth="702.0" VBox.vgrow="ALWAYS">
       <children>
-            <ComboBox fx:id="availableRobots" layoutX="18.0" layoutY="25.0" prefHeight="26.0" prefWidth="213.0" promptText="Choose a robot" styleClass="combo-box">
+            <ComboBox fx:id="availableRobots" layoutX="16.0" layoutY="25.0" prefHeight="26.0" prefWidth="213.0" promptText="Choose a robot" styleClass="combo-box">
                <contextMenu>
                   <ContextMenu>
                     <items>

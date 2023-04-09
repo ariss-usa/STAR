@@ -168,11 +168,33 @@ public class HelloController {
             }
         }
     }
-    
+    Process process = null;
+    Thread processThread = null;
     @FXML
     protected void visualize(ActionEvent event) throws IOException{
-        if(!visualizerCheck.isSelected()) return;
-        FXMLLoader loader = new FXMLLoader();
+        //if(!visualizerCheck.isSelected()) return;
+        if(visualizerCheck.isSelected()){
+            process = new ProcessBuilder("..\\MARS-SIM\\MARS-SIM.exe").start();
+            processThread = new Thread(() -> {
+                try {
+                    process.waitFor(); // Wait for the process to complete
+                    visualizerCheck.setSelected(false);
+                    process = null;
+                    processThread = null;
+                } catch (InterruptedException e) {
+                    // Handle any exceptions that may occur
+                    e.printStackTrace();
+                }
+            });
+            processThread.start();
+        }
+        else{
+            process.destroy();
+        }
+        
+        
+
+/*         FXMLLoader loader = new FXMLLoader();
         loader.setLocation(getClass().getResource("visualize.fxml"));
         
         root = loader.load();
@@ -186,7 +208,7 @@ public class HelloController {
         dialogStage.setScene(scene);
         
         dialogStage.showAndWait();
-        visualizerCheck.setSelected(false);
+        visualizerCheck.setSelected(false); */
     }
     @FXML
     protected void onCBPressed(ActionEvent event) throws IOException{
@@ -413,6 +435,7 @@ public class HelloController {
                 pairButton.setText("Pair");
                 transfer tr = new transfer("Pair disconnect");
                 threadExecutor.submit(tr);
+                
                 //transfer tr1 = new transfer("changeTo: No");
                 //threadExecutor.submit(tr1);
 
@@ -502,17 +525,17 @@ public class HelloController {
                 returnEntries.checkfile(true);
                 possibleConnections = returnEntries.getDirList();
                 availableRobots.setVisibleRowCount(3);
-                if(!fileValues.get(4).toString().equals("true")){
-                    recAPRSCheckBox.setDisable(true);
-                }
                 availableRobots.getItems().addAll(filter.filterInternetInput(possibleConnections, fileValues.get(0).toString()));
             }
         }
         File callsignFile = new File("callsign.txt");
         if(callsignFile.exists()){
             BufferedReader br = new BufferedReader(new FileReader(callsignFile));
-            availableRobots.getItems().add("My Call: " + br.readLine() + ", Send to: " + br.readLine());
+            availableRobots.getItems().add(0, "My Call: " + br.readLine() + ", Send to: " + br.readLine());
             br.close();
+        }
+        else{
+            availableRobots.setDisable(true);
         }
         onUpdateV2 ouv = new onUpdateV2();
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
