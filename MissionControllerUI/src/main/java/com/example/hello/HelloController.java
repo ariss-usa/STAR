@@ -534,9 +534,6 @@ public class HelloController {
             availableRobots.getItems().add(0, "My Call: " + br.readLine() + ", Send to: " + br.readLine());
             br.close();
         }
-        else{
-            availableRobots.setDisable(true);
-        }
         onUpdateV2 ouv = new onUpdateV2();
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
         scheduledExecutorService.scheduleWithFixedDelay(new Runnable() {
