@@ -174,7 +174,7 @@ public class HelloController {
     protected void visualize(ActionEvent event) throws IOException{
         //if(!visualizerCheck.isSelected()) return;
         if(visualizerCheck.isSelected()){
-            process = new ProcessBuilder("..\\MARS-SIM\\MARS-SIM.exe").start();
+            process = new ProcessBuilder(".\\MARS-SIM\\MARS-SIM.exe").start();
             processThread = new Thread(() -> {
                 try {
                     process.waitFor(); // Wait for the process to complete
