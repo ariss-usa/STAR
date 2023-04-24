@@ -17,6 +17,8 @@ import helper
 from playsound import playsound
 from aprsListener import APRSUpdater
 
+
+asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 intents = discord.Intents.all()
 client = commands.Bot(command_prefix="prefix", intents=intents)
 
@@ -165,14 +167,9 @@ async def on_ready():
                 mycallsign = c.split()[2]
                 command = c.split()[3] + " " + c.split()[4] + " " + c.split()[5]
                 wantedCall = c.split()[6]
-                oscommand = f"echo {mycallsign}^^^>WORLD: To {wantedCall} " + command + " | gen_packets -a 25 -o x.wav -"
-                
-                direwolf = subprocess.Popen(["direwolf", "-c", "direwolf.conf", "-r", "48000", "-D", "1"])
-                #gen_packets = subprocess.Popen(["gen_packets", "-a", "25", "-o", "x.wav", "-"], stdin=oscommand)
+                oscommand = f"echo {mycallsign}^^^>WORLD: To {wantedCall} {command} | gen_packets -a 25 -o x.wav -"
                 os.system(oscommand)
                 playsound('./x.wav')
-                #os.system("atest x.wav >> output.txt")
-                direwolf.kill()
                 socket.send_string("ACK")
             elif "stopReceivingAPRS" in c:
                 socket.send_string("ACK")
@@ -183,6 +180,8 @@ async def on_ready():
                     closeActivity = client.get_command("edit_message_online")
                     await closeConnection("No", messageToID[myMC])
                     await closeActivity("No", messageToID[myMC])
+                    await asyncio.sleep(1)
+                
                 socket.send_string("ACK")
                 context.destroy()
                 await client.close()
@@ -360,7 +359,7 @@ def postToSerial(commandList):
             serialPort.write(bytearray([255, 85, 7, 0, 2, 5, ls, ld, rs, rd]))
         time.sleep(timeOfOperation)
         serialPort.write(bytearray([255, 85, 7, 0, 2, 5, 0, 0, 0, 0]))
-
+"""
 def is_connected():
     try:
         # Try to open a connection to Google's DNS server
@@ -375,3 +374,6 @@ while True:
         client.run(token)
     else:
         time.sleep(5)
+"""
+
+client.run(token)
