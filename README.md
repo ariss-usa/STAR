@@ -19,7 +19,11 @@ If you don't have your own mBot or you only want to control remote mBots, skip t
 6. [Install the drivers for the SDR dongle](https://www.rtl-sdr.com/rtl-sdr-quick-start-guide/)
 7. Download the latest releases for [GPredict](https://github.com/csete/gpredict), [Direwolf](https://github.com/wb2osz/direwolf), [rtl-sdr](https://ftp.osmocom.org/binaries/windows/rtl-sdr/)
 8. Extract these folders and move them to the directory which contains the STAR folder 
-9. Obtain API tokens before use
+9. Set up the Discord component
+    1. Navigate to Discord Developer (https://discord.com/developers/applications) and click on 'Create New Application'
+    2. Create your own server: click on the green plus sign on the bottom left and enter the required information
+    3. Enter your newly created server and create a new channel by pressing the plus sign to the right of 'TEXT CHANNELS', and name it 'Directory'
+    4. Add a .env file underneath the STAR directory and add the tokens for the 'General', 'Directory', and the Discord bot
 
 Your project structure should look something like this:\
 📦ariss-usa\
