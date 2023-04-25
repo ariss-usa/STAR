@@ -25,6 +25,7 @@ If you don't have your own mBot or you only want to control remote mBots, skip t
     3. Enter your newly created server and create a new channel by pressing the plus sign to the right of 'TEXT CHANNELS', and name it 'Directory'
     4. Add the application to the server
     5. Add a .env file underneath the STAR directory and add the tokens for the 'General', 'Directory', and the Discord bot as demonstrated below.
+    
     ![image](https://user-images.githubusercontent.com/32817861/234155072-23d33c04-e326-455f-a5e3-d86dfa2e6994.png)
 
 
