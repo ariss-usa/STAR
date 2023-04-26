@@ -6,9 +6,9 @@ The STAR project allows for an easy way for a user to control the Makeblock mBot
 The purpose of this project is to prepare and familiarize students with remote communications before their contact with the International Space Station. 
 [Learn more about ARISS!](https://www.ariss.org/)
 
-## Use ##
-If you would like to control your own mBot locally, you must follow the instructions in the firmware folder; then, complete the installation instructions below.
-If you don't have your own mBot or you only want to control remote mBots, skip the firmware folder instructions and just follow the installation instructions below.
+## Usage ##
+To control your mBot using this app, you simply need to plug the Bluetooth dongle into the device running the application, and turn on the mBot.
+The mBot's flashing blue light should turn to a solid blue light to indicate successful pairing. Click the pair dropdown -> Select the Bluetooth dongle's COM port -> click pair. To send commands, select a robot (select the COM port for local control) and enter time, direction, and power values, then hit the send button.
 
 ## Installation (FOR DEVELOPERS) ##
 1. Download or clone this repository
