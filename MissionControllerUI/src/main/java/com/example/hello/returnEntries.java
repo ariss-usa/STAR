@@ -54,7 +54,7 @@ class dirV1 implements Callable<String>{
     public String call(){
         try(ZContext ctx = new ZContext()){
             ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
-            socket.connect("tcp://127.0.0.1:5555");
+            boolean bool = socket.connect("tcp://127.0.0.1:5555");
             socket.send("getDIRList");
             String str = socket.recvStr();
             ctx.destroy();

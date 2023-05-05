@@ -30,7 +30,7 @@ class APRSUpdater:
 
     def startAPRSprocesses(self):
         #gets mic input
-        direwolf = PtyProcess.spawn("direwolf -c direwolf.conf")
+        direwolf = PtyProcess.spawn("direwolf -c .\direwolf.conf")
 
         #gets RTL-SDR input
         #direwolf = PtyProcess.spawn("rtl_fm -f 144.390M - | direwolf -c direwolf.conf -")

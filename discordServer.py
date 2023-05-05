@@ -1,9 +1,8 @@
 import asyncio
 from queue import Empty, Queue
-import subprocess
 from threading import Thread
 import traceback
-import urllib.request
+import urllib3
 import zmq
 import discord
 import os
@@ -40,7 +39,6 @@ schoolName = "TBD"
 city = "TBD"
 state = "TBD"
 sdrDonglePresent = "TBD"
-#localOrRemote =    "TBD"
 online = "Yes"
 connected = "No"
 doNotDisturb = True
@@ -53,8 +51,6 @@ async def on_ready():
     global serialPort
     messageToID = {}
     dirArr = []
-    btconfigTimer = None
-    runOnce = True
     APRSupdater = APRSUpdater()
     async for message in client.get_channel(DIR_ID).history(limit=200):
         dirArr.insert(0, message)
@@ -75,12 +71,10 @@ async def on_ready():
                 await command(getCommand, getSelectedID)
             elif "Local" in c:
                 spl = c.split("Local ")
-                #var = spl[1]
                 words = spl[1].split()
                 grouped_words = [' '.join(words[i: i + 3]) for i in range(0, len(words), 3)]
                 socket.send_string("ACK")
                 helper.postToSerial(serialPort, grouped_words)
-                #serialPort.write(var.encode())
             elif "sendToDIR" in c:
                 command = client.get_command("sendToDIR")
                 socket.send_string("REC")
@@ -109,7 +103,8 @@ async def on_ready():
                         portString = connectOrDisc[2]
                         serialPort = serial.Serial(port=portString, baudrate=115200, bytesize=8, timeout=5, stopbits=serial.STOPBITS_ONE)
                         helper.setSerial(serialPort)
-                        btconfigTimer = time.time()
+                        #stop sequence for the mBot
+                        serialPort.write(bytearray([255, 85, 7, 0, 2, 5, 0, 0, 0, 0]))
                     except serial.SerialException:
                         portSuccess = False
                 else:
@@ -185,9 +180,6 @@ async def on_ready():
                 socket.send_string("ACK")
                 context.destroy()
                 await client.close()
-            #if(runOnce and btconfigTimer != None and time.time() - btconfigTimer > 1):
-            #    serialPort.write(bytearray([255, 85, 7, 0, 2, 5, 0, 0, 0, 0]))
-            #    runOnce = False
                 
         except zmq.ZMQError as e:
             if e.errno == zmq.EAGAIN or e.errno == zmq.Again:
@@ -240,11 +232,10 @@ async def checkFile(editMessage):
     global myMC, schoolName, city, state, sdrDonglePresent#, localOrRemote
     with open("important.txt", "r") as f:
         myMC = f.readline().strip()
-        schoolName = f.readline().strip()       #
-        city = f.readline().strip()             #"Houston"
-        state = f.readline().strip()            #"TX"
-        sdrDonglePresent = f.readline().strip() #"No"
-        #localOrRemote =  f.readline().strip()   #"Internet"
+        schoolName = f.readline().strip()       
+        city = f.readline().strip()             
+        state = f.readline().strip()            
+        sdrDonglePresent = f.readline().strip() 
     channel = client.get_channel(DIR_ID)
 
     if(editMessage == "true"):
@@ -330,12 +321,6 @@ def getContent(dirArr):
 
 def postToSerial(commandList):
     for i in range(0, len(commandList)):
-        """
-        response = ""
-        serialPort.write(commandList[i].encode())
-        while "FIN" not in response:
-            response = serialPort.readline().decode('utf-8').strip()
-        """
         splitCommands = commandList[i].split(" ")
         #splitCommands[0] = power, [1] = direction, [2] = time
         ld = 255
@@ -359,21 +344,5 @@ def postToSerial(commandList):
             serialPort.write(bytearray([255, 85, 7, 0, 2, 5, ls, ld, rs, rd]))
         time.sleep(timeOfOperation)
         serialPort.write(bytearray([255, 85, 7, 0, 2, 5, 0, 0, 0, 0]))
-"""
-def is_connected():
-    try:
-        # Try to open a connection to Google's DNS server
-        urllib.request.urlopen("https://8.8.8.8", timeout=1)
-        return True
-    except urllib.error.URLError:
-        pass
-    return False
-
-while True:
-    if is_connected():
-        client.run(token)
-    else:
-        time.sleep(5)
-"""
 
 client.run(token)

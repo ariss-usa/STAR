@@ -33,6 +33,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -104,7 +105,6 @@ public class HelloController {
     private CheckBox visualizerCheck;
     @FXML
     private CheckBox recAPRSCheckBox;
-
     
     private Stage parent;
     private Parent root;

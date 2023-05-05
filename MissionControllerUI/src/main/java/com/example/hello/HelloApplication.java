@@ -20,12 +20,9 @@ public class HelloApplication extends Application {
     @Override
     public void start(Stage stage) throws IOException {
         stage.getIcons().add(new Image("file:.\\MissionControllerUI\\src\\main\\resources\\com\\example\\images\\arissLogo.jpg"));
+        System.out.println(HelloApplication.class.getResource("newGUI.fxml"));
         FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("newGUI.fxml"));
         Parent root = fxmlLoader.load();
-
-        //Parent root = FXMLLoader.load(getClass().getClassLoader().getResource("/example/newGUI.fxml"));
-        //URL test = new URL("file:.\\MissionControllerUI\\src\\main\\resources\\com\\example\\hello\\newGUI.fxml");
-        //Parent root = FXMLLoader.load(test);
 
         Scene scene = new Scene(root, 665, 466);
         
@@ -38,13 +35,9 @@ public class HelloApplication extends Application {
             public void handle(WindowEvent we) {                
                 try(ZContext ctx = new ZContext()){
                     ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
-                    //ZMQ.Socket socket2 = ctx.createSocket(SocketType.REQ);
                     socket.connect("tcp://127.0.0.1:5555");
-                    //socket2.connect("tcp://127.0.0.1:5554");
                     socket.send("END");
-                    //socket2.send("END"); 
                     socket.recv();
-                    //socket2.recv();
                     ctx.destroy();
                 }
                 HelloController.threadExecutor.shutdown();
