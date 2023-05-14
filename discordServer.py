@@ -1,8 +1,6 @@
 import asyncio
-from queue import Empty, Queue
 from threading import Thread
 import traceback
-import urllib3
 import zmq
 import discord
 import os
@@ -15,9 +13,11 @@ import time
 import helper
 from playsound import playsound
 from aprsListener import APRSUpdater
+import platform
 
-
-asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+if platform.system() == "Windows":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    
 intents = discord.Intents.all()
 client = commands.Bot(command_prefix="prefix", intents=intents)
 

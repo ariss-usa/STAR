@@ -1,12 +1,22 @@
 import helper
-from winpty import PtyProcess
 import re
+import platform
+
 class APRSUpdater:
     def __init__(self):
         self.path_to_file = "callsign.txt"
         self.continueFlag = True
         self.processList = []
-        
+        current_platform = platform.system()
+        self.ptyModule = None
+        if current_platform == "Windows":
+            module = helper.import_module_by_platform("winpty", current_platform)
+            self.ptyModule = module.PtyProcess
+        elif current_platform == "Linux":
+            self.ptyModule = helper.import_module_by_platform("pty", current_platform)
+        else:
+            print("Unsupported platform.")
+
     def checkAPRSUpdates(self):
         with open(self.path_to_file) as f:
             self.mycall = f.readline().strip()
@@ -30,7 +40,10 @@ class APRSUpdater:
 
     def startAPRSprocesses(self):
         #gets mic input
-        direwolf = PtyProcess.spawn("direwolf -c .\direwolf.conf")
+        if platform.system() == 'Windows' and self.ptyModule:
+            direwolf = self.ptyModule.spawn("direwolf -c .\direwolf.conf")
+        elif(platform.system() == "Linux") and self.ptyModule:
+            direwolf = self.ptyModule.spawn(["direwolf", "-c", "./direwolf.conf"])
 
         #gets RTL-SDR input
         #direwolf = PtyProcess.spawn("rtl_fm -f 144.390M - | direwolf -c direwolf.conf -")

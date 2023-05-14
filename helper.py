@@ -1,5 +1,6 @@
 import time
 import serial
+import importlib
 
 serialPort = None
 def postToSerial(serialPort, commandList):
@@ -40,3 +41,13 @@ def setSerial(ser):
 def getSerial():
     global serialPort
     return serialPort
+
+def import_module_by_platform(module_name, platform_name):
+    try:
+        module = importlib.import_module(module_name)
+        print(f"Module '{module_name}' imported successfully on {platform_name}.")
+        return module
+        # You can now use the imported module in your code.
+        # For example: module.some_function()
+    except ImportError:
+        print(f"Failed to import module '{module_name}' on {platform_name}.")
