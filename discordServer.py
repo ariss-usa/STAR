@@ -156,15 +156,20 @@ async def on_ready():
             
             elif "Transmit APRS" in c:
                 if(os.path.exists("callsign.txt") == False):
-                    socket.send_string("callsign file missing")
+                    socket.send_string("callsign file missing") 
                     print("NOT TRANSMITTING")
                     continue
                 mycallsign = c.split()[2]
                 command = c.split()[3] + " " + c.split()[4] + " " + c.split()[5]
                 wantedCall = c.split()[6]
-                oscommand = f"echo {mycallsign}^^^>WORLD: To {wantedCall} {command} | gen_packets -a 25 -o x.wav -"
-                os.system(oscommand)
-                playsound('./x.wav')
+                if platform.system() == "Windows":
+                    oscommand = f"echo {mycallsign}^^^>WORLD: To {wantedCall} {command} | gen_packets -a 25 -o x.wav -"
+                    os.system(oscommand)
+                    playsound('./x.wav')
+                elif platform.system() == "Linux":
+                    oscommand = f'echo "{mycallsign}>WORLD: To {wantedCall} {command}" | tee >(gen_packets -a 25 -o x.wav -) > /dev/null'
+                    os.system(oscommand)
+                    playsound('./x.wav')
                 socket.send_string("ACK")
             elif "stopReceivingAPRS" in c:
                 socket.send_string("ACK")

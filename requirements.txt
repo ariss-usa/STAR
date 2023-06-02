@@ -1,4 +1,6 @@
-discord.py==1.7.3
+discord.py==2.2.3
+playsound==1.3.0
 pyserial==3.5
-python-dotenv==0.20.0
+pyserial==3.4
+python-dotenv==1.0.0
 pyzmq==23.2.0
