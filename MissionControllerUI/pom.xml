@@ -56,11 +56,11 @@
             <artifactId>jeromq</artifactId>
             <version>0.5.2</version>
         </dependency>
-        <!-- <dependency>
-            <groupId>org.zeromq</groupId>
-            <artifactId>jeromq</artifactId>
-            <version>0.5.3-SNAPSHOT</version>
-        </dependency> -->
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-server</artifactId>
+            <version>9.4.52.v20230823</version>
+        </dependency>
     </dependencies>
 
     <build>

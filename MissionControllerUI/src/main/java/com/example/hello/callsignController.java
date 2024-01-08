@@ -18,16 +18,22 @@ public class callsignController {
     private TextField callsignText;
     @FXML
     private TextField callsignListener;
+    final private int CALLSIGN_LENGTH = 6;
     @FXML
     protected void callSignSubmitPressed(ActionEvent event) throws IOException{
         String callsign = callsignText.getText();
         String listeningCall = callsignListener.getText();
-        File file = new File("callsign.txt");
-        PrintWriter pw = new PrintWriter(new FileWriter("callsign.txt", false));
-        pw.write(callsign);
-        pw.write("\n" + listeningCall);
-        pw.close();
-        ((Stage)(((Button)event.getSource()).getScene().getWindow())).close();
+        if(callsign.length() != CALLSIGN_LENGTH){
+            AlertBox.display("Malformed callsign - Must be 6 characters in length");
+        }
+        else{
+            File file = new File("callsign.txt");
+            PrintWriter pw = new PrintWriter(new FileWriter("callsign.txt", false));
+            pw.write(callsign);
+            pw.write("\n" + listeningCall);
+            pw.close();
+            ((Stage)(((Button)event.getSource()).getScene().getWindow())).close();
+        }
     }
     @FXML
     protected void callSignCancelPressed(ActionEvent event) throws IOException{

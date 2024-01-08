@@ -20,7 +20,7 @@ public class onUpdateV2{
             poller.register(client, ZMQ.Poller.POLLIN);
             poller.register(editSocket, ZMQ.Poller.POLLIN);
 
-            Object var = poller.poll(2);
+            Object var = poller.poll(100);
 
             if(poller.pollin(0)){
                 String reply = client.recvStr(ZMQ.DONTWAIT);

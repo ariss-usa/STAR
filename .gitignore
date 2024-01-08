@@ -6,3 +6,4 @@ MissionControllerUI/target/
 .env
 important.txt
 packagedMissionController/
+venv/

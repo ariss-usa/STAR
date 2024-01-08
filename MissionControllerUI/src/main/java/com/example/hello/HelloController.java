@@ -19,7 +19,6 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.input.TransferMode;
 import javafx.scene.shape.Circle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -30,21 +29,18 @@ import javafx.concurrent.Task;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
@@ -102,6 +98,8 @@ public class HelloController {
     @FXML
     private MenuItem otherFeatures;
     @FXML
+    private MenuItem commandBuilder;
+    @FXML
     private CheckBox visualizerCheck;
     @FXML
     private CheckBox recAPRSCheckBox;
@@ -113,20 +111,40 @@ public class HelloController {
     public static ExecutorService threadExecutor = Executors.newSingleThreadExecutor();
     private static String currRobot = "";
     private static boolean pairingStatus = false;
+    final private String ARISS_URL = "https://www.ariss.org/";
+    final private String STAR_URL = "https://sites.google.com/view/ariss-starproject/home";
+    final private String LOCALHOST_URL = "http://localhost:8080/index.html";
 
     @FXML
     protected void onLinkPressed(ActionEvent event) throws IOException, URISyntaxException{
-        Desktop.getDesktop().browse(new URI("https://www.ariss.org/"));
+        if(System.getProperty("os.name").toLowerCase().contains("win")){
+            Desktop.getDesktop().browse(new URI(ARISS_URL));
+        }
+        else{
+            //Default browser for rpi
+            new ProcessBuilder("sh", "-c", "sensible-browser " + ARISS_URL).start();
+        }
     }
     
     @FXML
     protected void onhelpPressed(ActionEvent event) throws IOException, URISyntaxException{
-        Desktop.getDesktop().browse(new URI("https://sites.google.com/view/ariss-starproject/home"));
+        if(System.getProperty("os.name").toLowerCase().contains("win")){
+            Desktop.getDesktop().browse(new URI(STAR_URL));
+        }
+        else{
+            //Default browser for rpi
+            new ProcessBuilder("sh", "-c", "sensible-browser " + STAR_URL).start();
+        }
     }
 
     @FXML
     protected void gpredictMenuItemPressed(ActionEvent event) throws IOException {
-        Process process = new ProcessBuilder("..\\gpredict-win32-2.2.1\\gpredict-win32-2.2.1\\gpredict.exe").start();
+        if(System.getProperty("os.name").toLowerCase().contains("win")){
+            new ProcessBuilder("..\\gpredict-win32-2.2.1\\gpredict-win32-2.2.1\\gpredict.exe").start();
+        }
+        else{
+            new ProcessBuilder("gpredict").start();
+        }
     }
 
     @FXML
@@ -152,7 +170,7 @@ public class HelloController {
         String format = "My Call: " + br.readLine() + ", Send to: " + br.readLine();
         br.close();
         if(pairingStatus){
-            if(availableRobots.getItems().get(1).startsWith("My Call")){
+            if(availableRobots.getItems().size() > 1 && availableRobots.getItems().get(1).startsWith("My Call")){
                 availableRobots.getItems().set(1, format);
             }
             else{
@@ -160,7 +178,7 @@ public class HelloController {
             }
         }
         else{
-            if(availableRobots.getItems().get(0).startsWith("My Call")){
+            if(availableRobots.getItems().size() > 0 && availableRobots.getItems().get(0).startsWith("My Call")){
                 availableRobots.getItems().set(0, format);
             }
             else{
@@ -170,45 +188,48 @@ public class HelloController {
     }
     Process process = null;
     Thread processThread = null;
+    Server server = null;
     @FXML
-    protected void visualize(ActionEvent event) throws IOException{
-        //if(!visualizerCheck.isSelected()) return;
-        if(visualizerCheck.isSelected()){
-            process = new ProcessBuilder(".\\MARS-SIM\\MARS-SIM.exe").start();
-            processThread = new Thread(() -> {
-                try {
-                    process.waitFor(); // Wait for the process to complete
-                    visualizerCheck.setSelected(false);
-                    process = null;
-                    processThread = null;
-                } catch (InterruptedException e) {
-                    // Handle any exceptions that may occur
-                    e.printStackTrace();
-                }
-            });
-            processThread.start();
+    protected void visualize(ActionEvent event) throws Exception{
+        if(System.getProperty("os.name").toLowerCase().contains("win")){
+            if(visualizerCheck.isSelected()){
+                process = new ProcessBuilder(".\\MARS-SIM\\MARS-SIM.exe").start();
+                processThread = new Thread(() -> {
+                    try {
+                        process.waitFor(); // Wait for the process to complete
+                        visualizerCheck.setSelected(false);
+                        process = null;
+                        processThread = null;
+                    } catch (InterruptedException e) {
+                        // Handle any exceptions that may occur
+                        e.printStackTrace();
+                    }
+                });
+                processThread.start();
+            }
+            else{
+                process.destroy();
+            }
         }
         else{
-            process.destroy();
+            if(visualizerCheck.isSelected()){
+                server = new Server(8080);
+                ResourceHandler resourceHandler = new ResourceHandler();
+                resourceHandler.setWelcomeFiles(new String[]{"index.html"});
+                resourceHandler.setResourceBase("./webGL_Mars_Sim");
+                server.setHandler(resourceHandler);
+                try{
+                    server.start();
+                    new ProcessBuilder("sh", "-c", "sensible-browser " + LOCALHOST_URL).start();
+                }
+                catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+            else if(server != null){
+                server.stop();
+            }
         }
-        
-        
-
-/*         FXMLLoader loader = new FXMLLoader();
-        loader.setLocation(getClass().getResource("visualize.fxml"));
-        
-        root = loader.load();
-        Stage dialogStage = new Stage();
-        dialogStage.setResizable(false);
-        dialogStage.setTitle("Visualizer");
-        dialogStage.initOwner(parent);
-        dialogStage.initModality(Modality.WINDOW_MODAL);
-        Scene scene = new Scene(root, 800, 600);
-        scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
-        dialogStage.setScene(scene);
-        
-        dialogStage.showAndWait();
-        visualizerCheck.setSelected(false); */
     }
     @FXML
     protected void onCBPressed(ActionEvent event) throws IOException{
@@ -267,16 +288,6 @@ public class HelloController {
             availableRobots.getItems().addAll(filter.filterInternetInput(possibleConnections, fileValues.get(0).toString()));        
             
             availableRobots.setVisibleRowCount(3);
-
-            if(!fileValues.get(4).toString().equals("true")){
-                recAPRSCheckBox.setDisable(true);
-                medium.setDisable(true);
-                File callsignFile = new File("callsign.txt");
-                callsignFile.delete();
-            }
-            else{
-                recAPRSCheckBox.setDisable(false);
-            }
         }
     }
     @FXML
@@ -286,8 +297,8 @@ public class HelloController {
             t.setOnSucceeded(e -> {
                 String recv = t.getValue();
                 if(recv.equals("ACK")) return;
-                if(recv.equals("callsign file missing")){
-                    AlertBox.display("Call sign file missing");
+                if(recv.equals("no rtl-sdr")){
+                    AlertBox.display("No RTL-SDR dongle found. Check if it's plugged in.");
                     recAPRSCheckBox.setSelected(false);
                 }
                 else if(recv.equals("rtl_fm stopped")){
@@ -356,12 +367,6 @@ public class HelloController {
                 br.close();
                 String command = Power.getText() + " " + selectedDirection + " " + s;
                 transfer t = new transfer("Transmit APRS " + mycallsign + " " + command + " " + sendcall);
-                t.setOnSucceeded(e -> {
-                    String recv = t.getValue();
-                    if(recv.equals("callsign file missing")){
-                        AlertBox.display("Call sign file missing");
-                    }
-                });
                 threadExecutor.submit(t);
                 
             }
@@ -429,13 +434,15 @@ public class HelloController {
                 localRobotConnection.setValue(null);
                 localRobotConnection.setDisable(false);
                 availableRobots.getItems().remove(0);
+                recAPRSCheckBox.setSelected(false);
                 recAPRSCheckBox.setDisable(true);
-
+                
                 //Unpair and turn status offline
                 pairButton.setText("Pair");
                 transfer tr = new transfer("Pair disconnect");
+                transfer tr1 = new transfer("stopReceivingAPRS");
                 threadExecutor.submit(tr);
-                
+                threadExecutor.submit(tr1);
                 //transfer tr1 = new transfer("changeTo: No");
                 //threadExecutor.submit(tr1);
 
@@ -456,7 +463,8 @@ public class HelloController {
         recListView.getItems().add("~");
         doNotDisturb.setSelected(true);
         doNotDisturb.setDisable(true);
-        otherFeatures.setDisable(true);
+        //otherFeatures.setDisable(true);
+        commandBuilder.setDisable(true);
         
         hideLoadingAnimation();
         loadingAnimation();
@@ -501,10 +509,12 @@ public class HelloController {
                 return;
             }
             if(currRobot.startsWith("My Call")){
+                commandBuilder.setDisable(true);
                 medium.setDisable(true);
                 medium.setSelected(true);
             }
             else{
+                commandBuilder.setDisable(false);
                 medium.setDisable(true);
                 medium.setSelected(false);
                 threadExecutor.submit(new transfer("stopReceivingAPRS"));
@@ -532,6 +542,7 @@ public class HelloController {
         if(callsignFile.exists()){
             BufferedReader br = new BufferedReader(new FileReader(callsignFile));
             availableRobots.getItems().add(0, "My Call: " + br.readLine() + ", Send to: " + br.readLine());
+            recAPRSCheckBox.setDisable(false);
             br.close();
         }
         onUpdateV2 ouv = new onUpdateV2();

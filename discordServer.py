@@ -14,6 +14,9 @@ import helper
 from playsound import playsound
 from aprsListener import APRSUpdater
 import platform
+import subprocess
+from pydub import AudioSegment
+from pydub.playback import play
 
 if platform.system() == "Windows":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
@@ -122,15 +125,19 @@ async def on_ready():
                 socket.send_string(';'.join(p))
             elif "recAPRS" in c:
                 #process = subprocess.Popen("rtl_fm -f 144.390M -s 48000 -g 20 | direwolf -c direwolf.conf -r 48000 -D 1 - | decode_aprs > .\output.txt", shell=True)
-                if(os.path.exists("callsign.txt") == False):
-                    socket.send_string("callsign file missing")
-                    print("NOT RECEIVING")
+                if(platform.system() == "Linux" and not check_rtlsdr()):
+                    socket.send_string("no rtl-sdr")
                     continue
-
-                processes = APRSupdater.startAPRSprocesses()
-                thread = Thread(target=APRSupdater.checkAPRSUpdates)
-                thread.start()
                 
+                processes = APRSupdater.startAPRSprocesses()
+
+                thread = None
+                if(platform.system() == "Linux"):
+                    thread = Thread(target=APRSupdater.checkAPRSUpdates_RTLSDR)
+                else:
+                    thread = Thread(target=APRSupdater.checkAPRSUpdates)
+
+                thread.start()
                 socket.send_string("ACK")
 
                 """
@@ -155,10 +162,6 @@ async def on_ready():
                 """
             
             elif "Transmit APRS" in c:
-                if(os.path.exists("callsign.txt") == False):
-                    socket.send_string("callsign file missing") 
-                    print("NOT TRANSMITTING")
-                    continue
                 mycallsign = c.split()[2]
                 command = c.split()[3] + " " + c.split()[4] + " " + c.split()[5]
                 wantedCall = c.split()[6]
@@ -167,9 +170,11 @@ async def on_ready():
                     os.system(oscommand)
                     playsound('./x.wav')
                 elif platform.system() == "Linux":
-                    oscommand = f'echo "{mycallsign}>WORLD: To {wantedCall} {command}" | tee >(gen_packets -a 25 -o x.wav -) > /dev/null'
+                    #oscommand = f'echo "{mycallsign}>WORLD: To {wantedCall} {command}" | tee >(gen_packets -a 25 -o x.wav -) > /dev/null'
+                    oscommand = f"echo -n '{mycallsign}>WORLD: To {wantedCall} {command}' | gen_packets -a 25 -o x.wav -"
                     os.system(oscommand)
-                    playsound('./x.wav')
+                    sound = AudioSegment.from_wav("./x.wav")
+                    play(sound)
                 socket.send_string("ACK")
             elif "stopReceivingAPRS" in c:
                 socket.send_string("ACK")
@@ -196,6 +201,18 @@ def enqueue_output(errstream, queue):
     for line in iter(errstream.readline, b''):
         queue.put(line)
     errstream.close()
+
+def check_rtlsdr():
+    try:
+        output = subprocess.check_output(["lsusb"]).decode("utf-8")
+        if "RTL" in output:
+            print("rtl-sdr found")
+            return True
+        else:
+            print("rtl-sdr not found")
+            return False
+    except subprocess.CalledProcessError as e:
+        print("Error executing lsusb:", e)
 
 @client.command()
 async def SEND(comm, selectedID):
