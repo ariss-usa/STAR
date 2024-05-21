@@ -2,6 +2,7 @@ import helper
 import re
 import platform
 from subprocess import Popen, PIPE
+from os import system
 class APRSUpdater:
     def __init__(self):
         self.continueFlag = True
@@ -55,6 +56,7 @@ class APRSUpdater:
             self.processList.append(direwolf)
         #sdr input
         elif(platform.system() == "Linux"):
+            system("sudo modprobe snd-aloop")
             rtl_sdr = Popen(["rtl_fm", "-f", "144.390M", "-"], stdout=PIPE)
             direwolf = Popen(["direwolf", "-c", "direwolf.conf", "-"], stdin=rtl_sdr.stdout, stdout=PIPE, bufsize=1, universal_newlines=True)
             self.processList.append(direwolf)
