@@ -276,6 +276,10 @@ public class HelloController {
             else{
                 returnEntries.checkfile(true);
             }
+
+            if(pairingStatus){
+                doNotDisturb.setDisable(false);
+            }
             
             availableRobots.getItems().removeAll(availableRobots.getItems());
 
@@ -330,8 +334,8 @@ public class HelloController {
         else if (command.getText().isEmpty()){
             AlertBox.display("Enter the amount of seconds you would like to run the robot");
         }
-        else if (Double.parseDouble(command.getText()) < 1 || Double.parseDouble(command.getText()) > 120){
-            AlertBox.display("Enter values between 1 and 120");
+        else if (Double.parseDouble(command.getText()) < 0 || Double.parseDouble(command.getText()) > 120){
+            AlertBox.display("Enter values between 0 and 120");
         }
         else{
             //Determine whether internet/APRS
@@ -416,8 +420,12 @@ public class HelloController {
                     if (passfail.equals("pass")){
                         availableRobots.getItems().add(0, localRobotConnection.getValue());
                         localRobotConnection.setDisable(true);
-                        doNotDisturb.setDisable(false);
+                        File f = new File("important.txt");
+                        if(f.exists()){
+                            doNotDisturb.setDisable(false);
+                        }
                         recAPRSCheckBox.setDisable(false);
+                        pairingStatus = true;
                         pairButton.setText("Disconnect");
                     }
                     else if(passfail.equals("fail")){
@@ -426,9 +434,7 @@ public class HelloController {
                     }
                     pairButton.setDisable(false);
                 });
-                threadExecutor.submit(tr);
-                pairingStatus = true;
-                
+                threadExecutor.submit(tr);       
             }
             else{
                 localRobotConnection.setValue(null);
@@ -553,11 +559,16 @@ public class HelloController {
                 ouv.call();
                 String addedEntry = ouv.getNewUpdate();
                 String editedEntry = ouv.getEditedEntry();
+                String aprsEntry = ouv.getAPRSEntry();
                 ouv.reset();
                 ouv.resetEditedEntry();
+                ouv.resetAPRSEntry();
                 Platform.runLater(
                 () -> {
-                    if(addedEntry.contains("New Command:")){
+                    if(!aprsEntry.equals("")){
+                        recListView.getItems().add(aprsEntry);
+                    }
+                    else if(addedEntry.contains("New Command:")){
                         if(!doNotDisturb.isSelected()){
                             recListView.getItems().add(addedEntry.substring(13, addedEntry.length()));
                         }
