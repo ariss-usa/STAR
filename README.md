@@ -10,7 +10,7 @@ The purpose of this project is to prepare and familiarize students with remote c
 To control your mBot using this app, you simply need to plug the Bluetooth dongle into the device running the application, and turn on the mBot.
 The mBot's flashing blue light should turn to a solid blue light to indicate successful pairing. Click the pair dropdown -> Select the Bluetooth dongle's COM port -> click pair. To send commands, select a robot (select the COM port for local control) and enter time, direction, and power values, then hit the send button.
 
-## Installation (FOR DEVELOPERS) ##
+## Windows Installation (FOR DEVELOPERS) ##
 1. Download or clone this repository
 2. Open this project in Visual Studio Code
 3. Create a virtual environment inside the root directory
