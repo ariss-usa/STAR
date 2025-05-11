@@ -44,6 +44,7 @@
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.Tooltip?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
@@ -105,20 +106,20 @@
                   <Font name="Verdana" size="12.0" />
               </font>
             </Button>
-            <Label fx:id="sentText" layoutX="83.0" layoutY="146.0" text="Commands Sent">
+            <Label fx:id="sentText" layoutX="83.0" layoutY="149.0" text="Commands Sent">
                <font>
                   <Font name="Verdana" size="15.0" />
                </font>
             </Label>
-            <Label fx:id="recText" layoutX="413.0" layoutY="146.0" text="Commands Received">
+            <Label fx:id="recText" layoutX="659.0" layoutY="149.0" text="Commands Received">
                <font>
                   <Font name="Verdana" size="15.0" />
                </font>
             </Label>
             <ListView fx:id="sentListView" layoutX="17.0" layoutY="169.0" prefHeight="270.0" prefWidth="280.0" />
-            <ListView fx:id="recListView" layoutX="369.0" layoutY="169.0" prefHeight="270.0" prefWidth="280.0" />
-            <Separator layoutX="336.0" layoutY="38.0" orientation="VERTICAL" prefHeight="374.0" prefWidth="0.0" />
-            <CheckBox fx:id="doNotDisturb" layoutX="367.0" layoutY="70.0" mnemonicParsing="false" onMouseClicked="#checkBoxClicked" text="Do Not Disturb">
+            <ListView fx:id="recListView" layoutX="615.0" layoutY="172.0" prefHeight="270.0" prefWidth="280.0" />
+            <Separator layoutX="440.0" layoutY="31.0" orientation="VERTICAL" prefHeight="190.0" prefWidth="6.0" />
+            <CheckBox fx:id="doNotDisturb" layoutX="613.0" layoutY="73.0" mnemonicParsing="false" onMouseClicked="#checkBoxClicked" text="Do Not Disturb">
               <font>
                   <Font name="Verdana" size="12.0" />
               </font>
@@ -131,11 +132,11 @@
                   <Tooltip text="Speed of robot (1, 120)" />
                </tooltip>
             </TextField>
-            <ComboBox fx:id="localRobotConnection" layoutX="365.0" layoutY="25.0" prefHeight="26.0" prefWidth="158.0" promptText="BT Connections" styleClass="combo-box">
+            <ComboBox fx:id="localRobotConnection" layoutX="611.0" layoutY="28.0" prefHeight="26.0" prefWidth="158.0" promptText="BT Connections" styleClass="combo-box">
                <tooltip>
                   <Tooltip text="Pair with your local robot" />
                </tooltip></ComboBox>
-            <Button fx:id="pairButton" layoutX="534.0" layoutY="22.0" mnemonicParsing="false" onMouseClicked="#pairPressed" prefHeight="32.0" prefWidth="113.0" text="Pair">
+            <Button fx:id="pairButton" layoutX="780.0" layoutY="25.0" mnemonicParsing="false" onMouseClicked="#pairPressed" prefHeight="32.0" prefWidth="113.0" text="Pair">
               <font>
                   <Font name="Verdana" size="12.0" />
               </font>
@@ -145,15 +146,21 @@
                   <Font name="Verdana" size="12.0" />
               </font>
             </CheckBox>
-            <CheckBox fx:id="visualizerCheck" layoutX="367.0" layoutY="108.0" mnemonicParsing="false" onAction="#visualize" text="Enable Visualizer">
+            <CheckBox fx:id="visualizerCheck" layoutX="613.0" layoutY="111.0" mnemonicParsing="false" onAction="#visualize" text="Enable Visualizer">
               <font>
                   <Font name="Verdana" size="12.0" />
               </font>
             </CheckBox>
-            <Circle fx:id="circle1" fill="DODGERBLUE" layoutX="496.0" layoutY="80.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
-            <Circle fx:id="circle2" fill="#1fc4ff" layoutX="507.0" layoutY="80.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
-            <Circle fx:id="circle3" fill="#1fffda" layoutX="519.0" layoutY="80.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
+            <Circle fx:id="circle1" fill="DODGERBLUE" layoutX="742.0" layoutY="83.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
+            <Circle fx:id="circle2" fill="#1fc4ff" layoutX="753.0" layoutY="83.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
+            <Circle fx:id="circle3" fill="#1fffda" layoutX="765.0" layoutY="83.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
             <CheckBox fx:id="recAPRSCheckBox" layoutX="155.0" layoutY="108.0" mnemonicParsing="false" onAction="#receive" text="Receive APRS" />
+            <Label fx:id="recText1" layoutX="391.0" layoutY="234.0" prefHeight="19.0" prefWidth="106.0" text="SSTV Decode">
+               <font>
+                  <Font name="Verdana" size="15.0" />
+               </font>
+            </Label>
+            <ImageView fx:id="imgView" fitHeight="190.0" fitWidth="247.0" layoutX="330.0" layoutY="253.0" pickOnBounds="true" preserveRatio="true" />
       </children>
     </AnchorPane>
       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="200.0" prefWidth="320.0" />

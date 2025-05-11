@@ -25,7 +25,7 @@ public class HelloApplication extends Application {
         System.out.println(HelloApplication.class.getResource("newGUI.fxml"));
         FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("newGUI.fxml"));
         Parent root = fxmlLoader.load();
-        Scene scene = new Scene(root, 665, 466);
+        Scene scene = new Scene(root, 912, 510);
 
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
         stage.setTitle("Mission Controller");
@@ -33,8 +33,8 @@ public class HelloApplication extends Application {
         stage.setScene(scene);
 
         Platform.runLater(()-> {
-            stage.setWidth(665);
-            stage.setHeight(466);
+            stage.setWidth(912);
+            stage.setHeight(510);
             stage.centerOnScreen();
         });
         stage.show();

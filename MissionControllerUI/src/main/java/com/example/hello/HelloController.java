@@ -18,6 +18,9 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
+import javafx.scene.image.ImageView;
+import javafx.scene.image.PixelWriter;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.shape.Circle;
 import javafx.stage.Modality;
@@ -45,6 +48,7 @@ import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 import java.awt.*;
+import javafx.scene.paint.Color;
 
 public class HelloController {
     @FXML
@@ -103,6 +107,8 @@ public class HelloController {
     private CheckBox visualizerCheck;
     @FXML
     private CheckBox recAPRSCheckBox;
+    @FXML
+    private ImageView imgView;
     
     private Stage parent;
     private Parent root;
@@ -114,6 +120,7 @@ public class HelloController {
     final private String ARISS_URL = "https://www.ariss.org/";
     final private String STAR_URL = "https://sites.google.com/view/ariss-starproject/home";
     final private String LOCALHOST_URL = "http://localhost:8080/index.html";
+    private WritableImage wrImg;
 
     @FXML
     protected void onLinkPressed(ActionEvent event) throws IOException, URISyntaxException{
@@ -551,6 +558,7 @@ public class HelloController {
             recAPRSCheckBox.setDisable(false);
             br.close();
         }
+
         onUpdateV2 ouv = new onUpdateV2();
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
         scheduledExecutorService.scheduleWithFixedDelay(new Runnable() {
@@ -560,9 +568,15 @@ public class HelloController {
                 String addedEntry = ouv.getNewUpdate();
                 String editedEntry = ouv.getEditedEntry();
                 String aprsEntry = ouv.getAPRSEntry();
+
+                int width = ouv.getWidth();
+                ArrayList<Color> line = new ArrayList<Color>(ouv.getLine());
+                int lineNum = ouv.getLineNumber();
+
                 ouv.reset();
                 ouv.resetEditedEntry();
                 ouv.resetAPRSEntry();
+                ouv.resetSSTV();
                 Platform.runLater(
                 () -> {
                     if(!aprsEntry.equals("")){
@@ -584,6 +598,24 @@ public class HelloController {
                         int index = Integer.parseInt(arr[1]);
                         possibleConnections.set(index, arr[0]);
                         availableRobots.getItems().setAll(filter.filterInternetInput(possibleConnections, fileValues.get(0).toString()));
+                    }
+                    
+                    if(width != -1 && line.size() == width && lineNum >= 0 && lineNum <= 256){
+                        if(wrImg == null){
+                            wrImg = new WritableImage(width, 256);
+                            imgView.setImage(wrImg);
+                        }
+
+                        //all colors have been populated and width is init
+                        //Deploy the line to the image
+                        
+                        PixelWriter pixelWriter = wrImg.getPixelWriter();
+                        
+                        for(int x = 0; x < width; x++){
+                            pixelWriter.setColor(x, lineNum, line.get(x));
+                        }
+
+                        imgView.setImage(wrImg);
                     }
                 });
             }
