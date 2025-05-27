@@ -33,6 +33,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -44,6 +46,12 @@ import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
 import java.awt.*;
 
 public class HelloController {
@@ -114,6 +122,7 @@ public class HelloController {
     final private String ARISS_URL = "https://www.ariss.org/";
     final private String STAR_URL = "https://sites.google.com/view/ariss-starproject/home";
     final private String LOCALHOST_URL = "http://localhost:8080/index.html";
+    private BackendDispatcher dispatcher;
 
     @FXML
     protected void onLinkPressed(ActionEvent event) throws IOException, URISyntaxException{
@@ -347,16 +356,23 @@ public class HelloController {
             String selectedDirection = type.getSelectionModel().getSelectedItem();
             if(!medium.isSelected()){
                 String command = "";
+                HashMap<String, Object> map = new HashMap<>();
                 if(spl.length > 1){
                     String selectedMCID = selectedItem.substring(0, selectedItem.indexOf("\n"));
-                    command = "SEND " + Power.getText() + " " + selectedDirection + " "
-                    + s + " Selected MCid: " + selectedMCID;
+                    //command = "SEND " + Power.getText() + " " + selectedDirection + " "
+                    //+ s + " Selected MCid: " + selectedMCID;
+                    command = Power.getText() + " " + selectedDirection + " " + s;
+                    
+                    map.put("receiver_id", selectedMCID);
+                    map.put("commands", Arrays.asList(command));
+                    dispatcher = new BackendDispatcher(MessageStructure.REMOTE_CONTROL, map);
                 }
                 else{
-                    command = "Local " + Power.getText() + " " + selectedDirection + " "+ s;
+                    command = Power.getText() + " " + selectedDirection + " "+ s;
+                    map.put("commands", Arrays.asList(command));
+                    dispatcher = new BackendDispatcher(MessageStructure.LOCAL_CONTROL, map);
                 }
-                transfer t = new transfer(command);
-                threadExecutor.submit(t);
+                threadExecutor.submit(dispatcher);
                 sentListView.getItems().add(command);
             }
             else{
@@ -382,25 +398,30 @@ public class HelloController {
     @FXML
     void checkBoxClicked(MouseEvent event) {
         if(fileValues.size() != 0){
+            HashMap<String, Object> map = new HashMap<>();
             if(doNotDisturb.isSelected()){
                 doNotDisturb.setDisable(true);
                 showLoadingAnimation();
-                transfer tr = new transfer("editOnline, ChangeTo: No");
-                tr.setOnSucceeded(e -> {
+                //transfer tr = new transfer("editOnline, ChangeTo: No");
+                map.put("doNotDisturb", true);
+                dispatcher = new BackendDispatcher(MessageStructure.USER_DATA_UPDATE, map);
+                dispatcher.setOnSucceeded(e -> {
                     hideLoadingAnimation();
                     doNotDisturb.setDisable(false);
                 });
-                threadExecutor.submit(tr);
+                threadExecutor.submit(dispatcher);
             }
             else{
                 doNotDisturb.setDisable(true);
                 showLoadingAnimation();
-                transfer tr = new transfer("editOnline, ChangeTo: Yes");
-                tr.setOnSucceeded(e -> {
+                //transfer tr = new transfer("editOnline, ChangeTo: Yes");
+                map.put("doNotDisturb", false);
+                dispatcher = new BackendDispatcher(MessageStructure.USER_DATA_UPDATE, map);
+                dispatcher.setOnSucceeded(e -> {
                     doNotDisturb.setDisable(false);
                     hideLoadingAnimation();
                 });
-                threadExecutor.submit(tr);
+                threadExecutor.submit(dispatcher);
             }
         }
     }
@@ -412,12 +433,14 @@ public class HelloController {
         else{
             String pairText = pairButton.getText();
             if(pairText.equals("Pair")){
-                String send = "Pair connect " + localRobotConnection.getSelectionModel().getSelectedItem();
-                transfer tr = new transfer(send);
-                pairButton.setDisable(true);
-                tr.setOnSucceeded(e -> {
-                    String passfail = tr.getValue();
-                    if (passfail.equals("pass")){
+                HashMap<String, Object> map = new HashMap<>();
+                map.put("port", localRobotConnection.getSelectionModel().getSelectedItem());
+                dispatcher = new BackendDispatcher(MessageStructure.PAIR_CONNECT, map);
+
+                dispatcher.setOnSucceeded(e -> {
+                    //String passfail = dispatcher.getValue();
+                    JsonObject response = dispatcher.getValue();
+                    if (response.get("status").getAsString().equals("ok")){
                         availableRobots.getItems().add(0, localRobotConnection.getValue());
                         localRobotConnection.setDisable(true);
                         File f = new File("important.txt");
@@ -428,13 +451,13 @@ public class HelloController {
                         pairingStatus = true;
                         pairButton.setText("Disconnect");
                     }
-                    else if(passfail.equals("fail")){
+                    else if(response.get("status").getAsString().equals("error")){
                         //Show user pairing failed
                         AlertBox.display("Pairing failed, try again");
                     }
                     pairButton.setDisable(false);
                 });
-                threadExecutor.submit(tr);       
+                threadExecutor.submit(dispatcher);
             }
             else{
                 localRobotConnection.setValue(null);
@@ -445,9 +468,12 @@ public class HelloController {
                 
                 //Unpair and turn status offline
                 pairButton.setText("Pair");
-                transfer tr = new transfer("Pair disconnect");
+                //transfer tr = new transfer("Pair disconnect");
+
+                dispatcher = new BackendDispatcher(MessageStructure.PAIR_DISCONNECT, null);
+
                 transfer tr1 = new transfer("stopReceivingAPRS");
-                threadExecutor.submit(tr);
+                threadExecutor.submit(dispatcher);
                 threadExecutor.submit(tr1);
                 //transfer tr1 = new transfer("changeTo: No");
                 //threadExecutor.submit(tr1);
@@ -541,7 +567,8 @@ public class HelloController {
                 returnEntries.checkfile(true);
                 possibleConnections = returnEntries.getDirList();
                 availableRobots.setVisibleRowCount(3);
-                availableRobots.getItems().addAll(filter.filterInternetInput(possibleConnections, fileValues.get(0).toString()));
+                availableRobots.getItems().addAll(possibleConnections);
+                //availableRobots.getItems().addAll(filter.filterInternetInput(possibleConnections, fileValues.get(0).toString()));
             }
         }
         File callsignFile = new File("callsign.txt");
@@ -628,21 +655,27 @@ public class HelloController {
                     try(ZContext ctx = new ZContext()){
                         ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
                         socket.connect("tcp://127.0.0.1:5555");
-                        socket.send("getCOMList");
+                        Gson gson = new Gson();
+                        JsonObject msg = new JsonObject();
+                        msg.addProperty("type", "get_ports");
+                        socket.send(gson.toJson(msg));
                         String comports = socket.recvStr();
-                        String [] split = comports.split(";");
+                        //String [] split = comports.split(";");
+                        JsonObject obj = gson.fromJson(comports, JsonObject.class);
+                        JsonArray portsArray = obj.getAsJsonArray("ports");
+    
                         ctx.destroy();
                         final CountDownLatch latch = new CountDownLatch(1);
                         Platform.runLater(new Runnable() {                          
                             @Override
                             public void run() {
                                 try{
+                                    if(portsArray == null){
+                                        return;
+                                    }
                                     ArrayList<String> output = new ArrayList<String>();
-                                    for(int i = 0; i < split.length; i++){
-                                        if(split[i].equals("")){
-                                            continue;
-                                        }
-                                        output.add(split[i]);
+                                    for(JsonElement port : portsArray){
+                                        output.add(port.getAsString());
                                     }
                                     localRobotConnection.getItems().removeAll(localRobotConnection.getItems());
                                     localRobotConnection.getItems().addAll(output);

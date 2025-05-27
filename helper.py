@@ -1,5 +1,4 @@
 import time
-import serial
 import importlib
 
 serialPort = None

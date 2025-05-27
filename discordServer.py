@@ -259,7 +259,7 @@ async def checkFile(editMessage):
         schoolName = f.readline().strip()       
         city = f.readline().strip()             
         state = f.readline().strip()            
-        sdrDonglePresent = f.readline().strip() 
+        sdrDonglePresent = f.readline().strip()
     channel = client.get_channel(DIR_ID)
 
     if(editMessage == "true"):
