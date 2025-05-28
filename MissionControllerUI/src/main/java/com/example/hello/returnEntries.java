@@ -1,7 +1,6 @@
 package com.example.hello;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -31,9 +30,9 @@ public class returnEntries {
             connections.clear();
             for(int i = 0; i < robots.size(); i++){
                 JsonObject robot = robots.get(i).getAsJsonObject();
-                String summary = robot.get("id").getAsString() + " - " +
-                                robot.get("city").getAsString() + ", " +
-                                robot.get("state").getAsString();
+                String summary = robot.get("id").getAsString() + "\n" +
+                                 robot.get("city").getAsString() + "\n" +
+                                 robot.get("state").getAsString();
                 connections.add(summary);
             }
         }catch(final InterruptedException ex) {

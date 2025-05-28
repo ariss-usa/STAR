@@ -24,17 +24,7 @@ async def update(robot: RobotEntry):
         return {"status": "error"}
 
     active_robots[robot.id] = robot
-    for connection in active_connections.values():
-        try:
-            await connection.send_json({
-                "type": "robot_edit",
-                "id": robot.id,
-                "data": robot.model_dump()
-            })
-        except Exception as e:
-            print(f"Failed to send to connection: {e}")
-    
-    return {"status": "ok", "data": robot.model_dump()}
+    return {"status": "ok"}
 
 @app.post("/send_command")
 async def send_command(command: Command):
@@ -53,7 +43,7 @@ async def send_command(command: Command):
     
     await socket.send_json({
         "type": "command",
-        "commands": command.commands,
+        "commands": [c.model_dump() for c in command.commands],
         "sender_id": command.sender_id,
         "receiver_id": command.receiver_id
     })
@@ -72,7 +62,6 @@ async def websocket_endpoint(websocket: WebSocket):
         active_robots[mcID] = robot
         active_connections[mcID] = websocket
 
-        print("CONNECTED")
         while True:
             msg = await websocket.receive_json()
 

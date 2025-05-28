@@ -361,10 +361,14 @@ public class HelloController {
                     String selectedMCID = selectedItem.substring(0, selectedItem.indexOf("\n"));
                     //command = "SEND " + Power.getText() + " " + selectedDirection + " "
                     //+ s + " Selected MCid: " + selectedMCID;
-                    command = Power.getText() + " " + selectedDirection + " " + s;
+                    //command = Power.getText() + " " + selectedDirection + " " + s;
+                    HashMap<String, Object> cmd = new HashMap<>();
+                    cmd.put("power", Power.getText());
+                    cmd.put("direction", selectedDirection);
+                    cmd.put("time", s);
                     
                     map.put("receiver_id", selectedMCID);
-                    map.put("commands", Arrays.asList(command));
+                    map.put("commands", Arrays.asList(cmd));
                     dispatcher = new BackendDispatcher(MessageStructure.REMOTE_CONTROL, map);
                 }
                 else{

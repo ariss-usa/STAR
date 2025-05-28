@@ -105,6 +105,7 @@ async def handle_request(msg):
                 'commands': List[RobotCommand]
             }
             """
+            print(msg)
             payload = {
                 'sender_id': myMC,
                 'receiver_id': msg['receiver_id'],
@@ -198,7 +199,12 @@ async def connect_to_ws():
             websocket_started = True
             while True:
                 msg = await websocket.recv()
-                print("[WebSocket] Received:", msg)
+                data = json.loads(msg)
+                if data["type"] == "command":
+                    print("posting to Serial")
+                    helper.postToSerialJson(data["commands"])
+
+                print("[WebSocket] Received:", data)
     except Exception as e:
         print(f"[WebSocket] Connection failed: {e}")
         websocket_started = False
