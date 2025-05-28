@@ -8,14 +8,20 @@ from serial import STOPBITS_ONE
 from serial import SerialException
 from serial.tools.list_ports import comports
 import os
+import websockets
+import json
 
 ACTIVE_ROBOTS_ENDPOINT = "http://localhost:8000/robots/active"
 UPDATE_ROBOT_ENDPOINT = "http://localhost:8000/robots/update"
 SEND_COMMAND_ENDPOINT = "http://localhost:8000/send_command"
+WEBSOCKET_ENDPOINT = "ws://localhost:8000/ws"
 USER_DATA_FILE = "important.txt"
 GLOBAL_MODE = False
 
 myMC = schoolName = city = state = None
+do_not_disturb = True
+websocket_started = False
+
 context = Context()
 socket = context.socket(REP)
 socket.bind("tcp://127.0.0.1:5555")
@@ -36,7 +42,8 @@ def update_robot(doNotDisturb: bool):
     """
     Add/push changes into view
     """
-
+    global do_not_disturb
+    do_not_disturb = doNotDisturb
     robot_data = {
         "id": myMC,
         "schoolName": schoolName,
@@ -112,7 +119,11 @@ async def handle_request(msg):
             }
             """
             read_config()
-            update_robot(msg)
+            update_robot(msg["doNotDisturb"])
+
+            if not websocket_started and GLOBAL_MODE:
+                asyncio.create_task(connect_to_ws())
+
             return {"status": "ok"}
         case "local_control":
             """
@@ -148,11 +159,10 @@ async def handle_request(msg):
             }
             return payload
 
-async def main_loop():
-    read_config()
+async def zmq_loop():
     while True:
         try:
-            msg = socket.recv_json()
+            msg = await asyncio.get_running_loop().run_in_executor(None, socket.recv_json) # Run blocking recv_json() in separate thread
             print(f"[ZMQ] Received: {msg}")
             response = await handle_request(msg)
             print(f"[ZMQ] Response: {response}")
@@ -160,4 +170,37 @@ async def main_loop():
         except Exception as e:
             socket.send_json({"status": "error", "detail": str(e)})
 
-asyncio.run(main_loop())
+
+async def main():
+    read_config()
+    #tasks = [zmq_loop()]
+    tasks = [asyncio.create_task(zmq_loop())]
+    if GLOBAL_MODE:
+        print("scheduling websocket connect")
+        tasks.append(asyncio.create_task(connect_to_ws()))
+    else:
+        print("skipping websocket connection")
+    await asyncio.gather(*tasks)
+
+async def connect_to_ws():
+    global websocket_started
+
+    try:
+        async with websockets.connect(WEBSOCKET_ENDPOINT) as websocket:
+            print("Opening socket")
+            await websocket.send(json.dumps({
+                "id": myMC,
+                "schoolName": schoolName,
+                "city": city,
+                "state": state,
+                "doNotDisturb": do_not_disturb
+            }))
+            websocket_started = True
+            while True:
+                msg = await websocket.recv()
+                print("[WebSocket] Received:", msg)
+    except Exception as e:
+        print(f"[WebSocket] Connection failed: {e}")
+        websocket_started = False
+
+asyncio.run(main())

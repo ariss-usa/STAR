@@ -66,11 +66,13 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         metadata = await websocket.receive_json() # Client should immediately send their info
         mcID = metadata["id"]
+        print(metadata)
         robot = RobotEntry(**metadata) # Make a robot entry
 
         active_robots[mcID] = robot
         active_connections[mcID] = websocket
 
+        print("CONNECTED")
         while True:
             msg = await websocket.receive_json()
 

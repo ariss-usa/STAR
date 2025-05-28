@@ -1,6 +1,7 @@
 package com.example.hello;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -20,18 +21,11 @@ public class returnEntries {
 
     public static ArrayList<String> getDirList(){
         final ExecutorService service;
-        final Future<String>  dirTask;
+        final Future<String> dirTask;
 
         service = Executors.newFixedThreadPool(1);        
         dirTask = service.submit(new dirV1());
         try{
-            /*
-            connections.clear();
-            String [] arr = dirTask.get().split(";");
-            for(String traverse : arr){
-                connections.add(traverse);
-            }
-            */
             JsonObject obj = JsonParser.parseString(dirTask.get()).getAsJsonObject();
             JsonArray robots = obj.getAsJsonArray("active_robots");
             connections.clear();

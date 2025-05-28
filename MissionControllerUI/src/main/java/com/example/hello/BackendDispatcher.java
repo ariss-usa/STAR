@@ -49,11 +49,11 @@ public class BackendDispatcher extends Task<JsonObject>{
     }
 }
 
-
 enum MessageStructure {
     PAIR_CONNECT,
     REMOTE_CONTROL,
     LOCAL_CONTROL,
     PAIR_DISCONNECT,
-    USER_DATA_UPDATE
+    USER_DATA_UPDATE,
+    GET_DIRECTORY
 }
