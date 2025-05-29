@@ -26,12 +26,11 @@ public class commandBuilderController {
     void multiCommand(ActionEvent event) {
         String txt = CBTextBox.getText();
         boolean formatCheck = checkFormat(txt);
-        String currRobot = HelloController.getSelectedRobot();
+        RobotEntry currRobot = HelloController.getSelectedRobot();
         if(currRobot == null){
             AlertBox.display("pair to a robot");
         }
         else{
-            String [] spl = currRobot.split("\n");
             if(currRobot.equals("")){
                 AlertBox.display("Select a robot");
             }
@@ -40,9 +39,9 @@ public class commandBuilderController {
             }
             else if(formatCheck){
                 String command = "";
-                if(spl.length > 1){
+                if(!currRobot.isLocal()){
                     //Multi-commands through discord
-                    String selectedMCID = currRobot.substring(0, currRobot.indexOf("\n"));
+                    String selectedMCID = currRobot.getId();
                     //100 forward 5
                     //50 backward 2
                     //25 left 3

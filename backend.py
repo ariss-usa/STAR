@@ -120,10 +120,12 @@ async def handle_request(msg):
             }
             """
             read_config()
-            update_robot(msg["doNotDisturb"])
-
+            print(f"[DEBUG] websocket started: {websocket_started}")
+            print(f"[DEBUG] global mode: {GLOBAL_MODE}")
             if not websocket_started and GLOBAL_MODE:
                 asyncio.create_task(connect_to_ws())
+
+            update_robot(msg["doNotDisturb"])
 
             return {"status": "ok"}
         case "local_control":
@@ -133,8 +135,7 @@ async def handle_request(msg):
                 'commands': [100 forward 2, 200 backwards 1]
             }
             """
-            #TODO: update postToSerial to use its own serial port (not take in one since we set it)
-            helper.postToSerial(helper.getSerial(), msg['commands'])
+            helper.postToSerialJson(msg['commands'])
             return {"status": "ok"}
         case "pair_connect":
             """

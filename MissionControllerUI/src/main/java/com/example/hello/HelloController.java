@@ -64,11 +64,13 @@ public class HelloController {
     @FXML
     private javafx.scene.layout.VBox VBox;
     @FXML
-    private ComboBox<String> availableRobots;
+    private ComboBox<RobotEntry> availableRobots;
     @FXML
     private TextField command;
     @FXML
     private MenuItem configItem;
+    @FXML
+    private MenuItem configItem1;
     @FXML
     private CheckBox doNotDisturb;
     @FXML
@@ -98,12 +100,6 @@ public class HelloController {
     @FXML
     private MenuItem link;
     @FXML
-    private Circle circle1;
-    @FXML
-    private Circle circle2;
-    @FXML
-    private Circle circle3;
-    @FXML
     private MenuItem otherFeatures;
     @FXML
     private MenuItem commandBuilder;
@@ -111,13 +107,19 @@ public class HelloController {
     private CheckBox visualizerCheck;
     @FXML
     private CheckBox recAPRSCheckBox;
-    
+    @FXML
+    private Circle circle1;
+    @FXML
+    private Circle circle2;
+    @FXML
+    private Circle circle3;
+
     private Stage parent;
     private Parent root;
     private ArrayList<String> possibleConnections = new ArrayList<String>();
     private ArrayList<Object> fileValues = new ArrayList<Object>();
     public static ExecutorService threadExecutor = Executors.newSingleThreadExecutor();
-    private static String currRobot = "";
+    private static RobotEntry currRobot;
     private static boolean pairingStatus = false;
     final private String ARISS_URL = "https://www.ariss.org/";
     final private String STAR_URL = "https://sites.google.com/view/ariss-starproject/home";
@@ -178,6 +180,7 @@ public class HelloController {
         BufferedReader br = new BufferedReader(new FileReader(callsignFile));
         String format = "My Call: " + br.readLine() + ", Send to: " + br.readLine();
         br.close();
+        /*
         if(pairingStatus){
             if(availableRobots.getItems().size() > 1 && availableRobots.getItems().get(1).startsWith("My Call")){
                 availableRobots.getItems().set(1, format);
@@ -194,6 +197,7 @@ public class HelloController {
                 availableRobots.getItems().add(0, format);
             }
         }
+        */
     }
     Process process = null;
     Thread processThread = null;
@@ -294,13 +298,8 @@ public class HelloController {
 
             if(pairButton.getText().equals("Disconnect")){
                 String s = localRobotConnection.getValue();
-                availableRobots.getItems().add(s);
+                availableRobots.getItems().add(new RobotEntry(s));
             }
-            
-            possibleConnections = returnEntries.getDirList();
-            availableRobots.getItems().addAll(filter.filterInternetInput(possibleConnections, fileValues.get(0).toString()));        
-            
-            availableRobots.setVisibleRowCount(3);
         }
     }
     @FXML
@@ -348,20 +347,14 @@ public class HelloController {
         }
         else{
             //Determine whether internet/APRS
-            String str = availableRobots.getSelectionModel().getSelectedItem();
-            String [] spl = str.split("\n");
-
             String s = command.getText();
-            String selectedItem = availableRobots.getSelectionModel().getSelectedItem();
+            RobotEntry selectedItem = availableRobots.getSelectionModel().getSelectedItem();
             String selectedDirection = type.getSelectionModel().getSelectedItem();
             if(!medium.isSelected()){
                 String command = "";
                 HashMap<String, Object> map = new HashMap<>();
-                if(spl.length > 1){
-                    String selectedMCID = selectedItem.substring(0, selectedItem.indexOf("\n"));
-                    //command = "SEND " + Power.getText() + " " + selectedDirection + " "
-                    //+ s + " Selected MCid: " + selectedMCID;
-                    //command = Power.getText() + " " + selectedDirection + " " + s;
+                if(!selectedItem.isLocal()){
+                    String selectedMCID = selectedItem.getId();
                     HashMap<String, Object> cmd = new HashMap<>();
                     cmd.put("power", Power.getText());
                     cmd.put("direction", selectedDirection);
@@ -372,8 +365,12 @@ public class HelloController {
                     dispatcher = new BackendDispatcher(MessageStructure.REMOTE_CONTROL, map);
                 }
                 else{
-                    command = Power.getText() + " " + selectedDirection + " "+ s;
-                    map.put("commands", Arrays.asList(command));
+                    HashMap<String, Object> cmd = new HashMap<>();
+                    cmd.put("power", Power.getText());
+                    cmd.put("direction", selectedDirection);
+                    cmd.put("time", s);
+
+                    map.put("commands", Arrays.asList(cmd));
                     dispatcher = new BackendDispatcher(MessageStructure.LOCAL_CONTROL, map);
                 }
                 threadExecutor.submit(dispatcher);
@@ -445,7 +442,7 @@ public class HelloController {
                     //String passfail = dispatcher.getValue();
                     JsonObject response = dispatcher.getValue();
                     if (response.get("status").getAsString().equals("ok")){
-                        availableRobots.getItems().add(0, localRobotConnection.getValue());
+                        availableRobots.getItems().add(0, new RobotEntry(localRobotConnection.getValue()));
                         localRobotConnection.setDisable(true);
                         File f = new File("important.txt");
                         if(f.exists()){
@@ -501,6 +498,8 @@ public class HelloController {
         doNotDisturb.setDisable(true);
         //otherFeatures.setDisable(true);
         commandBuilder.setDisable(true);
+        medium.setDisable(true);
+        configItem1.setDisable(true);
         
         hideLoadingAnimation();
         loadingAnimation();
@@ -518,12 +517,12 @@ public class HelloController {
         });
         availableRobots.setButtonCell(new ListCell<>() {
             @Override
-            protected void updateItem(String item, boolean empty) {
+            protected void updateItem(RobotEntry item, boolean empty) {
                 super.updateItem(item, empty);
                 if (item == null || empty) {
                     setText(availableRobots.getPromptText());
                 } else {
-                    setText(item);
+                    setText(item.toString());
                 }
             }
         });
@@ -541,40 +540,78 @@ public class HelloController {
 
         availableRobots.getSelectionModel().selectedItemProperty().addListener((options, oldValue, newValue) -> {
             currRobot = newValue;
-            if(newValue == null || newValue.isEmpty()){
+
+            if (newValue == null) {
                 return;
             }
-            if(currRobot.startsWith("My Call")){
+
+            if (newValue.isLocal()) {
+                // This is a local robot — enable local-only options
                 commandBuilder.setDisable(true);
                 medium.setDisable(true);
-                medium.setSelected(true);
-            }
-            else{
+                medium.setSelected(false);
+            } else {
+                // This is a remote robot — enable remote features
                 commandBuilder.setDisable(false);
                 medium.setDisable(true);
                 medium.setSelected(false);
+
                 threadExecutor.submit(new transfer("stopReceivingAPRS"));
             }
+
             otherFeatures.setDisable(false);
-         });
+        });
+
         localRobotConnection.showingProperty().addListener((obs, wasShowing, isNowShowing) -> {
             if(isNowShowing){
                 comList.restart();
             }
         });
-        medium.setDisable(true);
-        recAPRSCheckBox.setDisable(true);
-        File tempFile = new File("important.txt");
-        if (tempFile.exists()){
+
+        if(new File("important.txt").exists()){
             Reader.read(fileValues);
-            if (fileValues.size() != 0){
-                returnEntries.checkfile(true);
-                possibleConnections = returnEntries.getDirList();
-                availableRobots.setVisibleRowCount(3);
-                availableRobots.getItems().addAll(possibleConnections);
-                //availableRobots.getItems().addAll(filter.filterInternetInput(possibleConnections, fileValues.get(0).toString()));
-            }
         }
+
+        availableRobots.setVisibleRowCount(3);
+        availableRobots.showingProperty().addListener((obs, wasShowing, isShowing) -> {
+            if (isShowing) {
+                ArrayList<RobotEntry> localEntries = new ArrayList<>();
+                for (RobotEntry item : availableRobots.getItems()) {
+                    if (item != null && item.isLocal()) {
+                        localEntries.add(item);
+                    }
+                }
+
+                dispatcher = new BackendDispatcher(MessageStructure.GET_DIRECTORY, null);
+                dispatcher.setOnSucceeded(event -> {
+                    JsonObject obj = dispatcher.getValue();
+
+                    if (obj != null && obj.get("status").getAsString().equals("ok")){
+                        ArrayList<RobotEntry> fullList = new ArrayList<>(localEntries);
+
+                        for (JsonElement el : obj.getAsJsonArray("active_robots")) {
+                            JsonObject robot = el.getAsJsonObject();
+                            String id = robot.get("id").getAsString();
+                            String school = robot.get("schoolName").getAsString();
+                            String city = robot.get("city").getAsString();
+                            String state = robot.get("state").getAsString();
+                            fullList.add(new RobotEntry(id, school, city, state));
+                        }
+
+                        RobotEntry selectedNow = availableRobots.getSelectionModel().getSelectedItem() == null ? 
+                                                null : availableRobots.getSelectionModel().getSelectedItem().get_copy();
+                        availableRobots.getItems().setAll(fullList);
+
+                        if (selectedNow != null){
+                            availableRobots.getSelectionModel().select(selectedNow);
+                        }
+                    }
+                });
+                threadExecutor.submit(dispatcher);
+            }
+        });
+
+        /*
         File callsignFile = new File("callsign.txt");
         if(callsignFile.exists()){
             BufferedReader br = new BufferedReader(new FileReader(callsignFile));
@@ -582,14 +619,13 @@ public class HelloController {
             recAPRSCheckBox.setDisable(false);
             br.close();
         }
+        */
         onUpdateV2 ouv = new onUpdateV2();
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
         scheduledExecutorService.scheduleWithFixedDelay(new Runnable() {
             @Override
             public void run() {
                 ouv.call();
-                String addedEntry = ouv.getNewUpdate();
-                String editedEntry = ouv.getEditedEntry();
                 String aprsEntry = ouv.getAPRSEntry();
                 ouv.reset();
                 ouv.resetEditedEntry();
@@ -599,33 +635,11 @@ public class HelloController {
                     if(!aprsEntry.equals("")){
                         recListView.getItems().add(aprsEntry);
                     }
-                    else if(addedEntry.contains("New Command:")){
-                        if(!doNotDisturb.isSelected()){
-                            recListView.getItems().add(addedEntry.substring(13, addedEntry.length()));
-                        }
-                    }
-                    else if(addedEntry.contains("New Robot:")){
-                        if(!addedEntry.substring(11, 16).equals(fileValues.get(0).toString())){
-                            possibleConnections.add(addedEntry);
-                            availableRobots.getItems().add(filter.filterEntry(addedEntry, fileValues.get(0).toString()));
-                        }
-                    }
-                    else if(!editedEntry.equals("")){
-                        String [] arr = editedEntry.split("\nIndex: ");
-                        int index = Integer.parseInt(arr[1]);
-                        possibleConnections.set(index, arr[0]);
-                        availableRobots.getItems().setAll(filter.filterInternetInput(possibleConnections, fileValues.get(0).toString()));
-                    }
                 });
             }
         }, 0, 100, TimeUnit.MILLISECONDS);
     }
-    public static String getSelectedRobot(){
-        return currRobot;
-    }
-    public static boolean getPairingStatus(){
-        return pairingStatus;
-    }
+
     private void loadingAnimation(){
         TranslateTransition [] tta = {new TranslateTransition(), new TranslateTransition(), new TranslateTransition()};
         Node [] circles = {circle1, circle2, circle3};
@@ -650,6 +664,14 @@ public class HelloController {
         circle2.setVisible(true);
         circle3.setVisible(true);
     }
+
+    public static RobotEntry getSelectedRobot(){
+        return currRobot;
+    }
+    public static boolean getPairingStatus(){
+        return pairingStatus;
+    }
+
     Service<Void> comList = new Service<Void>() {
         @Override
         protected Task<Void> createTask() {
@@ -664,7 +686,6 @@ public class HelloController {
                         msg.addProperty("type", "get_ports");
                         socket.send(gson.toJson(msg));
                         String comports = socket.recvStr();
-                        //String [] split = comports.split(";");
                         JsonObject obj = gson.fromJson(comports, JsonObject.class);
                         JsonArray portsArray = obj.getAsJsonArray("ports");
     

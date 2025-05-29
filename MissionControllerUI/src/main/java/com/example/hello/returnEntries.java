@@ -48,6 +48,13 @@ public class returnEntries {
             ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
             socket.connect("tcp://127.0.0.1:5555");
 
+            Gson gson = new Gson();
+            JsonObject msg = new JsonObject();
+            msg.addProperty("type", "user_data_update");
+            boolean b1 = socket.send(gson.toJson(msg));
+            String str = socket.recvStr();
+
+            /*
             if(editMessage){
                 Gson gson = new Gson();
                 JsonObject msg = new JsonObject();
@@ -61,6 +68,7 @@ public class returnEntries {
                 //boolean b1 = socket.send("Check file false");
                 //String str = socket.recvStr();
             }
+            */
             ctx.destroy();
         }
     }
