@@ -3,6 +3,7 @@ package com.example.hello;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -28,42 +29,35 @@ public class commandBuilderController {
         boolean formatCheck = checkFormat(txt);
         RobotEntry currRobot = HelloController.getSelectedRobot();
         if(currRobot == null){
-            AlertBox.display("pair to a robot");
+            AlertBox.display("Select a robot");
         }
         else{
-            if(currRobot.equals("")){
-                AlertBox.display("Select a robot");
-            }
-            else if(!HelloController.getPairingStatus()){
+            if(!HelloController.getPairingStatus()){
                 AlertBox.display("Pair to a robot");
             }
             else if(formatCheck){
-                String command = "";
+                String [] split = txt.split("\n| ");
+                HashMap<String, Object> params = new HashMap<>();
+                ArrayList<HashMap<String, Object>> cmds = new ArrayList<>();
+                for(int i = 0; i < split.length; i+=3){
+                    HashMap<String, Object> map = new HashMap<>();
+                    map.put("power", split[i]);
+                    map.put("direction", split[i+1]);
+                    map.put("time", split[i+2]);
+                    cmds.add(map);
+                }
+                params.put("commands", cmds);
+                BackendDispatcher dispatcher;
                 if(!currRobot.isLocal()){
                     //Multi-commands through discord
-                    String selectedMCID = currRobot.getId();
-                    //100 forward 5
-                    //50 backward 2
-                    //25 left 3
-                    String [] split = txt.split("\n| ");
-                    ArrayList<String> powers = new ArrayList<String>();
-                    ArrayList<String> direction = new ArrayList<String>();
-                    ArrayList<String> time = new ArrayList<String>();
-                    for(int i = 0; i < split.length; i+=3){
-                        powers.add(split[i]);
-                        direction.add(split[i + 1]);
-                        time.add(split[i + 2]);
-                    }
-                    command = "SEND " + powers.toString() + " " + direction.toString() + " "
-                    + time.toString() + " Selected MCid: " + selectedMCID;
-                    
+                    params.put("receiver_id", currRobot.getId());
+                    dispatcher = new BackendDispatcher(MessageStructure.REMOTE_CONTROL, params);
                 }
                 else{
                     //Multi-commands through BT
-                    command = "Local " + txt;
+                    dispatcher = new BackendDispatcher(MessageStructure.LOCAL_CONTROL, params);
                 }
-                transfer t = new transfer(command);
-                HelloController.threadExecutor.submit(t);
+                HelloController.threadExecutor.submit(dispatcher);
             }
         }
     }

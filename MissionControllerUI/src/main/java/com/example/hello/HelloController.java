@@ -116,7 +116,6 @@ public class HelloController {
 
     private Stage parent;
     private Parent root;
-    private ArrayList<String> possibleConnections = new ArrayList<String>();
     private ArrayList<Object> fileValues = new ArrayList<Object>();
     public static ExecutorService threadExecutor = Executors.newSingleThreadExecutor();
     private static RobotEntry currRobot;
@@ -124,7 +123,7 @@ public class HelloController {
     final private String ARISS_URL = "https://www.ariss.org/";
     final private String STAR_URL = "https://sites.google.com/view/ariss-starproject/home";
     final private String LOCALHOST_URL = "http://localhost:8080/index.html";
-    private BackendDispatcher dispatcher;
+    BackendDispatcher dispatcher;
 
     @FXML
     protected void onLinkPressed(ActionEvent event) throws IOException, URISyntaxException{
@@ -547,7 +546,7 @@ public class HelloController {
 
             if (newValue.isLocal()) {
                 // This is a local robot — enable local-only options
-                commandBuilder.setDisable(true);
+                commandBuilder.setDisable(false);
                 medium.setDisable(true);
                 medium.setSelected(false);
             } else {
@@ -671,7 +670,7 @@ public class HelloController {
     public static boolean getPairingStatus(){
         return pairingStatus;
     }
-
+    
     Service<Void> comList = new Service<Void>() {
         @Override
         protected Task<Void> createTask() {
