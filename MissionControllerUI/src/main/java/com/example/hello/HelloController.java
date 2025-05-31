@@ -452,7 +452,7 @@ public class HelloController {
                 HashMap<String, Object> map = new HashMap<>();
                 map.put("port", localRobotConnection.getSelectionModel().getSelectedItem());
                 dispatcher = new BackendDispatcher(MessageStructure.PAIR_CONNECT, map);
-
+                pairButton.setDisable(true);
                 dispatcher.setOnSucceeded(e -> {
                     //String passfail = dispatcher.getValue();
                     JsonObject response = dispatcher.getValue();
@@ -469,7 +469,7 @@ public class HelloController {
                     }
                     else if(response.get("status").getAsString().equals("error")){
                         //Show user pairing failed
-                        AlertBox.display("Pairing failed, try again");
+                        AlertBox.display(response.get("err_msg").getAsString());
                     }
                     pairButton.setDisable(false);
                 });
@@ -483,9 +483,19 @@ public class HelloController {
                 recAPRSCheckBox.setDisable(true);
                 
                 //Unpair and turn status offline
+                pairButton.setDisable(false);
                 pairButton.setText("Pair");
 
                 dispatcher = new BackendDispatcher(MessageStructure.PAIR_DISCONNECT, null);
+                dispatcher.setOnSucceeded(e -> {
+                    JsonObject recv = dispatcher.getValue();
+                    if(recv.get("status").getAsString().equals("error")){
+                        AlertBox.display(recv.get("err_msg").getAsString());
+                    }
+                    else{
+                        pairButton.setDisable(false);
+                    }
+                });
 
                 BackendDispatcher stop_rec = new BackendDispatcher(MessageStructure.STOP_APRS_RECEIVE, null);
                 stop_rec.setOnSucceeded(e -> {
@@ -633,25 +643,48 @@ public class HelloController {
             availableRobots.getItems().add(new RobotEntry(br.readLine(), br.readLine()));
             br.close();
         }
-        
-        onUpdateV2 ouv = new onUpdateV2();
-        ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
-        scheduledExecutorService.scheduleWithFixedDelay(new Runnable() {
-            @Override
-            public void run() {
-                ouv.call();
-                String aprsEntry = ouv.getAPRSEntry();
-                ouv.reset();
-                ouv.resetEditedEntry();
-                ouv.resetAPRSEntry();
-                Platform.runLater(
-                () -> {
-                    if(!aprsEntry.equals("")){
-                        recListView.getItems().add(aprsEntry);
-                    }
-                });
+
+        onUpdateV3 updater = new onUpdateV3();
+        updater.startListening(() -> {
+            //We have received a usb disconnect
+            if(pairingStatus){
+                localRobotConnection.getSelectionModel().clearSelection();
+                localRobotConnection.getItems().clear();
+                pairButton.setText("Pair");
+
+                if(availableRobots.getItems().size() > 0){
+                    //the first one must be the local robot
+                    availableRobots.getItems().remove(0);
+                }
+
+                pairButton.setDisable(false);
+                doNotDisturb.setSelected(true);
+                doNotDisturb.setDisable(true);
+                recAPRSCheckBox.setSelected(false);
+                recAPRSCheckBox.setDisable(true);
+                localRobotConnection.setDisable(false);
+                pairingStatus = false;
             }
-        }, 0, 100, TimeUnit.MILLISECONDS);
+        });
+        
+        // onUpdateV2 ouv = new onUpdateV2();
+        // ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
+        // scheduledExecutorService.scheduleWithFixedDelay(new Runnable() {
+        //     @Override
+        //     public void run() {
+        //         ouv.call();
+        //         String aprsEntry = ouv.getAPRSEntry();
+        //         ouv.reset();
+        //         ouv.resetEditedEntry();
+        //         ouv.resetAPRSEntry();
+        //         Platform.runLater(
+        //         () -> {
+        //             if(!aprsEntry.equals("")){
+        //                 recListView.getItems().add(aprsEntry);
+        //             }
+        //         });
+        //     }
+        // }, 0, 100, TimeUnit.MILLISECONDS);
     }
 
     private void loadingAnimation(){

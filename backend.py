@@ -15,6 +15,7 @@ import websockets
 import json
 from rtlsdr import RtlSdr
 from playsound3 import playsound
+from DisconnectMonitor import USBDisconnectWatcher
 
 ACTIVE_ROBOTS_ENDPOINT = "http://localhost:8000/robots/active"
 UPDATE_ROBOT_ENDPOINT = "http://localhost:8000/robots/update"
@@ -27,6 +28,7 @@ myMC = schoolName = city = state = None
 do_not_disturb = True
 websocket_started = False
 aprsUpdater = APRSUpdater()
+disconnectMonitor = None
 
 context = Context()
 socket = context.socket(REP)
@@ -90,8 +92,8 @@ def pair_with_bot(msg) -> bool:
         ser = Serial(port=msg['port'], baudrate=115200, bytesize=8, timeout=5, stopbits=STOPBITS_ONE)
         helper.setSerial(ser)
         helper.getSerial().write(bytearray([255, 85, 7, 0, 2, 5, 0, 0, 0, 0])) #stop sequence
-    except SerialException:
-        return False
+    except Exception as e:
+        raise RuntimeError(f"Error: {str(e)}")
     return True
 
 def check_rtlsdr():
@@ -178,13 +180,18 @@ async def handle_request(msg):
                 'port': ,
             }
             """
-            if pair_with_bot(msg):
+
+            try:
+                pair_with_bot(msg)
+                disconnectMonitor = USBDisconnectWatcher(msg['port'])
+                disconnectMonitor.start()
                 return {"status": "ok"}
-            else:
-                return {"status": "error"}
+            except Exception as e:
+                return {"status": "error", "err_msg": str(e)}
             
         case "pair_disconnect":
             helper.setSerial(None)
+            disconnectMonitor.stop()
             return {"status": "ok"}
         
         case "get_ports":
