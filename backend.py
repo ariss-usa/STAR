@@ -125,6 +125,7 @@ def send_aprs(msg):
         raise RuntimeError(f"Error sending aprs: {str(e)}")
     
 async def handle_request(msg):
+    global disconnectMonitor
     match msg['type']:
         case "get_directory":
             """
@@ -180,19 +181,21 @@ async def handle_request(msg):
                 'port': ,
             }
             """
-
             try:
                 pair_with_bot(msg)
-                disconnectMonitor = USBDisconnectWatcher(msg['port'])
+                disconnectMonitor = USBDisconnectWatcher(msg['port'], aprsUpdater)
                 disconnectMonitor.start()
                 return {"status": "ok"}
             except Exception as e:
                 return {"status": "error", "err_msg": str(e)}
             
         case "pair_disconnect":
-            helper.setSerial(None)
-            disconnectMonitor.stop()
-            return {"status": "ok"}
+            try:
+                helper.closeSerial()
+                disconnectMonitor.stop()
+                return {"status": "ok"}
+            except Exception as e:
+                return {"status": "error", "err_msg": f"Error: {str(e)}"}
         
         case "get_ports":
             ports = [str(port.device) for port in comports()]
@@ -205,6 +208,7 @@ async def handle_request(msg):
         case "send_aprs":
             try:
                 send_aprs(msg)
+                return {"status": "ok"}
             except Exception as e:
                 return {"status": "error", "err_msg": str(e)}
 

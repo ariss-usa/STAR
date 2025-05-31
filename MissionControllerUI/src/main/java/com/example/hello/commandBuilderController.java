@@ -53,11 +53,15 @@ public class commandBuilderController {
                     params.put("receiver_id", currRobot.getId());
                     dispatcher = new BackendDispatcher(MessageStructure.REMOTE_CONTROL, params);
                 }
-                else{
+                else if(currRobot.getType() == EntryType.LOCAL){
                     //Multi-commands through BT
                     dispatcher = new BackendDispatcher(MessageStructure.LOCAL_CONTROL, params);
                 }
-                //TODO: handle multiline commands through APRS
+                else{
+                    params.put("callsign", currRobot.myCallsign);
+                    params.put("destination", currRobot.callsignToAccept);
+                    dispatcher = new BackendDispatcher(MessageStructure.SEND_APRS, params);
+                }
                 HelloController.threadExecutor.submit(dispatcher);
             }
         }

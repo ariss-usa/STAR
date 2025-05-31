@@ -73,6 +73,12 @@ def getSerial():
     global serialPort
     return serialPort
 
+def closeSerial():
+    global serialPort
+    if serialPort:
+        serialPort.close()
+        serialPort = None
+
 def import_module_by_platform(module_name, platform_name):
     try:
         module = importlib.import_module(module_name)

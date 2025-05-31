@@ -25,16 +25,13 @@ class APRSUpdater:
         while direwolf.isalive():
             try:
                 line = direwolf.readline()
-                print(line)
-                clean_str = re.sub(r'\x1b\[.*?[@-~]', '', line)
-                clean_str = clean_str.strip()
-                pattern = re.compile(r'To\s(.*?)\s<0x0a>')
-                match = pattern.search(clean_str)
+                print("FROM THREAD", line)
+                match = re.search(r'(\w+)>[^:]+:\s*\[(.*?)\]', line)
                 if match:
-                    contents = match.group(1).split()
-                    command = f"{contents[1]} {contents[2]} {contents[3]}"
-                    print(command)
-                    helper.postToSerial(serialPort, [command])
+                    commands = match.group(2).split(",")
+                    for cmd in commands:
+                        div = cmd.split()
+                        helper.postToSerialJson([{"power": div[0], "direction": div[1], "time": div[2]}])
             except EOFError:
                 print("Direwolf stopped")
                 break
@@ -77,29 +74,14 @@ class APRSUpdater:
                         self.socket.send_string(line)
                         self.socket.recv()
                         helper.postToSerial(serialPort, commands)
-        """
-        with direwolf as p:
-            for line in p.stdout:
-                print(line)
-                line = line.strip()
-                #linearr = line.split()
-                pattern = r'\[([^]]+)\]'
-                match = re.search(pattern, line)
-                if match:
-                    content = match.group(1)
-                    commands = re.split(r',\s*', content)
-                    if self.checkFormat(commands):
-                        self.socket.send_string(line)
-                        self.socket.recv()
-                        helper.postToSerial(serialPort, commands)
-        """
+
     def startAPRSprocesses(self):
         #gets mic input
         if platform.system() == 'Windows' and self.ptyModule:
             if shutil.which("direwolf") is None:
                 raise RuntimeError("Direwolf not found in PATH. Please install it or add to PATH")
             try:
-                direwolf = self.ptyModule.spawn("direwolf -c ./direwolf.conf")
+                direwolf = self.ptyModule.spawn("direwolf -c ./direwolf-win.conf")
                 self.processList.append(direwolf)
             except Exception as e:
                 raise RuntimeError(f"Failed to launch Direwolf: {str(e)}")

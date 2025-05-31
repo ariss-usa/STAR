@@ -38,8 +38,6 @@ import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ResourceHandler;
@@ -483,9 +481,8 @@ public class HelloController {
                 recAPRSCheckBox.setDisable(true);
                 
                 //Unpair and turn status offline
-                pairButton.setDisable(false);
-                pairButton.setText("Pair");
-
+                pairButton.setDisable(true);
+                
                 dispatcher = new BackendDispatcher(MessageStructure.PAIR_DISCONNECT, null);
                 dispatcher.setOnSucceeded(e -> {
                     JsonObject recv = dispatcher.getValue();
@@ -493,13 +490,14 @@ public class HelloController {
                         AlertBox.display(recv.get("err_msg").getAsString());
                     }
                     else{
+                        pairButton.setText("Pair");
                         pairButton.setDisable(false);
                     }
                 });
 
                 BackendDispatcher stop_rec = new BackendDispatcher(MessageStructure.STOP_APRS_RECEIVE, null);
                 stop_rec.setOnSucceeded(e -> {
-                    JsonObject recv = dispatcher.getValue();
+                    JsonObject recv = stop_rec.getValue();
                     if(recv.get("status").getAsString().equals("error")){
                         AlertBox.display(recv.get("err_msg").getAsString());
                     }
@@ -509,7 +507,6 @@ public class HelloController {
                 threadExecutor.submit(stop_rec);
 
                 pairingStatus = false;
-                doNotDisturb.setSelected(true);
                 doNotDisturb.setDisable(true);
                 Power.clear();
                 command.clear();
@@ -658,7 +655,6 @@ public class HelloController {
                 }
 
                 pairButton.setDisable(false);
-                doNotDisturb.setSelected(true);
                 doNotDisturb.setDisable(true);
                 recAPRSCheckBox.setSelected(false);
                 recAPRSCheckBox.setDisable(true);
