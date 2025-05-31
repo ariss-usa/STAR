@@ -25,7 +25,7 @@ class APRSUpdater:
         while direwolf.isalive():
             try:
                 line = direwolf.readline()
-                print("FROM THREAD", line)
+                print(line)
                 match = re.search(r'(\w+)>[^:]+:\s*\[(.*?)\]', line)
                 if match:
                     commands = match.group(2).split(",")

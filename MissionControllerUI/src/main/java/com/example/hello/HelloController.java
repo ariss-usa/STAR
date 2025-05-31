@@ -279,12 +279,11 @@ public class HelloController {
         Dialogue controller = loader.getController();
         fileValues = controller.getFileList();
         if(controller.submitPressed()){
-            if(controller.isNewUser()){
-                returnEntries.checkfile(false);
-            }
-            else{
-                returnEntries.checkfile(true);
-            }
+            //New/Entry may have been changed - push to server
+            HashMap<String, Object> params = new HashMap<>();
+            params.put("doNotDisturb", doNotDisturb.isSelected());
+            dispatcher = new BackendDispatcher(MessageStructure.USER_DATA_UPDATE, params);
+            threadExecutor.submit(dispatcher);
 
             if(pairingStatus){
                 doNotDisturb.setDisable(false);
