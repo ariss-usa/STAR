@@ -16,7 +16,7 @@
       </Label>
       <Button fx:id="callSignSubmit" layoutX="228.0" layoutY="96.0" mnemonicParsing="false" onAction="#callSignSubmitPressed" text="Submit" />
       <Button fx:id="callSignCancel" layoutX="143.0" layoutY="96.0" mnemonicParsing="false" onAction="#callSignCancelPressed" text="Cancel" />
-      <TextField fx:id="callsignListener" layoutX="143.0" layoutY="57.0" prefHeight="25.0" prefWidth="139.0" text="ALLCALL" />
+      <TextField fx:id="callsignListener" layoutX="143.0" layoutY="57.0" prefHeight="25.0" prefWidth="139.0" text="WORLD" />
       <Label layoutX="14.0" layoutY="62.0" prefHeight="15.0" prefWidth="139.0" text="Call sign to send to:">
          <font>
             <Font name="Verdana" size="12.0" />

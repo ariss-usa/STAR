@@ -7,3 +7,6 @@ MissionControllerUI/target/
 important.txt
 packagedMissionController/
 venv/
+direwolf-1.5-win/
+__pycache__
+DisconnectMonitor.py

@@ -177,26 +177,25 @@ public class HelloController {
         File callsignFile = new File("callsign.txt");
         if(!callsignFile.exists()) return;
         BufferedReader br = new BufferedReader(new FileReader(callsignFile));
-        String format = "My Call: " + br.readLine() + ", Send to: " + br.readLine();
+        RobotEntry entry = new RobotEntry(br.readLine(), br.readLine());
         br.close();
-        /*
+        
         if(pairingStatus){
-            if(availableRobots.getItems().size() > 1 && availableRobots.getItems().get(1).startsWith("My Call")){
-                availableRobots.getItems().set(1, format);
+            if(availableRobots.getItems().size() > 1 && availableRobots.getItems().get(1).getType() == EntryType.APRS){
+                availableRobots.getItems().set(1, entry);
             }
             else{
-                availableRobots.getItems().add(1, format);
+                availableRobots.getItems().add(1, entry);
             }
         }
         else{
-            if(availableRobots.getItems().size() > 0 && availableRobots.getItems().get(0).startsWith("My Call")){
-                availableRobots.getItems().set(0, format);
+            if(availableRobots.getItems().size() > 0 && availableRobots.getItems().get(0).getType() == EntryType.APRS){
+                availableRobots.getItems().set(0, entry);
             }
             else{
-                availableRobots.getItems().add(0, format);
+                availableRobots.getItems().add(0, entry);
             }
         }
-        */
     }
     Process process = null;
     Thread processThread = null;
@@ -304,25 +303,28 @@ public class HelloController {
     @FXML
     protected void receive(ActionEvent event) throws IOException{
         if(recAPRSCheckBox.isSelected()){
-            transfer t = new transfer("recAPRS");
-            t.setOnSucceeded(e -> {
-                String recv = t.getValue();
-                if(recv.equals("ACK")) return;
-                if(recv.equals("no rtl-sdr")){
-                    AlertBox.display("No RTL-SDR dongle found. Check if it's plugged in.");
-                    recAPRSCheckBox.setSelected(false);
-                }
-                else if(recv.equals("rtl_fm stopped")){
-                    AlertBox.display("RTL-SDR not running, check if the dongle is plugged in");
+            dispatcher = new BackendDispatcher(MessageStructure.RECEIVE_APRS, null);
+            dispatcher.setOnSucceeded(e -> {
+                JsonObject recv = dispatcher.getValue();
+                if(recv.get("status").getAsString().equals("error")){
+                    AlertBox.display("Error: " + recv.get("err_msg"));
                     recAPRSCheckBox.setSelected(false);
                 }
             });
-            threadExecutor.submit(t);
-            
+            threadExecutor.submit(dispatcher);
         }
         else{
-            transfer t = new transfer("stopReceivingAPRS");
-            threadExecutor.submit(t);
+            recAPRSCheckBox.setDisable(true);
+            dispatcher = new BackendDispatcher(MessageStructure.STOP_APRS_RECEIVE, null);
+            dispatcher.setOnSucceeded(e -> {
+                JsonObject recv = dispatcher.getValue();
+                if(recv.get("status").getAsString().equals("error")){
+                    AlertBox.display(recv.get("err_msg").getAsString());
+                }
+                recAPRSCheckBox.setDisable(false);
+            });
+
+            threadExecutor.submit(dispatcher);
         }
     }
     
@@ -349,10 +351,10 @@ public class HelloController {
             String s = command.getText();
             RobotEntry selectedItem = availableRobots.getSelectionModel().getSelectedItem();
             String selectedDirection = type.getSelectionModel().getSelectedItem();
+            String string_command = Power.getText() + " " + selectedDirection + " " + s;
             if(!medium.isSelected()){
-                String command = "";
                 HashMap<String, Object> map = new HashMap<>();
-                if(!selectedItem.isLocal()){
+                if(selectedItem.getType() == EntryType.REMOTE){
                     String selectedMCID = selectedItem.getId();
                     HashMap<String, Object> cmd = new HashMap<>();
                     cmd.put("power", Power.getText());
@@ -373,7 +375,7 @@ public class HelloController {
                     dispatcher = new BackendDispatcher(MessageStructure.LOCAL_CONTROL, map);
                 }
                 threadExecutor.submit(dispatcher);
-                sentListView.getItems().add(command);
+                sentListView.getItems().add(string_command);
             }
             else{
                 File file = new File("callsign.txt");
@@ -385,10 +387,26 @@ public class HelloController {
                 String mycallsign = br.readLine();
                 String sendcall = br.readLine();
                 br.close();
-                String command = Power.getText() + " " + selectedDirection + " " + s;
-                transfer t = new transfer("Transmit APRS " + mycallsign + " " + command + " " + sendcall);
-                threadExecutor.submit(t);
+
+                HashMap<String, Object> params = new HashMap<>();
+                params.put("callsign", mycallsign);
+                HashMap<String, Object> cmd = new HashMap<>();
+                ArrayList<Object> cmdList = new ArrayList<>();
+                cmd.put("power", Power.getText());
+                cmd.put("direction", selectedDirection);
+                cmd.put("time", s);
+                cmdList.add(cmd);
+                params.put("commands", cmdList);
+                params.put("destination", sendcall);
+                dispatcher = new BackendDispatcher(MessageStructure.SEND_APRS, params);
                 
+                dispatcher.setOnSucceeded(e -> {
+                    JsonObject recv = dispatcher.getValue();
+                    if(recv.get("status").getAsString().equals("error")){
+                        AlertBox.display("Error: " + recv.get("err_msg"));
+                    }
+                });
+                threadExecutor.submit(dispatcher);
             }
             Power.clear();
             type.setValue("N/A");
@@ -402,7 +420,6 @@ public class HelloController {
             if(doNotDisturb.isSelected()){
                 doNotDisturb.setDisable(true);
                 showLoadingAnimation();
-                //transfer tr = new transfer("editOnline, ChangeTo: No");
                 map.put("doNotDisturb", true);
                 dispatcher = new BackendDispatcher(MessageStructure.USER_DATA_UPDATE, map);
                 dispatcher.setOnSucceeded(e -> {
@@ -414,7 +431,6 @@ public class HelloController {
             else{
                 doNotDisturb.setDisable(true);
                 showLoadingAnimation();
-                //transfer tr = new transfer("editOnline, ChangeTo: Yes");
                 map.put("doNotDisturb", false);
                 dispatcher = new BackendDispatcher(MessageStructure.USER_DATA_UPDATE, map);
                 dispatcher.setOnSucceeded(e -> {
@@ -468,18 +484,21 @@ public class HelloController {
                 
                 //Unpair and turn status offline
                 pairButton.setText("Pair");
-                //transfer tr = new transfer("Pair disconnect");
 
                 dispatcher = new BackendDispatcher(MessageStructure.PAIR_DISCONNECT, null);
 
-                transfer tr1 = new transfer("stopReceivingAPRS");
+                BackendDispatcher stop_rec = new BackendDispatcher(MessageStructure.STOP_APRS_RECEIVE, null);
+                stop_rec.setOnSucceeded(e -> {
+                    JsonObject recv = dispatcher.getValue();
+                    if(recv.get("status").getAsString().equals("error")){
+                        AlertBox.display(recv.get("err_msg").getAsString());
+                    }
+                });
+
                 threadExecutor.submit(dispatcher);
-                threadExecutor.submit(tr1);
-                //transfer tr1 = new transfer("changeTo: No");
-                //threadExecutor.submit(tr1);
+                threadExecutor.submit(stop_rec);
 
                 pairingStatus = false;
-                otherFeatures.setDisable(true);
                 doNotDisturb.setSelected(true);
                 doNotDisturb.setDisable(true);
                 Power.clear();
@@ -495,10 +514,10 @@ public class HelloController {
         recListView.getItems().add("~");
         doNotDisturb.setSelected(true);
         doNotDisturb.setDisable(true);
-        //otherFeatures.setDisable(true);
-        commandBuilder.setDisable(true);
         medium.setDisable(true);
-        configItem1.setDisable(true);
+        recAPRSCheckBox.setDisable(true);
+        recAPRSCheckBox.setSelected(false);
+
         
         hideLoadingAnimation();
         loadingAnimation();
@@ -543,22 +562,19 @@ public class HelloController {
             if (newValue == null) {
                 return;
             }
-
-            if (newValue.isLocal()) {
-                // This is a local robot — enable local-only options
-                commandBuilder.setDisable(false);
+            
+            if(newValue.getType() == EntryType.APRS){
                 medium.setDisable(true);
-                medium.setSelected(false);
-            } else {
-                // This is a remote robot — enable remote features
-                commandBuilder.setDisable(false);
-                medium.setDisable(true);
-                medium.setSelected(false);
-
-                threadExecutor.submit(new transfer("stopReceivingAPRS"));
+                medium.setSelected(true);
             }
-
-            otherFeatures.setDisable(false);
+            else if(newValue.getType() == EntryType.LOCAL){
+                medium.setDisable(true);
+                medium.setSelected(false);
+            }
+            else if(newValue.getType() == EntryType.REMOTE){
+                medium.setDisable(true);
+                medium.setSelected(false);
+            }
         });
 
         localRobotConnection.showingProperty().addListener((obs, wasShowing, isNowShowing) -> {
@@ -576,7 +592,7 @@ public class HelloController {
             if (isShowing) {
                 ArrayList<RobotEntry> localEntries = new ArrayList<>();
                 for (RobotEntry item : availableRobots.getItems()) {
-                    if (item != null && item.isLocal()) {
+                    if (item != null && item.getType() == EntryType.LOCAL || item.getType() == EntryType.APRS) {
                         localEntries.add(item);
                     }
                 }
@@ -610,15 +626,14 @@ public class HelloController {
             }
         });
 
-        /*
+        
         File callsignFile = new File("callsign.txt");
         if(callsignFile.exists()){
             BufferedReader br = new BufferedReader(new FileReader(callsignFile));
-            availableRobots.getItems().add(0, "My Call: " + br.readLine() + ", Send to: " + br.readLine());
-            recAPRSCheckBox.setDisable(false);
+            availableRobots.getItems().add(new RobotEntry(br.readLine(), br.readLine()));
             br.close();
         }
-        */
+        
         onUpdateV2 ouv = new onUpdateV2();
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
         scheduledExecutorService.scheduleWithFixedDelay(new Runnable() {

@@ -48,7 +48,7 @@ public class commandBuilderController {
                 }
                 params.put("commands", cmds);
                 BackendDispatcher dispatcher;
-                if(!currRobot.isLocal()){
+                if(currRobot.getType() == EntryType.REMOTE){
                     //Multi-commands through discord
                     params.put("receiver_id", currRobot.getId());
                     dispatcher = new BackendDispatcher(MessageStructure.REMOTE_CONTROL, params);
@@ -57,6 +57,7 @@ public class commandBuilderController {
                     //Multi-commands through BT
                     dispatcher = new BackendDispatcher(MessageStructure.LOCAL_CONTROL, params);
                 }
+                //TODO: handle multiline commands through APRS
                 HelloController.threadExecutor.submit(dispatcher);
             }
         }

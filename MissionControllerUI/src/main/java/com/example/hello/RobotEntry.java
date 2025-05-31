@@ -4,37 +4,64 @@ import java.util.Objects;
 
 public class RobotEntry {
     String id, school, city, state, port;
-    boolean isLocalRobot;
+    String myCallsign, callsignToAccept;
+    EntryType type;
+
+    /*
+     * For Remote entries
+     */
     public RobotEntry(String id, String school, String city, String state){
         this.id = id;
         this.school = school;
         this.city = city;
         this.state = state;
-        this.isLocalRobot = false;
-    }
-    public RobotEntry(String port){
-        this.port = port;
-        this.isLocalRobot = true;
+        this.type = EntryType.REMOTE;
     }
 
-    public boolean isLocal(){
-        return isLocalRobot;
+    /*
+     * For Local entries
+     */
+    public RobotEntry(String port){
+        this.port = port;
+        this.type = EntryType.LOCAL;
+    }
+
+    /*
+     * For APRS entries
+     */
+    public RobotEntry(String myCall, String callsignToAccept){
+        this.myCallsign = myCall;
+        this.callsignToAccept = callsignToAccept;
+        this.type = EntryType.APRS;
+    }
+
+    public EntryType getType(){
+        return type;
     }
 
     public String getId(){
-        return isLocalRobot ? port : id;
+        if (type == EntryType.REMOTE){return id;}
+        if (type == EntryType.LOCAL) {return port;}
+        if (type == EntryType.APRS) {return myCallsign;}
+        return null;
     }
 
     public String toString(){
-        if(isLocalRobot){
+        if(type == EntryType.LOCAL){
             return port;
+        }
+        if(type == EntryType.APRS){
+            return String.format("My callsign: %s, receiving from %s", this.myCallsign, this.callsignToAccept);
         }
         return String.format("%s\n%s\n%s\n%s", this.id, this.school, this.city, this.state);
     }
 
     public RobotEntry get_copy(){
-        if(isLocalRobot){
+        if(type == EntryType.LOCAL){
             return new RobotEntry(port);
+        }
+        else if(type == EntryType.APRS){
+            return new RobotEntry(myCallsign, callsignToAccept);
         }
         return new RobotEntry(id, school, city, state);
     }
@@ -44,12 +71,18 @@ public class RobotEntry {
         if (this == o) return true;
         if (!(o instanceof RobotEntry)) return false;
         RobotEntry that = (RobotEntry) o;
-        return isLocalRobot == that.isLocalRobot &&
+        return this.getType() == that.getType() &&
                 Objects.equals(this.getId(), that.getId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), isLocalRobot);
+        return Objects.hash(getId(), getType());
     }
+}
+
+enum EntryType {
+    LOCAL,
+    REMOTE,
+    APRS
 }

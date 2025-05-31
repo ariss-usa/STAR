@@ -5,6 +5,7 @@ from subprocess import Popen, PIPE
 import os
 import zmq
 from threading import Thread
+import shutil
 class APRSUpdater:
     def __init__(self):
         self.continueFlag = True
@@ -95,14 +96,24 @@ class APRSUpdater:
     def startAPRSprocesses(self):
         #gets mic input
         if platform.system() == 'Windows' and self.ptyModule:
-            direwolf = self.ptyModule.spawn("direwolf -c .\direwolf.conf")
-            self.processList.append(direwolf)
+            if shutil.which("direwolf") is None:
+                raise RuntimeError("Direwolf not found in PATH. Please install it or add to PATH")
+            try:
+                direwolf = self.ptyModule.spawn("direwolf -c ./direwolf.conf")
+                self.processList.append(direwolf)
+            except Exception as e:
+                raise RuntimeError(f"Failed to launch Direwolf: {str(e)}")
         #sdr input
         elif(platform.system() == "Linux"):
             self.continueFlag = True
-            shellscript = Popen(["bash", "script.sh"], stdout=PIPE, universal_newlines=True)
-            os.set_blocking(shellscript.stdout.fileno(), False)
-            self.processList.append(shellscript)
+
+            try:
+                shellscript = Popen(["bash", "script.sh"], stdout=PIPE, universal_newlines=True)
+                os.set_blocking(shellscript.stdout.fileno(), False)
+                self.processList.append(shellscript)
+            except Exception as e:
+                raise RuntimeError(f"Failed to run SDR script: {str(e)}")
+            
         return self.processList
 
     def stop(self):
@@ -112,5 +123,8 @@ class APRSUpdater:
                 i.terminate()
                 i.wait()
         self.processList = []
-        os.system("./cleanup.sh")
+        
+        if platform.system() == "Linux":
+            os.system("./cleanup.sh")
+            
         print("APRS PROCESSESES KILLED")

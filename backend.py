@@ -1,7 +1,10 @@
 import asyncio
+import platform
+from threading import Thread
 import requests
 from zmq import Context
 from zmq import REP
+from aprsListener import APRSUpdater
 import helper
 from serial import Serial
 from serial import STOPBITS_ONE
@@ -10,6 +13,8 @@ from serial.tools.list_ports import comports
 import os
 import websockets
 import json
+from rtlsdr import RtlSdr
+from playsound3 import playsound
 
 ACTIVE_ROBOTS_ENDPOINT = "http://localhost:8000/robots/active"
 UPDATE_ROBOT_ENDPOINT = "http://localhost:8000/robots/update"
@@ -21,6 +26,7 @@ GLOBAL_MODE = False
 myMC = schoolName = city = state = None
 do_not_disturb = True
 websocket_started = False
+aprsUpdater = APRSUpdater()
 
 context = Context()
 socket = context.socket(REP)
@@ -87,6 +93,34 @@ def pair_with_bot(msg) -> bool:
     except SerialException:
         return False
     return True
+
+def check_rtlsdr():
+    try:
+        sdr = RtlSdr()
+        sdr.close()
+        return {"status": "ok"}
+    except Exception as e:
+        return {"status": "error", "err_msg": str(e)}
+    
+def send_aprs(msg):
+    try:
+        mycallsign = msg["callsign"]
+        commands = msg["commands"]
+        destination = msg["destination"]
+
+        formatted = [f"{c['power']} {c['direction']} {c['time']}" for c in commands]
+        payload = f"[{', '.join(formatted)}]"
+
+        if platform.system() == "Windows":
+            oscommand = f"echo {mycallsign}^^^>{destination}: {payload} | gen_packets -a 25 -o aprs_commands.wav -"
+        elif platform.system() == "Linux":
+            #oscommand = f'echo "{mycallsign}>WORLD: To {wantedCall} {command}" | tee >(gen_packets -a 25 -o x.wav -) > /dev/null'
+            oscommand = f"echo -n '{mycallsign}>{destination}: {payload}' | gen_packets -a 25 -o aprs_commands.wav -"
+        
+        os.system(oscommand)
+        playsound("./aprs_commands.wav")
+    except Exception as e:
+        raise RuntimeError(f"Error sending aprs: {str(e)}")
     
 async def handle_request(msg):
     match msg['type']:
@@ -160,6 +194,33 @@ async def handle_request(msg):
                 "ports": ports
             }
             return payload
+        
+        case "send_aprs":
+            try:
+                send_aprs(msg)
+            except Exception as e:
+                return {"status": "error", "err_msg": str(e)}
+
+        case "receive_aprs":
+            check = check_rtlsdr()
+            if check["status"] == "error":
+                return check
+            
+            try:
+                aprsUpdater.startAPRSprocesses()
+            except Exception as e:
+                return {"status": "error", "err_msg": str(e)}
+
+            if(platform.system() == "Linux"):
+                thread = Thread(target=aprsUpdater.checkAPRSUpdates_RTLSDR)
+            else:
+                thread = Thread(target=aprsUpdater.checkAPRSUpdates)
+
+            thread.start()
+            return {"status": "ok"}
+        case "stop_aprs_receive":
+            aprsUpdater.stop()
+            return {"status": "ok"}
 
 async def zmq_loop():
     while True:
