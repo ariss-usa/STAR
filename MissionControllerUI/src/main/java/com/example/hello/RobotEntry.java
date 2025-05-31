@@ -4,7 +4,7 @@ import java.util.Objects;
 
 public class RobotEntry {
     String id, school, city, state, port;
-    String myCallsign, callsignToAccept;
+    String myCallsign, destinationCallsign;
     EntryType type;
 
     /*
@@ -31,7 +31,7 @@ public class RobotEntry {
      */
     public RobotEntry(String myCall, String callsignToAccept){
         this.myCallsign = myCall;
-        this.callsignToAccept = callsignToAccept;
+        this.destinationCallsign = callsignToAccept;
         this.type = EntryType.APRS;
     }
 
@@ -51,9 +51,9 @@ public class RobotEntry {
             return port;
         }
         if(type == EntryType.APRS){
-            return String.format("My callsign: %s, receiving from %s", this.myCallsign, this.callsignToAccept);
+            return String.format("My callsign: %s, send to %s", this.myCallsign, this.destinationCallsign);
         }
-        return String.format("%s\n%s\n%s\n%s", this.id, this.school, this.city, this.state);
+        return String.format("Id: %s\nSchool: %s\nCity: %s\nState: %s", this.id, this.school, this.city, this.state);
     }
 
     public RobotEntry get_copy(){
@@ -61,7 +61,7 @@ public class RobotEntry {
             return new RobotEntry(port);
         }
         else if(type == EntryType.APRS){
-            return new RobotEntry(myCallsign, callsignToAccept);
+            return new RobotEntry(myCallsign, destinationCallsign);
         }
         return new RobotEntry(id, school, city, state);
     }

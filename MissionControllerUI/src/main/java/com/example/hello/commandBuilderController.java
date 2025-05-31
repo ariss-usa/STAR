@@ -59,7 +59,7 @@ public class commandBuilderController {
                 }
                 else{
                     params.put("callsign", currRobot.myCallsign);
-                    params.put("destination", currRobot.callsignToAccept);
+                    params.put("destination", currRobot.destinationCallsign);
                     dispatcher = new BackendDispatcher(MessageStructure.SEND_APRS, params);
                 }
                 HelloController.threadExecutor.submit(dispatcher);
