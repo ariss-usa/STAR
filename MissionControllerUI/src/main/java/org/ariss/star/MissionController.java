@@ -114,7 +114,7 @@ public class MissionController {
     final private String ARISS_URL = "https://www.ariss.org/";
     final private String STAR_URL = "https://sites.google.com/view/ariss-starproject/home";
     final private String LOCALHOST_URL = "http://localhost:8080/index.html";
-    BackendDispatcher dispatcher;
+    private AvailableRobotsManager robotsManager;
 
     @FXML
     protected void onLinkPressed(ActionEvent event) throws IOException, URISyntaxException{
@@ -171,22 +171,7 @@ public class MissionController {
         RobotEntry entry = new RobotEntry(br.readLine(), br.readLine());
         br.close();
         
-        if(pairingStatus){
-            if(availableRobots.getItems().size() > 1 && availableRobots.getItems().get(1).getType() == EntryType.APRS){
-                availableRobots.getItems().set(1, entry);
-            }
-            else{
-                availableRobots.getItems().add(1, entry);
-            }
-        }
-        else{
-            if(availableRobots.getItems().size() > 0 && availableRobots.getItems().get(0).getType() == EntryType.APRS){
-                availableRobots.getItems().set(0, entry);
-            }
-            else{
-                availableRobots.getItems().add(0, entry);
-            }
-        }
+        robotsManager.addAprsRobot(entry);
     }
     Process process = null;
     Thread processThread = null;
@@ -275,25 +260,24 @@ public class MissionController {
             //New/Entry may have been changed - push to server
             HashMap<String, Object> params = new HashMap<>();
             params.put("doNotDisturb", doNotDisturb.isSelected());
-            dispatcher = new BackendDispatcher(MessageStructure.USER_DATA_UPDATE, params);
+            BackendDispatcher dispatcher = new BackendDispatcher(MessageStructure.USER_DATA_UPDATE, params);
+            dispatcher.setOnSucceeded(e -> {
+                JsonObject obj = dispatcher.getValue();
+                if(obj.get("status").getAsString().equals("error")){
+                    AlertBox.display(obj.get("err_msg").getAsString());
+                }
+            });
             threadExecutor.submit(dispatcher);
 
             if(pairingStatus){
                 doNotDisturb.setDisable(false);
-            }
-            
-            availableRobots.getItems().removeAll(availableRobots.getItems());
-
-            if(pairButton.getText().equals("Disconnect")){
-                String s = localRobotConnection.getValue();
-                availableRobots.getItems().add(new RobotEntry(s));
             }
         }
     }
     @FXML
     protected void receive(ActionEvent event) throws IOException{
         if(recAPRSCheckBox.isSelected()){
-            dispatcher = new BackendDispatcher(MessageStructure.RECEIVE_APRS, null);
+            BackendDispatcher dispatcher = new BackendDispatcher(MessageStructure.RECEIVE_APRS, null);
             dispatcher.setOnSucceeded(e -> {
                 JsonObject recv = dispatcher.getValue();
                 if(recv.get("status").getAsString().equals("error")){
@@ -305,7 +289,7 @@ public class MissionController {
         }
         else{
             recAPRSCheckBox.setDisable(true);
-            dispatcher = new BackendDispatcher(MessageStructure.STOP_APRS_RECEIVE, null);
+            BackendDispatcher dispatcher = new BackendDispatcher(MessageStructure.STOP_APRS_RECEIVE, null);
             dispatcher.setOnSucceeded(e -> {
                 JsonObject recv = dispatcher.getValue();
                 if(recv.get("status").getAsString().equals("error")){
@@ -342,6 +326,7 @@ public class MissionController {
             RobotEntry selectedItem = availableRobots.getSelectionModel().getSelectedItem();
             String selectedDirection = type.getSelectionModel().getSelectedItem();
             String string_command = Power.getText() + " " + selectedDirection + " " + s;
+            BackendDispatcher dispatcher;
             if(!medium.isSelected()){
                 HashMap<String, Object> map = new HashMap<>();
                 if(selectedItem.getType() == EntryType.REMOTE){
@@ -354,6 +339,12 @@ public class MissionController {
                     map.put("receiver_id", selectedMCID);
                     map.put("commands", Arrays.asList(cmd));
                     dispatcher = new BackendDispatcher(MessageStructure.REMOTE_CONTROL, map);
+                    dispatcher.setOnSucceeded(e -> {
+                        JsonObject recv = dispatcher.getValue();
+                        if(recv.get("status").getAsString().equals("error")){
+                            AlertBox.display("Error: " + recv.get("err_msg"));
+                        }
+                    });
                 }
                 else{
                     HashMap<String, Object> cmd = new HashMap<>();
@@ -411,8 +402,12 @@ public class MissionController {
                 doNotDisturb.setDisable(true);
                 showLoadingAnimation();
                 map.put("doNotDisturb", true);
-                dispatcher = new BackendDispatcher(MessageStructure.USER_DATA_UPDATE, map);
+                BackendDispatcher dispatcher = new BackendDispatcher(MessageStructure.USER_DATA_UPDATE, map);
                 dispatcher.setOnSucceeded(e -> {
+                    JsonObject obj = dispatcher.getValue();
+                    if(obj.get("status").getAsString().equals("error")){
+                        AlertBox.display(obj.get("err_msg").getAsString());
+                    }
                     hideLoadingAnimation();
                     doNotDisturb.setDisable(false);
                 });
@@ -422,8 +417,12 @@ public class MissionController {
                 doNotDisturb.setDisable(true);
                 showLoadingAnimation();
                 map.put("doNotDisturb", false);
-                dispatcher = new BackendDispatcher(MessageStructure.USER_DATA_UPDATE, map);
+                BackendDispatcher dispatcher = new BackendDispatcher(MessageStructure.USER_DATA_UPDATE, map);
                 dispatcher.setOnSucceeded(e -> {
+                    JsonObject obj = dispatcher.getValue();
+                    if(obj.get("status").getAsString().equals("error")){
+                        AlertBox.display(obj.get("err_msg").getAsString());
+                    }
                     doNotDisturb.setDisable(false);
                     hideLoadingAnimation();
                 });
@@ -441,13 +440,12 @@ public class MissionController {
             if(pairText.equals("Pair")){
                 HashMap<String, Object> map = new HashMap<>();
                 map.put("port", localRobotConnection.getSelectionModel().getSelectedItem());
-                dispatcher = new BackendDispatcher(MessageStructure.PAIR_CONNECT, map);
+                BackendDispatcher dispatcher = new BackendDispatcher(MessageStructure.PAIR_CONNECT, map);
                 pairButton.setDisable(true);
                 dispatcher.setOnSucceeded(e -> {
-                    //String passfail = dispatcher.getValue();
                     JsonObject response = dispatcher.getValue();
                     if (response.get("status").getAsString().equals("ok")){
-                        availableRobots.getItems().add(0, new RobotEntry(localRobotConnection.getValue()));
+                        robotsManager.addLocalRobot(new RobotEntry(localRobotConnection.getValue()));
                         localRobotConnection.setDisable(true);
                         File f = new File("important.txt");
                         if(f.exists()){
@@ -468,14 +466,15 @@ public class MissionController {
             else{
                 localRobotConnection.setValue(null);
                 localRobotConnection.setDisable(false);
-                availableRobots.getItems().remove(0);
+                robotsManager.removeLocalRobot();
                 recAPRSCheckBox.setSelected(false);
                 recAPRSCheckBox.setDisable(true);
                 
                 //Unpair and turn status offline
                 pairButton.setDisable(true);
+                pairingStatus = false;
                 
-                dispatcher = new BackendDispatcher(MessageStructure.PAIR_DISCONNECT, null);
+                BackendDispatcher dispatcher = new BackendDispatcher(MessageStructure.PAIR_DISCONNECT, null);
                 dispatcher.setOnSucceeded(e -> {
                     JsonObject recv = dispatcher.getValue();
                     if(recv.get("status").getAsString().equals("error")){
@@ -498,7 +497,6 @@ public class MissionController {
                 threadExecutor.submit(dispatcher);
                 threadExecutor.submit(stop_rec);
 
-                pairingStatus = false;
                 doNotDisturb.setDisable(true);
                 Power.clear();
                 command.clear();
@@ -516,7 +514,7 @@ public class MissionController {
         medium.setDisable(true);
         recAPRSCheckBox.setDisable(true);
         recAPRSCheckBox.setSelected(false);
-
+        robotsManager = new AvailableRobotsManager(threadExecutor);
         
         hideLoadingAnimation();
         loadingAnimation();
@@ -532,6 +530,14 @@ public class MissionController {
                 }
             }
         });
+
+        availableRobots.setVisibleRowCount(3);
+        availableRobots.setItems(robotsManager.getDisplayedRobots());
+        availableRobots.showingProperty().addListener((obs, wasShowing, isShowing) -> {
+            if(isShowing)
+                robotsManager.refreshRemoteRobots();
+        });
+
         availableRobots.setButtonCell(new ListCell<>() {
             @Override
             protected void updateItem(RobotEntry item, boolean empty) {
@@ -610,51 +616,11 @@ public class MissionController {
         if(new File("important.txt").exists()){
             Reader.read(fileValues);
         }
-
-        availableRobots.setVisibleRowCount(3);
-        availableRobots.showingProperty().addListener((obs, wasShowing, isShowing) -> {
-            if (isShowing) {
-                ArrayList<RobotEntry> localEntries = new ArrayList<>();
-                for (RobotEntry item : availableRobots.getItems()) {
-                    if (item != null && item.getType() == EntryType.LOCAL || item.getType() == EntryType.APRS) {
-                        localEntries.add(item);
-                    }
-                }
-
-                dispatcher = new BackendDispatcher(MessageStructure.GET_DIRECTORY, null);
-                dispatcher.setOnSucceeded(event -> {
-                    JsonObject obj = dispatcher.getValue();
-
-                    if (obj != null && obj.get("status").getAsString().equals("ok")){
-                        ArrayList<RobotEntry> fullList = new ArrayList<>(localEntries);
-
-                        for (JsonElement el : obj.getAsJsonArray("active_robots")) {
-                            JsonObject robot = el.getAsJsonObject();
-                            String id = robot.get("id").getAsString();
-                            String school = robot.get("schoolName").getAsString();
-                            String city = robot.get("city").getAsString();
-                            String state = robot.get("state").getAsString();
-                            fullList.add(new RobotEntry(id, school, city, state));
-                        }
-
-                        RobotEntry selectedNow = availableRobots.getSelectionModel().getSelectedItem() == null ? 
-                                                null : availableRobots.getSelectionModel().getSelectedItem().get_copy();
-                        availableRobots.getItems().setAll(fullList);
-
-                        if (selectedNow != null){
-                            availableRobots.getSelectionModel().select(selectedNow);
-                        }
-                    }
-                });
-                threadExecutor.submit(dispatcher);
-            }
-        });
-
         
         File callsignFile = new File("callsign.txt");
         if(callsignFile.exists()){
             BufferedReader br = new BufferedReader(new FileReader(callsignFile));
-            availableRobots.getItems().add(new RobotEntry(br.readLine(), br.readLine()));
+            robotsManager.addAprsRobot(new RobotEntry(br.readLine(), br.readLine()));
             br.close();
         }
 
@@ -666,10 +632,7 @@ public class MissionController {
                 localRobotConnection.getItems().clear();
                 pairButton.setText("Pair");
 
-                if(availableRobots.getItems().size() > 0){
-                    //the first one must be the local robot
-                    availableRobots.getItems().remove(0);
-                }
+                robotsManager.removeLocalRobot();
 
                 pairButton.setDisable(false);
                 doNotDisturb.setDisable(true);

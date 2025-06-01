@@ -21,7 +21,7 @@ import org.zeromq.ZMQ;
 public class StarApp extends Application {
     @Override
     public void start(Stage stage) throws IOException {
-        stage.getIcons().add(new Image("file:.\\MissionControllerUI\\src\\main\\resources\\com\\example\\images\\arissLogo.jpg"));
+        stage.getIcons().add(new Image(getClass().getResource("/org/ariss/images/arissLogo.jpg").toExternalForm()));
         System.out.println(StarApp.class.getResource("newGUI.fxml"));
         FXMLLoader fxmlLoader = new FXMLLoader(StarApp.class.getResource("newGUI.fxml"));
         Parent root = fxmlLoader.load();

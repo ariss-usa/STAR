@@ -2,6 +2,7 @@ import asyncio
 import platform
 from threading import Thread
 import requests
+from requests import RequestException, Timeout
 from zmq import Context
 from zmq import REP
 from aprsListener import APRSUpdater
@@ -20,6 +21,7 @@ ACTIVE_ROBOTS_ENDPOINT = "http://localhost:8000/robots/active"
 UPDATE_ROBOT_ENDPOINT = "http://localhost:8000/robots/update"
 SEND_COMMAND_ENDPOINT = "http://localhost:8000/send_command"
 WEBSOCKET_ENDPOINT = "ws://localhost:8000/ws"
+REQUEST_TIMEOUT = (3.05, 5)
 USER_DATA_FILE = "important.txt"
 GLOBAL_MODE = False
 
@@ -60,18 +62,20 @@ def update_robot(doNotDisturb: bool):
     }
 
     try:
-        resp = requests.post(UPDATE_ROBOT_ENDPOINT, json=robot_data)
-        print("update status", resp.status_code)
-    except Exception as e:
-        print("Failed to update robot:", e)
+        requests.post(UPDATE_ROBOT_ENDPOINT, json=robot_data, timeout=REQUEST_TIMEOUT)
+    except Timeout:
+        raise RuntimeError("Server did not reply in time")
+    except RequestException:
+        raise RuntimeError("A network error has occured")
+
+    return {"status": "ok"}
 
 def get_active_robots():
     try:
-        resp = requests.get(ACTIVE_ROBOTS_ENDPOINT)
+        resp = requests.get(ACTIVE_ROBOTS_ENDPOINT, timeout=REQUEST_TIMEOUT)
         return resp.json()
-    except Exception as e:
-        print("Failed to get active robots:", e)
-        return {"status": "error"}
+    except RequestException:
+        return {"status": "ok", "active_robots": []}
 
 def send_command(msg):
     """
@@ -79,12 +83,11 @@ def send_command(msg):
     the Command class defined in models.py
     """
     try:
-        resp = requests.post(SEND_COMMAND_ENDPOINT, json=msg)
-        print("status", resp.status_code)
-        return {"status": "ok"}
-    except Exception as e:
-        print("Failed to send command:", e)
-        return {"status": "error"}
+        requests.post(SEND_COMMAND_ENDPOINT, json=msg, timeout=REQUEST_TIMEOUT)
+    except Timeout:
+        raise RuntimeError("Server did not reply in time")
+    except RequestException:
+        raise RuntimeError("A network error has occured")
     
 def pair_with_bot(msg) -> bool:
     try:
@@ -131,7 +134,10 @@ async def handle_request(msg):
                 'type': 'get_directory'
             }
             """
-            return get_active_robots()
+            try:
+                return get_active_robots()
+            except Exception as e:
+                return {"status": "error", "err_msg": str(e)}
         case "remote_control":
             """
             msg format: {
@@ -146,7 +152,11 @@ async def handle_request(msg):
                 'receiver_id': msg['receiver_id'],
                 'commands': msg['commands']
             }
-            return send_command(payload)
+            try:
+                send_command(payload)
+                return {"status": "ok"}
+            except Exception as e:
+                return {"status": "error", "err_msg": str(e)}
         case "user_data_update":
             """
             msg format: {
@@ -160,9 +170,11 @@ async def handle_request(msg):
             if not websocket_started and GLOBAL_MODE:
                 asyncio.create_task(connect_to_ws())
 
-            update_robot(msg["doNotDisturb"])
-
-            return {"status": "ok"}
+            try:
+                update_robot(msg["doNotDisturb"])
+                return {"status": "ok"}
+            except Exception as e:
+                return {"status": "error", "err_msg": str(e)}
         case "local_control":
             """
             msg format: {
