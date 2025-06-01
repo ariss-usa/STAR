@@ -53,7 +53,7 @@ public class RobotEntry {
         if(type == EntryType.APRS){
             return String.format("My callsign: %s, send to %s", this.myCallsign, this.destinationCallsign);
         }
-        return String.format("Id: %s\nSchool: %s\nCity: %s\nState: %s", this.id, this.school, this.city, this.state);
+        return String.format("Robot Id: %s\nSchool: %s\nCity: %s\nState: %s", this.id, this.school, this.city, this.state);
     }
 
     public RobotEntry get_copy(){

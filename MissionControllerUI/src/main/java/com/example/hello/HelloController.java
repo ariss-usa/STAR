@@ -2,7 +2,6 @@ package com.example.hello;
 
 import javafx.animation.Timeline;
 import javafx.animation.TranslateTransition;
-import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -35,17 +34,11 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ResourceHandler;
-import org.zeromq.SocketType;
-import org.zeromq.ZContext;
-import org.zeromq.ZMQ;
-
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -583,6 +576,31 @@ public class HelloController {
             }
         });
 
+        Service<JsonObject> comList = new Service<JsonObject>() {
+            @Override
+            protected Task<JsonObject> createTask() {
+                return new BackendDispatcher(MessageStructure.GET_PORTS, null);
+            }
+        };
+
+        comList.setOnSucceeded(event -> {
+            JsonObject obj = comList.getValue();
+            if(obj.get("status").getAsString().equals("ok")){
+                JsonArray ports = obj.getAsJsonArray("ports");
+                ArrayList<String> portsList = new ArrayList<>();
+                for(JsonElement item : ports){
+                    portsList.add(item.getAsString());
+                }
+
+                String prev_selection = null;
+                if(localRobotConnection.getSelectionModel().getSelectedItem() != null){
+                    prev_selection = new String(localRobotConnection.getSelectionModel().getSelectedItem());
+                }
+                localRobotConnection.getItems().setAll(portsList);
+                localRobotConnection.getSelectionModel().select(prev_selection);
+            }
+        });
+
         localRobotConnection.showingProperty().addListener((obs, wasShowing, isNowShowing) -> {
             if(isNowShowing){
                 comList.restart();
@@ -661,25 +679,6 @@ public class HelloController {
                 pairingStatus = false;
             }
         });
-        
-        // onUpdateV2 ouv = new onUpdateV2();
-        // ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
-        // scheduledExecutorService.scheduleWithFixedDelay(new Runnable() {
-        //     @Override
-        //     public void run() {
-        //         ouv.call();
-        //         String aprsEntry = ouv.getAPRSEntry();
-        //         ouv.reset();
-        //         ouv.resetEditedEntry();
-        //         ouv.resetAPRSEntry();
-        //         Platform.runLater(
-        //         () -> {
-        //             if(!aprsEntry.equals("")){
-        //                 recListView.getItems().add(aprsEntry);
-        //             }
-        //         });
-        //     }
-        // }, 0, 100, TimeUnit.MILLISECONDS);
     }
 
     private void loadingAnimation(){
@@ -713,53 +712,5 @@ public class HelloController {
     public static boolean getPairingStatus(){
         return pairingStatus;
     }
-    
-    Service<Void> comList = new Service<Void>() {
-        @Override
-        protected Task<Void> createTask() {
-            return new Task<Void>() {
-                @Override
-                public Void call() {
-                    try(ZContext ctx = new ZContext()){
-                        ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
-                        socket.connect("tcp://127.0.0.1:5555");
-                        Gson gson = new Gson();
-                        JsonObject msg = new JsonObject();
-                        msg.addProperty("type", "get_ports");
-                        socket.send(gson.toJson(msg));
-                        String comports = socket.recvStr();
-                        JsonObject obj = gson.fromJson(comports, JsonObject.class);
-                        JsonArray portsArray = obj.getAsJsonArray("ports");
-    
-                        ctx.destroy();
-                        final CountDownLatch latch = new CountDownLatch(1);
-                        Platform.runLater(new Runnable() {                          
-                            @Override
-                            public void run() {
-                                try{
-                                    if(portsArray == null){
-                                        return;
-                                    }
-                                    ArrayList<String> output = new ArrayList<String>();
-                                    for(JsonElement port : portsArray){
-                                        output.add(port.getAsString());
-                                    }
-                                    localRobotConnection.getItems().removeAll(localRobotConnection.getItems());
-                                    localRobotConnection.getItems().addAll(output);
-                                }finally{
-                                    latch.countDown();
-                                }
-                            }
-                        });
-                        latch.await();
-                    } catch (InterruptedException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                    return null;
-                }
-            };
-        }
-    };
 }
 

@@ -26,14 +26,9 @@
                <font>
                   <Font name="Verdana" size="15.0" />
                </font></Label>
-            <Label fx:id="dongleLabel" layoutX="26.0" layoutY="137.0" text="SDR Dongle present?">
-               <font>
-                  <Font name="Verdana" size="15.0" />
-               </font></Label>
             <ComboBox fx:id="state" layoutX="216.0" layoutY="99.0" prefWidth="150.0" promptText="Enter State" />
             <TextField fx:id="city" layoutX="216.0" layoutY="62.0" promptText="Enter City"/>
             <TextField fx:id="school" layoutX="216.0" layoutY="28.0" promptText="Enter your school name" />
-            <ChoiceBox fx:id="sdr" layoutX="216.0" layoutY="134.0" prefWidth="150.0"/>
             <Button fx:id="enter" layoutX="311.0" layoutY="173.0" mnemonicParsing="false" onAction="#inputData" text="Submit" />
             <Button fx:id="cancel" layoutX="189.0" layoutY="173.0" mnemonicParsing="false" onAction="#pressed" text="Cancel" />
          </children></AnchorPane>
