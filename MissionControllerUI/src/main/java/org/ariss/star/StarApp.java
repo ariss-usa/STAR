@@ -1,4 +1,4 @@
-package com.example.hello;
+package org.ariss.star;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -18,12 +18,12 @@ import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
-public class HelloApplication extends Application {
+public class StarApp extends Application {
     @Override
     public void start(Stage stage) throws IOException {
         stage.getIcons().add(new Image("file:.\\MissionControllerUI\\src\\main\\resources\\com\\example\\images\\arissLogo.jpg"));
-        System.out.println(HelloApplication.class.getResource("newGUI.fxml"));
-        FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("newGUI.fxml"));
+        System.out.println(StarApp.class.getResource("newGUI.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(StarApp.class.getResource("newGUI.fxml"));
         Parent root = fxmlLoader.load();
         Scene scene = new Scene(root, 665, 466);
 
@@ -48,14 +48,14 @@ public class HelloApplication extends Application {
                     socket.recv();
                     ctx.destroy();
                 }
-                HelloController.threadExecutor.shutdown();
+                MissionController.threadExecutor.shutdown();
                 try{
-                    if (!HelloController.threadExecutor.awaitTermination(10, TimeUnit.SECONDS)){
-                        HelloController.threadExecutor.shutdownNow();
+                    if (!MissionController.threadExecutor.awaitTermination(10, TimeUnit.SECONDS)){
+                        MissionController.threadExecutor.shutdownNow();
                     }
                 }
                 catch(InterruptedException e){
-                    HelloController.threadExecutor.shutdownNow();
+                    MissionController.threadExecutor.shutdownNow();
                 }
                 System.exit(0);
             }

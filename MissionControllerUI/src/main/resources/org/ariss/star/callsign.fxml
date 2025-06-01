@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.text.Font?>
 
-<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="135.0" prefWidth="313.0" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="com.example.hello.callsignController">
+<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="135.0" prefWidth="313.0" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="org.ariss.star.callsignController">
    <children>
       <TextField fx:id="callsignText" layoutX="143.0" layoutY="23.0" prefHeight="25.0" prefWidth="139.0" />
       <Label layoutX="14.0" layoutY="28.0" prefHeight="15.0" prefWidth="139.0" text="Enter your call sign:">

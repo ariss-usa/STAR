@@ -1,4 +1,4 @@
-package com.example.hello;
+package org.ariss.star;
 
 import org.zeromq.ZMQ;
 

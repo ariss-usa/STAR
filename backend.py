@@ -8,7 +8,6 @@ from aprsListener import APRSUpdater
 import helper
 from serial import Serial
 from serial import STOPBITS_ONE
-from serial import SerialException
 from serial.tools.list_ports import comports
 import os
 import websockets
@@ -116,7 +115,6 @@ def send_aprs(msg):
         if platform.system() == "Windows":
             oscommand = f"echo {mycallsign}^^^>{destination}: {payload} | gen_packets -a 25 -o aprs_commands.wav -"
         elif platform.system() == "Linux":
-            #oscommand = f'echo "{mycallsign}>WORLD: To {wantedCall} {command}" | tee >(gen_packets -a 25 -o x.wav -) > /dev/null'
             oscommand = f"echo -n '{mycallsign}>{destination}: {payload}' | gen_packets -a 25 -o aprs_commands.wav -"
         
         os.system(oscommand)
@@ -247,7 +245,6 @@ async def zmq_loop():
 
 async def main():
     read_config()
-    #tasks = [zmq_loop()]
     tasks = [asyncio.create_task(zmq_loop())]
     if GLOBAL_MODE:
         print("scheduling websocket connect")

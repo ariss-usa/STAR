@@ -2,38 +2,6 @@ import time
 import importlib
 
 serialPort = None
-def postToSerial(serialPort, commandList):
-    for i in range(0, len(commandList)):
-        splitCommands = commandList[i].split(" ")
-        #splitCommands[0] = power, [1] = direction, [2] = time
-        rd = 0
-        rs = 0
-        ld = 0
-        ls = 0
-        timeOfOperation = float(splitCommands[2])
-        if(splitCommands[1] == "forward"):
-            ld = 255
-            rs = int(float(splitCommands[0]))
-            ls = 256-rs
-        elif(splitCommands[1] == "backward"):
-            rd = 255
-            ls = int(float(splitCommands[0]))
-            rs = 256-ls
-        elif(splitCommands[1] == "right"):
-            ld = 255
-            rd = 255
-            ls = 256 - int(float(splitCommands[0]))
-            rs = ls
-        elif(splitCommands[1] == "left"):
-            rd = 0
-            ld = 0
-            ls = int(float(splitCommands[0]))
-            rs = ls
-        if(splitCommands[1] != "delay"):
-            serialPort.write(bytearray([255, 85, 7, 0, 2, 5, ls, ld, rs, rd]))
-        time.sleep(timeOfOperation)
-        serialPort.write(bytearray([255, 85, 7, 0, 2, 5, 0, 0, 0, 0]))
-
 def postToSerialJson(commandList):
     for i in range(0, len(commandList)):
         command = commandList[i]

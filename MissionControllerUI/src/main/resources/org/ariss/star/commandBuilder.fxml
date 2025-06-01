@@ -7,7 +7,7 @@
 <?import javafx.scene.text.Font?>
 
 <Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="207.0" prefWidth="273.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
-   fx:controller="com.example.hello.commandBuilderController">
+   fx:controller="org.ariss.star.commandBuilderController">
    <children>
       <TextArea fx:id="CBTextBox" layoutX="15.0" layoutY="55.0" prefHeight="98.0" prefWidth="236.0">
          <font>

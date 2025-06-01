@@ -1,4 +1,4 @@
-package com.example.hello;
+package org.ariss.star;
 
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -29,7 +29,7 @@ public class AlertBox {
         layout.setAlignment(Pos.CENTER);
 
         Scene scene = new Scene(layout);
-        scene.getStylesheets().add(HelloApplication.class.getResource("style.css").toExternalForm());
+        scene.getStylesheets().add(StarApp.class.getResource("style.css").toExternalForm());
         window.setScene(scene);
         window.show();
     }

@@ -1,4 +1,4 @@
-package com.example.hello;
+package org.ariss.star;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -27,12 +27,12 @@ public class commandBuilderController {
     void multiCommand(ActionEvent event) {
         String txt = CBTextBox.getText();
         boolean formatCheck = checkFormat(txt);
-        RobotEntry currRobot = HelloController.getSelectedRobot();
+        RobotEntry currRobot = MissionController.getSelectedRobot();
         if(currRobot == null){
             AlertBox.display("Select a robot");
         }
         else{
-            if(!HelloController.getPairingStatus()){
+            if(!MissionController.getPairingStatus()){
                 AlertBox.display("Pair to a robot");
             }
             else if(formatCheck){
@@ -62,7 +62,7 @@ public class commandBuilderController {
                     params.put("destination", currRobot.destinationCallsign);
                     dispatcher = new BackendDispatcher(MessageStructure.SEND_APRS, params);
                 }
-                HelloController.threadExecutor.submit(dispatcher);
+                MissionController.threadExecutor.submit(dispatcher);
             }
         }
     }

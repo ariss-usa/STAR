@@ -49,7 +49,7 @@
 <?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
 
-<VBox fx:id="VBox" prefHeight="466.0" prefWidth="665.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="com.example.hello.HelloController">
+<VBox fx:id="VBox" prefHeight="466.0" prefWidth="665.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="org.ariss.star.MissionController">
   <children>
     <MenuBar fx:id="MenuBar" VBox.vgrow="NEVER">
       <menus>

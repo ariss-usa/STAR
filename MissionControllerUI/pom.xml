@@ -4,11 +4,11 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.example</groupId>
-    <artifactId>hello</artifactId>
+    <groupId>org.ariss</groupId>
+    <artifactId>star</artifactId>
     <packaging>jar</packaging>
     <version>1.0-SNAPSHOT</version>
-    <name>hello</name>
+    <name>star</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -87,7 +87,7 @@
                     <execution>
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>com.example.hello.Main</mainClass>
+                            <mainClass>org.ariss.star.Main</mainClass>
                         </configuration>
                     </execution>
                 </executions>
@@ -99,7 +99,7 @@
                     <archive>
                         <manifest>
                         <addClasspath>true</addClasspath>
-                        <mainClass>com.example.hello.Main</mainClass>
+                        <mainClass>org.ariss.star.Main</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>

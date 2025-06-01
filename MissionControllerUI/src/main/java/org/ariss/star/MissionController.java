@@ -1,4 +1,4 @@
-package com.example.hello;
+package org.ariss.star;
 
 import javafx.animation.Timeline;
 import javafx.animation.TranslateTransition;
@@ -45,7 +45,7 @@ import com.google.gson.JsonObject;
 
 import java.awt.*;
 
-public class HelloController {
+public class MissionController {
     @FXML
     private javafx.scene.layout.AnchorPane AnchorPane;
     @FXML
