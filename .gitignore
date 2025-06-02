@@ -12,3 +12,5 @@ DisconnectMonitor.py
 aprs_commands.wav
 callsign.txt
 __pycache__/
+callsign.json
+important.json

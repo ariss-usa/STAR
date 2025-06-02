@@ -22,7 +22,7 @@ UPDATE_ROBOT_ENDPOINT = "http://localhost:8000/robots/update"
 SEND_COMMAND_ENDPOINT = "http://localhost:8000/send_command"
 WEBSOCKET_ENDPOINT = "ws://localhost:8000/ws"
 REQUEST_TIMEOUT = (3.05, 5)
-USER_DATA_FILE = "important.txt"
+USER_DATA_FILE = "important.json"
 GLOBAL_MODE = False
 
 myMC = schoolName = city = state = None
@@ -39,13 +39,18 @@ def read_config():
     global myMC, schoolName, city, state, GLOBAL_MODE
     if not os.path.exists(USER_DATA_FILE):
         return
-
-    with open(USER_DATA_FILE, "r") as f:
-        myMC = f.readline().strip()
-        schoolName = f.readline().strip()
-        city = f.readline().strip()
-        state = f.readline().strip()
-        GLOBAL_MODE = True
+    try:
+        with open(USER_DATA_FILE, "r") as f:
+            data = json.load(f)
+            myMC = data.get("id")
+            schoolName = data.get("school")
+            city = data.get("city")
+            state = data.get("state")
+            print("here3")
+            if all([myMC, schoolName, city, state]):
+                GLOBAL_MODE = True
+    except (json.JSONDecodeError, IOError):
+        pass
 
 def update_robot(doNotDisturb: bool):
     """

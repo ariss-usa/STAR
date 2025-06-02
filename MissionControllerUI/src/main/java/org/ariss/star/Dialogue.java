@@ -2,6 +2,7 @@ package org.ariss.star;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectInputFilter.Config;
 import java.util.ArrayList;
 
 import javafx.event.ActionEvent;
@@ -39,9 +40,7 @@ public class Dialogue {
             "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"};
 
     private String stateName;
-    private ArrayList<Object> list = new ArrayList<>();
     private boolean isSubmitPressed = false;
-    private boolean newUser = true;
 
     @FXML
     void pressed(ActionEvent event) {
@@ -61,27 +60,19 @@ public class Dialogue {
             AlertBox.display("Enter a response in the states dropdown");
         }
         else{
-            File file = new File("important.txt");
-            String generateID = "";
-            if (file.exists()){
-                Reader.read(list);
-                generateID = list.get(0).toString();
-                newUser = false;
+            String id = "";
+            if(ConfigManager.isGlobalModeEnabled()){
+                ConfigManager.readConfig();
+                id = ConfigManager.getConfig().id;
             }
             else{
-                //generateID = java.util.UUID.randomUUID().toString();
+                //id = java.util.UUID.randomUUID().toString();
                 for(int i = 0; i < 5; i++){
-                    generateID += (int)Math.floor(Math.random() * 10);
+                    id += (int)Math.floor(Math.random() * 10);
                 }
             }
 
-            list.clear();
-            list.add(generateID);
-            list.add(school.getText());
-            list.add(city.getText());
-            list.add(state.getValue());
-            Writer.write(list);
-
+            ConfigManager.dumpConfig(id, school.getText(), city.getText(), state.getValue());
             ((Stage)(((Button)event.getSource()).getScene().getWindow())).close();
             isSubmitPressed = true;
         }
@@ -90,13 +81,12 @@ public class Dialogue {
         state.getItems().addAll(states);
         state.setOnAction(this::getState);
         
-        File file = new File("important.txt");
-        if (file.isFile()){
-            Reader.read(list);
-            school.setText(list.get(1).toString());
-            city.setText(list.get(2).toString());
-            state.getSelectionModel().select(list.get(3).toString());
-        }    
+        if(ConfigManager.isGlobalModeEnabled() && ConfigManager.readConfig()){
+            UserConfig config = ConfigManager.getConfig();
+            school.setText(config.school);
+            city.setText(config.city);
+            state.getSelectionModel().select(config.state);
+        }
     }
     public void getState(ActionEvent event)  {
         setState(state.getValue());
@@ -107,11 +97,5 @@ public class Dialogue {
     }
     public boolean submitPressed(){
         return isSubmitPressed;
-    }
-    public ArrayList<Object> getFileList(){
-        return list;
-    }
-    public boolean isNewUser(){
-        return newUser;
     }
 }

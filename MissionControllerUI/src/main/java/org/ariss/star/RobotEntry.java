@@ -72,7 +72,7 @@ public class RobotEntry {
         if (!(o instanceof RobotEntry)) return false;
         RobotEntry that = (RobotEntry) o;
         return this.getType() == that.getType() &&
-                Objects.equals(this.getId(), that.getId());
+                Objects.equals(this.getId(), that.getId()) ;
     }
 
     @Override

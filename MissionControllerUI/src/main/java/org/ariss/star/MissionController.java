@@ -115,6 +115,7 @@ public class MissionController {
     final private String STAR_URL = "https://sites.google.com/view/ariss-starproject/home";
     final private String LOCALHOST_URL = "http://localhost:8080/index.html";
     private AvailableRobotsManager robotsManager;
+    static ConfigManager configManager;
 
     @FXML
     protected void onLinkPressed(ActionEvent event) throws IOException, URISyntaxException{
@@ -165,13 +166,12 @@ public class MissionController {
         dialogStage.setScene(scene);
         dialogStage.showAndWait();
 
-        File callsignFile = new File("callsign.txt");
-        if(!callsignFile.exists()) return;
-        BufferedReader br = new BufferedReader(new FileReader(callsignFile));
-        RobotEntry entry = new RobotEntry(br.readLine(), br.readLine());
-        br.close();
-        
-        robotsManager.addAprsRobot(entry);
+        if(ConfigManager.hasCallsignConfig()){
+            RobotEntry bot = ConfigManager.readCallsignConfig();
+            if(bot != null){
+                robotsManager.addAprsRobot(ConfigManager.callsignEntry);
+            }
+        }
     }
     Process process = null;
     Thread processThread = null;
@@ -255,10 +255,10 @@ public class MissionController {
         dialogStage.showAndWait();
 
         Dialogue controller = loader.getController();
-        fileValues = controller.getFileList();
-        if(controller.submitPressed()){
+        if(controller.submitPressed() && ConfigManager.isGlobalModeEnabled()){
             //New/Entry may have been changed - push to server
             HashMap<String, Object> params = new HashMap<>();
+            //Client backend will reread these new values from file
             params.put("doNotDisturb", doNotDisturb.isSelected());
             BackendDispatcher dispatcher = new BackendDispatcher(MessageStructure.USER_DATA_UPDATE, params);
             dispatcher.setOnSucceeded(e -> {
@@ -268,39 +268,23 @@ public class MissionController {
                 }
             });
             threadExecutor.submit(dispatcher);
-
-            if(pairingStatus){
-                doNotDisturb.setDisable(false);
-            }
         }
     }
+    
     @FXML
     protected void receive(ActionEvent event) throws IOException{
-        if(recAPRSCheckBox.isSelected()){
-            BackendDispatcher dispatcher = new BackendDispatcher(MessageStructure.RECEIVE_APRS, null);
-            dispatcher.setOnSucceeded(e -> {
-                JsonObject recv = dispatcher.getValue();
-                if(recv.get("status").getAsString().equals("error")){
-                    AlertBox.display("Error: " + recv.get("err_msg"));
-                    recAPRSCheckBox.setSelected(false);
-                }
-            });
-            threadExecutor.submit(dispatcher);
-        }
-        else{
-            recAPRSCheckBox.setDisable(true);
-            BackendDispatcher dispatcher = new BackendDispatcher(MessageStructure.STOP_APRS_RECEIVE, null);
-            dispatcher.setOnSucceeded(e -> {
-                JsonObject recv = dispatcher.getValue();
-                if(recv.get("status").getAsString().equals("error")){
-                    AlertBox.display(recv.get("err_msg").getAsString());
-                }
-                recAPRSCheckBox.setDisable(false);
-            });
-
-            threadExecutor.submit(dispatcher);
-        }
+        MessageStructure structure = recAPRSCheckBox.isSelected() ? MessageStructure.RECEIVE_APRS : MessageStructure.STOP_APRS_RECEIVE;
+        BackendDispatcher dispatcher = new BackendDispatcher(structure, null);
+        dispatcher.setOnSucceeded(e -> {
+            JsonObject recv = dispatcher.getValue();
+            if(recv.get("status").getAsString().equals("error")){
+                AlertBox.display("Error: " + recv.get("err_msg"));
+                recAPRSCheckBox.setSelected(false);
+            }
+        });
+        threadExecutor.submit(dispatcher);
     }
+    
     
     @FXML
     void sendPressed(MouseEvent event) throws IOException {
@@ -359,18 +343,12 @@ public class MissionController {
                 sentListView.getItems().add(string_command);
             }
             else{
-                File file = new File("callsign.txt");
-                if(!file.exists()){
-                    AlertBox.display("Add a call sign before sending via APRS");
-                    return;
+                if(!ConfigManager.hasCallsignConfig() || ConfigManager.callsignEntry == null){
+                    AlertBox.display("Setup your callsign");
                 }
-                BufferedReader br = new BufferedReader(new FileReader(file));
-                String mycallsign = br.readLine();
-                String sendcall = br.readLine();
-                br.close();
 
                 HashMap<String, Object> params = new HashMap<>();
-                params.put("callsign", mycallsign);
+                params.put("callsign", ConfigManager.callsignEntry.myCallsign);
                 HashMap<String, Object> cmd = new HashMap<>();
                 ArrayList<Object> cmdList = new ArrayList<>();
                 cmd.put("power", Power.getText());
@@ -378,7 +356,7 @@ public class MissionController {
                 cmd.put("time", s);
                 cmdList.add(cmd);
                 params.put("commands", cmdList);
-                params.put("destination", sendcall);
+                params.put("destination", ConfigManager.callsignEntry.destinationCallsign);
                 dispatcher = new BackendDispatcher(MessageStructure.SEND_APRS, params);
                 
                 dispatcher.setOnSucceeded(e -> {
@@ -394,42 +372,7 @@ public class MissionController {
             command.clear();
         }
     }
-    @FXML
-    void checkBoxClicked(MouseEvent event) {
-        if(fileValues.size() != 0){
-            HashMap<String, Object> map = new HashMap<>();
-            if(doNotDisturb.isSelected()){
-                doNotDisturb.setDisable(true);
-                showLoadingAnimation();
-                map.put("doNotDisturb", true);
-                BackendDispatcher dispatcher = new BackendDispatcher(MessageStructure.USER_DATA_UPDATE, map);
-                dispatcher.setOnSucceeded(e -> {
-                    JsonObject obj = dispatcher.getValue();
-                    if(obj.get("status").getAsString().equals("error")){
-                        AlertBox.display(obj.get("err_msg").getAsString());
-                    }
-                    hideLoadingAnimation();
-                    doNotDisturb.setDisable(false);
-                });
-                threadExecutor.submit(dispatcher);
-            }
-            else{
-                doNotDisturb.setDisable(true);
-                showLoadingAnimation();
-                map.put("doNotDisturb", false);
-                BackendDispatcher dispatcher = new BackendDispatcher(MessageStructure.USER_DATA_UPDATE, map);
-                dispatcher.setOnSucceeded(e -> {
-                    JsonObject obj = dispatcher.getValue();
-                    if(obj.get("status").getAsString().equals("error")){
-                        AlertBox.display(obj.get("err_msg").getAsString());
-                    }
-                    doNotDisturb.setDisable(false);
-                    hideLoadingAnimation();
-                });
-                threadExecutor.submit(dispatcher);
-            }
-        }
-    }
+
     @FXML
     void pairPressed(MouseEvent event) {
         if (localRobotConnection.getSelectionModel().isEmpty())  {
@@ -447,11 +390,6 @@ public class MissionController {
                     if (response.get("status").getAsString().equals("ok")){
                         robotsManager.addLocalRobot(new RobotEntry(localRobotConnection.getValue()));
                         localRobotConnection.setDisable(true);
-                        File f = new File("important.txt");
-                        if(f.exists()){
-                            doNotDisturb.setDisable(false);
-                        }
-                        recAPRSCheckBox.setDisable(false);
                         pairingStatus = true;
                         pairButton.setText("Disconnect");
                     }
@@ -467,8 +405,6 @@ public class MissionController {
                 localRobotConnection.setValue(null);
                 localRobotConnection.setDisable(false);
                 robotsManager.removeLocalRobot();
-                recAPRSCheckBox.setSelected(false);
-                recAPRSCheckBox.setDisable(true);
                 
                 //Unpair and turn status offline
                 pairButton.setDisable(true);
@@ -497,7 +433,6 @@ public class MissionController {
                 threadExecutor.submit(dispatcher);
                 threadExecutor.submit(stop_rec);
 
-                doNotDisturb.setDisable(true);
                 Power.clear();
                 command.clear();
                 type.setValue(null);
@@ -510,11 +445,8 @@ public class MissionController {
         sentListView.getItems().add("~");
         recListView.getItems().add("~");
         doNotDisturb.setSelected(true);
-        doNotDisturb.setDisable(true);
         medium.setDisable(true);
-        recAPRSCheckBox.setDisable(true);
-        recAPRSCheckBox.setSelected(false);
-        robotsManager = new AvailableRobotsManager(threadExecutor);
+        robotsManager = new AvailableRobotsManager(threadExecutor, availableRobots);
         
         hideLoadingAnimation();
         loadingAnimation();
@@ -534,7 +466,7 @@ public class MissionController {
         availableRobots.setVisibleRowCount(3);
         availableRobots.setItems(robotsManager.getDisplayedRobots());
         availableRobots.showingProperty().addListener((obs, wasShowing, isShowing) -> {
-            if(isShowing)
+            if(isShowing && ConfigManager.isGlobalModeEnabled())
                 robotsManager.refreshRemoteRobots();
         });
 
@@ -613,16 +545,27 @@ public class MissionController {
             }
         });
 
-        if(new File("important.txt").exists()){
-            Reader.read(fileValues);
+        if(ConfigManager.isGlobalModeEnabled()){
+            ConfigManager.readConfig();
         }
-        
-        File callsignFile = new File("callsign.txt");
-        if(callsignFile.exists()){
-            BufferedReader br = new BufferedReader(new FileReader(callsignFile));
-            robotsManager.addAprsRobot(new RobotEntry(br.readLine(), br.readLine()));
-            br.close();
+
+        if(ConfigManager.hasCallsignConfig()){
+            RobotEntry entry = ConfigManager.readCallsignConfig();
+            if(entry != null){
+                robotsManager.addAprsRobot(entry);
+            }
         }
+
+        doNotDisturb.addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
+            if(!ConfigManager.isGlobalModeEnabled() || !pairingStatus){
+                event.consume();
+                AlertBox.display("User must be configured and robot must be paired");
+                return;
+            }
+            doNotDisturb.setSelected(!doNotDisturb.isSelected());
+            handleDoNotDisturbUpdate();
+            event.consume();
+        });
 
         onUpdateV3 updater = new onUpdateV3();
         updater.startListening(() -> {
@@ -635,9 +578,6 @@ public class MissionController {
                 robotsManager.removeLocalRobot();
 
                 pairButton.setDisable(false);
-                doNotDisturb.setDisable(true);
-                recAPRSCheckBox.setSelected(false);
-                recAPRSCheckBox.setDisable(true);
                 localRobotConnection.setDisable(false);
                 pairingStatus = false;
             }
@@ -674,6 +614,23 @@ public class MissionController {
     }
     public static boolean getPairingStatus(){
         return pairingStatus;
+    }
+
+    private void handleDoNotDisturbUpdate(){
+        HashMap<String, Object> map = new HashMap<>();
+        doNotDisturb.setDisable(true);
+        showLoadingAnimation();
+        map.put("doNotDisturb", doNotDisturb.isSelected());
+        BackendDispatcher dispatcher = new BackendDispatcher(MessageStructure.USER_DATA_UPDATE, map);
+        dispatcher.setOnSucceeded(e -> {
+            JsonObject obj = dispatcher.getValue();
+            if(obj.get("status").getAsString().equals("error")){
+                AlertBox.display(obj.get("err_msg").getAsString());
+            }
+            hideLoadingAnimation();
+            doNotDisturb.setDisable(false);
+        });
+        threadExecutor.submit(dispatcher);
     }
 }
 

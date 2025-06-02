@@ -3,9 +3,7 @@ package org.ariss.star;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -22,16 +20,12 @@ public class callsignController {
     @FXML
     protected void callSignSubmitPressed(ActionEvent event) throws IOException{
         String callsign = callsignText.getText();
-        String listeningCall = callsignListener.getText();
+        String destinationCall = callsignListener.getText();
         if(callsign.length() != CALLSIGN_LENGTH){
             AlertBox.display("Malformed callsign - Must be 6 characters in length");
         }
         else{
-            File file = new File("callsign.txt");
-            PrintWriter pw = new PrintWriter(new FileWriter("callsign.txt", false));
-            pw.write(callsign);
-            pw.write("\n" + listeningCall);
-            pw.close();
+            ConfigManager.dumpCallsignConfig(callsign, destinationCall);
             ((Stage)(((Button)event.getSource()).getScene().getWindow())).close();
         }
     }
@@ -41,12 +35,12 @@ public class callsignController {
     }
 
     public void initialize() throws IOException{
-        File file = new File("callsign.txt");
-        if (file.isFile()){
-            BufferedReader br = new BufferedReader(new FileReader(file));
-            callsignText.setText(br.readLine());
-            callsignListener.setText(br.readLine());
-            br.close();
+        if(ConfigManager.hasCallsignConfig()){
+            ConfigManager.readCallsignConfig();
+            if(ConfigManager.callsignEntry.myCallsign != null && ConfigManager.callsignEntry.destinationCallsign != null){
+                callsignText.setText(ConfigManager.callsignEntry.myCallsign);
+                callsignListener.setText(ConfigManager.callsignEntry.destinationCallsign);
+            }
         }
     }
 }
