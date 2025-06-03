@@ -118,7 +118,7 @@
             <ListView fx:id="sentListView" layoutX="17.0" layoutY="169.0" prefHeight="270.0" prefWidth="280.0" />
             <ListView fx:id="recListView" layoutX="369.0" layoutY="169.0" prefHeight="270.0" prefWidth="280.0" />
             <Separator layoutX="336.0" layoutY="38.0" orientation="VERTICAL" prefHeight="374.0" prefWidth="0.0" />
-            <CheckBox fx:id="doNotDisturb" layoutX="367.0" layoutY="70.0" mnemonicParsing="false" onMouseClicked="#checkBoxClicked" text="Do Not Disturb">
+            <CheckBox fx:id="doNotDisturb" layoutX="367.0" layoutY="70.0" mnemonicParsing="false" text="Do Not Disturb">
               <font>
                   <Font name="Verdana" size="12.0" />
               </font>

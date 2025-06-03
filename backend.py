@@ -3,11 +3,11 @@ import platform
 from threading import Thread
 import requests
 from requests import RequestException, Timeout
-from zmq import Context
+from zmq import PUSH, Context
 from zmq import REP
 from aprsListener import APRSUpdater
 import helper
-from serial import Serial
+from serial import Serial, SerialException
 from serial import STOPBITS_ONE
 from serial.tools.list_ports import comports
 import os
@@ -35,6 +35,9 @@ context = Context()
 socket = context.socket(REP)
 socket.bind("tcp://127.0.0.1:5555")
 
+push_update_socket = context.socket(PUSH)
+push_update_socket.bind("tcp://127.0.0.1:5556")
+
 def read_config():
     global myMC, schoolName, city, state, GLOBAL_MODE
     if not os.path.exists(USER_DATA_FILE):
@@ -46,7 +49,6 @@ def read_config():
             schoolName = data.get("school")
             city = data.get("city")
             state = data.get("state")
-            print("here3")
             if all([myMC, schoolName, city, state]):
                 GLOBAL_MODE = True
     except (json.JSONDecodeError, IOError):
@@ -187,7 +189,10 @@ async def handle_request(msg):
                 'commands': [100 forward 2, 200 backwards 1]
             }
             """
-            helper.postToSerialJson(msg['commands'])
+            try:
+                helper.postToSerialJson(msg['commands'])
+            except (SerialException, RuntimeError) as e:
+                return {"status": "error", "err_msg": str(e)}
             return {"status": "ok"}
         case "pair_connect":
             """
@@ -198,7 +203,7 @@ async def handle_request(msg):
             """
             try:
                 pair_with_bot(msg)
-                disconnectMonitor = USBDisconnectWatcher(msg['port'], aprsUpdater)
+                disconnectMonitor = USBDisconnectWatcher(msg['port'], aprsUpdater, push_update_socket)
                 disconnectMonitor.start()
                 return {"status": "ok"}
             except Exception as e:
@@ -228,10 +233,11 @@ async def handle_request(msg):
                 return {"status": "error", "err_msg": str(e)}
 
         case "receive_aprs":
-            check = check_rtlsdr()
-            if check["status"] == "error":
-                return check
-            
+            if platform.system() == "linux":
+                check = check_rtlsdr()
+                if check["status"] == "error":
+                    return check
+
             try:
                 aprsUpdater.startAPRSprocesses()
             except Exception as e:
@@ -289,6 +295,7 @@ async def connect_to_ws():
                 data = json.loads(msg)
                 if data["type"] == "command":
                     print("posting to Serial")
+                    push_update_socket.send_json(data)
                     helper.postToSerialJson(data["commands"])
 
                 print("[WebSocket] Received:", data)

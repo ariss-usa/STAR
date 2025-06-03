@@ -43,6 +43,15 @@ public class BackendDispatcher extends Task<JsonObject>{
         }
         return obj;
     }
+
+    public void attachDefaultErrorHandler(){
+        this.setOnSucceeded(e -> {
+            JsonObject recv = this.getValue();
+            if(recv.get("status").getAsString().equals("error")){
+                AlertBox.display("Error: " + recv.get("err_msg"));
+            }
+        });
+    }
 }
 
 enum MessageStructure {

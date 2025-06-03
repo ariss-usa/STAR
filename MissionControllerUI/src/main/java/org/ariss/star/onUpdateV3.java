@@ -7,6 +7,9 @@ import com.google.gson.JsonObject;
 
 import org.zeromq.ZContext;
 import javafx.application.Platform;
+
+import java.util.function.Consumer;
+
 import org.zeromq.SocketType;
 
 public class onUpdateV3 {
@@ -14,7 +17,7 @@ public class onUpdateV3 {
     private ZContext context;
     private ZMQ.Socket pullSocket;
 
-    public void startListening(Runnable onDisconnect) {
+    public void startListening(Consumer<JsonObject> onUpdate) {
         context = new ZContext();
         pullSocket = context.createSocket(SocketType.PULL);
         pullSocket.connect("tcp://127.0.0.1:5556");
@@ -24,12 +27,11 @@ public class onUpdateV3 {
                 try {
                     String message = pullSocket.recvStr();
                     JsonObject obj = gson.fromJson(message, JsonObject.class);
-                    if (obj != null && obj.get("type").getAsString().equals("usb_disconnect")) {
-                        Platform.runLater(onDisconnect);
+                    if (obj != null && obj.has("type")) {
+                        Platform.runLater(() -> onUpdate.accept(obj));
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
-                    break;
+                    System.out.println("[DEBUG]: there was an error handling pushed updates from client backend " + e.toString());
                 }
             }
         });

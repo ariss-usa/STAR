@@ -3,6 +3,9 @@ import importlib
 
 serialPort = None
 def postToSerialJson(commandList):
+    if serialPort is None or not serialPort.isOpen():
+        raise RuntimeError("Robot is not properly connected")
+
     for i in range(0, len(commandList)):
         command = commandList[i]
         #splitCommands[0] = power, [1] = direction, [2] = time

@@ -32,10 +32,7 @@ public class commandBuilderController {
             AlertBox.display("Select a robot");
         }
         else{
-            if(!MissionController.getPairingStatus()){
-                AlertBox.display("Pair to a robot");
-            }
-            else if(formatCheck){
+            if(formatCheck){
                 String [] split = txt.split("\n| ");
                 HashMap<String, Object> params = new HashMap<>();
                 ArrayList<HashMap<String, Object>> cmds = new ArrayList<>();

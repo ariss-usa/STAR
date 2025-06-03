@@ -1,3 +1,4 @@
+from serial import SerialException
 import helper
 import re
 import platform
@@ -31,7 +32,12 @@ class APRSUpdater:
                     commands = match.group(2).split(",")
                     for cmd in commands:
                         div = cmd.split()
-                        helper.postToSerialJson([{"power": div[0], "direction": div[1], "time": div[2]}])
+                        try:
+                            helper.postToSerialJson([{"power": div[0], "direction": div[1], "time": div[2]}])
+                        except (RuntimeError, SerialException) as e:
+                            #Log this
+                            print("[DEBUG] Error executing command from direwolf - check robot connection")
+                            pass
             except EOFError:
                 print("Direwolf stopped")
                 break

@@ -25,9 +25,6 @@ import javafx.util.Duration;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -107,7 +104,6 @@ public class MissionController {
 
     private Stage parent;
     private Parent root;
-    private ArrayList<Object> fileValues = new ArrayList<Object>();
     public static ExecutorService threadExecutor = Executors.newSingleThreadExecutor();
     private static RobotEntry currRobot;
     private static boolean pairingStatus = false;
@@ -261,12 +257,7 @@ public class MissionController {
             //Client backend will reread these new values from file
             params.put("doNotDisturb", doNotDisturb.isSelected());
             BackendDispatcher dispatcher = new BackendDispatcher(MessageStructure.USER_DATA_UPDATE, params);
-            dispatcher.setOnSucceeded(e -> {
-                JsonObject obj = dispatcher.getValue();
-                if(obj.get("status").getAsString().equals("error")){
-                    AlertBox.display(obj.get("err_msg").getAsString());
-                }
-            });
+            dispatcher.attachDefaultErrorHandler();
             threadExecutor.submit(dispatcher);
         }
     }
@@ -275,13 +266,7 @@ public class MissionController {
     protected void receive(ActionEvent event) throws IOException{
         MessageStructure structure = recAPRSCheckBox.isSelected() ? MessageStructure.RECEIVE_APRS : MessageStructure.STOP_APRS_RECEIVE;
         BackendDispatcher dispatcher = new BackendDispatcher(structure, null);
-        dispatcher.setOnSucceeded(e -> {
-            JsonObject recv = dispatcher.getValue();
-            if(recv.get("status").getAsString().equals("error")){
-                AlertBox.display("Error: " + recv.get("err_msg"));
-                recAPRSCheckBox.setSelected(false);
-            }
-        });
+        dispatcher.attachDefaultErrorHandler();
         threadExecutor.submit(dispatcher);
     }
     
@@ -323,12 +308,7 @@ public class MissionController {
                     map.put("receiver_id", selectedMCID);
                     map.put("commands", Arrays.asList(cmd));
                     dispatcher = new BackendDispatcher(MessageStructure.REMOTE_CONTROL, map);
-                    dispatcher.setOnSucceeded(e -> {
-                        JsonObject recv = dispatcher.getValue();
-                        if(recv.get("status").getAsString().equals("error")){
-                            AlertBox.display("Error: " + recv.get("err_msg"));
-                        }
-                    });
+                    dispatcher.attachDefaultErrorHandler();
                 }
                 else{
                     HashMap<String, Object> cmd = new HashMap<>();
@@ -338,6 +318,7 @@ public class MissionController {
 
                     map.put("commands", Arrays.asList(cmd));
                     dispatcher = new BackendDispatcher(MessageStructure.LOCAL_CONTROL, map);
+                    dispatcher.attachDefaultErrorHandler();
                 }
                 threadExecutor.submit(dispatcher);
                 sentListView.getItems().add(string_command);
@@ -359,12 +340,7 @@ public class MissionController {
                 params.put("destination", ConfigManager.callsignEntry.destinationCallsign);
                 dispatcher = new BackendDispatcher(MessageStructure.SEND_APRS, params);
                 
-                dispatcher.setOnSucceeded(e -> {
-                    JsonObject recv = dispatcher.getValue();
-                    if(recv.get("status").getAsString().equals("error")){
-                        AlertBox.display("Error: " + recv.get("err_msg"));
-                    }
-                });
+                dispatcher.attachDefaultErrorHandler();
                 threadExecutor.submit(dispatcher);
             }
             Power.clear();
@@ -423,12 +399,7 @@ public class MissionController {
                 });
 
                 BackendDispatcher stop_rec = new BackendDispatcher(MessageStructure.STOP_APRS_RECEIVE, null);
-                stop_rec.setOnSucceeded(e -> {
-                    JsonObject recv = stop_rec.getValue();
-                    if(recv.get("status").getAsString().equals("error")){
-                        AlertBox.display(recv.get("err_msg").getAsString());
-                    }
-                });
+                stop_rec.attachDefaultErrorHandler();
 
                 threadExecutor.submit(dispatcher);
                 threadExecutor.submit(stop_rec);
@@ -568,18 +539,41 @@ public class MissionController {
         });
 
         onUpdateV3 updater = new onUpdateV3();
-        updater.startListening(() -> {
-            //We have received a usb disconnect
-            if(pairingStatus){
-                localRobotConnection.getSelectionModel().clearSelection();
-                localRobotConnection.getItems().clear();
-                pairButton.setText("Pair");
+        updater.startListening(update -> {
+            String type = update.get("type").getAsString();
+            switch (type) {
+                case "usb_disconnect":
+                    //We have received a usb disconnect
+                    if(pairingStatus){
+                        localRobotConnection.getSelectionModel().clearSelection();
+                        localRobotConnection.getItems().clear();
+                        pairButton.setText("Pair");
 
-                robotsManager.removeLocalRobot();
+                        robotsManager.removeLocalRobot();
 
-                pairButton.setDisable(false);
-                localRobotConnection.setDisable(false);
-                pairingStatus = false;
+                        pairButton.setDisable(false);
+                        localRobotConnection.setDisable(false);
+                        pairingStatus = false;
+                    }
+                    break;
+                case "command":
+                    //Someone sent us a command
+                    JsonArray commands = update.get("commands").getAsJsonArray();
+                    String readableEntry = "";
+
+                    for(int i = 0; i < commands.size(); i++){
+                        JsonObject obj = commands.get(i).getAsJsonObject();
+                        
+                        readableEntry += obj.get("power").getAsString() + " " +
+                                        obj.get("direction").getAsString() + " " +
+                                        obj.get("time").getAsString();
+
+                        if(commands.size() > 0 && i != commands.size() - 1){
+                            readableEntry += ", ";
+                        }
+                    }
+                    recListView.getItems().add(readableEntry);
+                    break;
             }
         });
     }
