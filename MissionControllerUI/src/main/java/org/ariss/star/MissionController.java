@@ -572,7 +572,9 @@ public class MissionController {
                             readableEntry += ", ";
                         }
                     }
-                    recListView.getItems().add(readableEntry);
+
+                    if (!readableEntry.equals(""))
+                        recListView.getItems().add(readableEntry);
                     break;
             }
         });

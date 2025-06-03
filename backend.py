@@ -131,7 +131,7 @@ def send_aprs(msg):
         playsound("./aprs_commands.wav")
     except Exception as e:
         raise RuntimeError(f"Error sending aprs: {str(e)}")
-    
+        
 async def handle_request(msg):
     global disconnectMonitor
     match msg['type']:
@@ -172,11 +172,6 @@ async def handle_request(msg):
             }
             """
             read_config()
-            print(f"[DEBUG] websocket started: {websocket_started}")
-            print(f"[DEBUG] global mode: {GLOBAL_MODE}")
-            if not websocket_started and GLOBAL_MODE:
-                asyncio.create_task(connect_to_ws())
-
             try:
                 update_robot(msg["doNotDisturb"])
                 return {"status": "ok"}
@@ -268,20 +263,26 @@ async def zmq_loop():
 
 async def main():
     read_config()
-    tasks = [asyncio.create_task(zmq_loop())]
-    if GLOBAL_MODE:
-        print("scheduling websocket connect")
-        tasks.append(asyncio.create_task(connect_to_ws()))
-    else:
-        print("skipping websocket connection")
-    await asyncio.gather(*tasks)
+    await asyncio.gather(
+        zmq_loop(),
+        auto_reconnect_loop()
+    )
+
+async def auto_reconnect_loop():
+    while True:
+        if GLOBAL_MODE and not websocket_started:
+            print("[DEBUG] Retry websocket connection")
+            await connect_to_ws()
+        await asyncio.sleep(10)    
 
 async def connect_to_ws():
     global websocket_started
 
     try:
-        async with websockets.connect(WEBSOCKET_ENDPOINT) as websocket:
-            print("Opening socket")
+        websocket = await asyncio.wait_for(websockets.connect(WEBSOCKET_ENDPOINT), timeout=3)
+
+        async with websocket:
+            print("[DEBUG] Opening socket")
             await websocket.send(json.dumps({
                 "id": myMC,
                 "schoolName": schoolName,
@@ -292,15 +293,17 @@ async def connect_to_ws():
             websocket_started = True
             while True:
                 msg = await websocket.recv()
-                data = json.loads(msg)
-                if data["type"] == "command":
-                    print("posting to Serial")
-                    push_update_socket.send_json(data)
-                    helper.postToSerialJson(data["commands"])
-
-                print("[WebSocket] Received:", data)
+                try:
+                    data = json.loads(msg)
+                    if data["type"] == "command":
+                        print("posting to Serial")
+                        push_update_socket.send_json(data)
+                        helper.postToSerialJson(data["commands"])
+                        print("[WebSocket] Received:", data)
+                except json.JSONDecodeError:
+                    print("[Error] JSON decode error")
     except Exception as e:
-        print(f"[WebSocket] Connection failed: {e}")
+        print(f"[WebSocket] Connection failed: {str(e)}")
         websocket_started = False
 
 asyncio.run(main())
