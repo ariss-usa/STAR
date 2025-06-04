@@ -8,7 +8,6 @@ important.txt
 packagedMissionController/
 venv/
 direwolf-1.5-win/
-DisconnectMonitor.py
 aprs_commands.wav
 callsign.txt
 __pycache__/
