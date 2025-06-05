@@ -1,9 +1,6 @@
 package org.ariss.star;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.ObjectInputFilter.Config;
-import java.util.ArrayList;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;

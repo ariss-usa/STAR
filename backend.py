@@ -6,7 +6,6 @@ from requests import RequestException, Timeout
 from zmq import PUSH, Context
 from zmq import REP
 from aprsListener import APRSUpdater
-import helper
 from serial import Serial, SerialException
 from serial import STOPBITS_ONE
 from serial.tools.list_ports import comports
@@ -17,6 +16,7 @@ from rtlsdr import RtlSdr
 from playsound3 import playsound
 from DisconnectMonitor import USBDisconnectWatcher
 import sys
+from robot_link import RobotLink
 
 ACTIVE_ROBOTS_ENDPOINT = "https://star-44oa.onrender.com/robots/active"
 UPDATE_ROBOT_ENDPOINT = "https://star-44oa.onrender.com/robots/update"
@@ -29,7 +29,6 @@ GLOBAL_MODE = False
 myMC = schoolName = city = state = None
 do_not_disturb = True
 websocket_started = False
-aprsUpdater = APRSUpdater()
 disconnectMonitor = None
 
 context = Context()
@@ -38,6 +37,8 @@ socket.bind("tcp://127.0.0.1:5555")
 
 push_update_socket = context.socket(PUSH)
 push_update_socket.bind("tcp://127.0.0.1:5556")
+link = RobotLink(push_update_socket)
+aprsUpdater = APRSUpdater(link)
 
 def read_config():
     global myMC, schoolName, city, state, GLOBAL_MODE
@@ -100,8 +101,8 @@ def send_command(msg):
 def pair_with_bot(msg) -> bool:
     try:
         ser = Serial(port=msg['port'], baudrate=115200, bytesize=8, timeout=5, stopbits=STOPBITS_ONE)
-        helper.setSerial(ser)
-        helper.getSerial().write(bytearray([255, 85, 7, 0, 2, 5, 0, 0, 0, 0])) #stop sequence
+        link.setSerial(ser)
+        link.getSerial().write(bytearray([255, 85, 7, 0, 2, 5, 0, 0, 0, 0])) #stop sequence
     except Exception as e:
         raise RuntimeError(f"Error: {str(e)}")
     return True
@@ -186,7 +187,7 @@ async def handle_request(msg):
             }
             """
             try:
-                helper.postToSerialJson(msg['commands'])
+                link.postToSerialJson(msg['commands'])
             except (SerialException, RuntimeError) as e:
                 return {"status": "error", "err_msg": str(e)}
             return {"status": "ok"}
@@ -199,7 +200,7 @@ async def handle_request(msg):
             """
             try:
                 pair_with_bot(msg)
-                disconnectMonitor = USBDisconnectWatcher(msg['port'], aprsUpdater, push_update_socket)
+                disconnectMonitor = USBDisconnectWatcher(msg['port'], aprsUpdater, push_update_socket, link)
                 disconnectMonitor.start()
                 return {"status": "ok"}
             except Exception as e:
@@ -207,7 +208,7 @@ async def handle_request(msg):
             
         case "pair_disconnect":
             try:
-                helper.closeSerial()
+                link.closeSerial()
                 disconnectMonitor.stop()
                 return {"status": "ok"}
             except Exception as e:
@@ -240,7 +241,7 @@ async def handle_request(msg):
                 return {"status": "error", "err_msg": str(e)}
 
             if(platform.system() == "Linux"):
-                thread = Thread(target=aprsUpdater.checkAPRSUpdates_RTLSDR)
+                thread = Thread(target=aprsUpdater.checkAPRSUpdates_Linux)
             else:
                 thread = Thread(target=aprsUpdater.checkAPRSUpdates)
 
@@ -253,6 +254,7 @@ async def handle_request(msg):
         case "end_program":
             try:
                 socket.send_json({"status": "ok"})
+                aprsUpdater.stop()
                 context.destroy()
                 sys.exit(0)
             except Exception as e:
@@ -307,8 +309,7 @@ async def connect_to_ws():
                     data = json.loads(msg)
                     if data["type"] == "command":
                         print("posting to Serial")
-                        push_update_socket.send_json(data)
-                        helper.postToSerialJson(data["commands"])
+                        link.postToSerialJson(data["commands"])
                         print("[WebSocket] Received:", data)
                 except json.JSONDecodeError:
                     print("[Error] JSON decode error")

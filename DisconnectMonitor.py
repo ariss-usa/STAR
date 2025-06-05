@@ -2,15 +2,16 @@ from usbmonitor import USBMonitor
 from usbmonitor.attributes import ID_VENDOR_ID, ID_MODEL_ID
 from serial.tools import list_ports
 import threading
-import helper
+from robot_link import RobotLink
 
 class USBDisconnectWatcher:
-    def __init__(self, port_name, aprsUpdater, push_socket):
+    def __init__(self, port_name, aprsUpdater, push_socket, link):
         self.port_name = port_name
         self.vid, self.pid = self._get_vid_pid(port_name)
         self.monitor = USBMonitor()
         self.aprsUpdater = aprsUpdater
         self.push_socket = push_socket
+        self.link = link
 
     def _get_vid_pid(self, port_name):
         for p in list_ports.comports():
@@ -23,7 +24,7 @@ class USBDisconnectWatcher:
             device_info.get(ID_MODEL_ID, "").lower() == self.pid):
             print(f"[USB Watchdog] Matched disconnect on port {self.port_name}")
             threading.Timer(0, self.stop).start()
-            helper.closeSerial()
+            self.link.closeSerial()
             self.aprsUpdater.stop()
 
             if self.push_socket:
