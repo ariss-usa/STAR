@@ -64,5 +64,6 @@ enum MessageStructure {
     RECEIVE_APRS,
     STOP_APRS_RECEIVE,
     SEND_APRS,
-    GET_PORTS
+    GET_PORTS,
+    END_PROGRAM
 }

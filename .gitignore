@@ -14,3 +14,6 @@ __pycache__/
 callsign.json
 important.json
 MARS-SIM/
+gpredict-win32-2.2.1
+package/
+MissionController-win-v1.3

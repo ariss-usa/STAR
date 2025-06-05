@@ -18,6 +18,8 @@ import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
+import com.google.gson.JsonObject;
+
 public class StarApp extends Application {
     @Override
     public void start(Stage stage) throws IOException {
@@ -40,24 +42,28 @@ public class StarApp extends Application {
         stage.show();
         
         stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
-            public void handle(WindowEvent we) {                
-                try(ZContext ctx = new ZContext()){
-                    ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
-                    socket.connect("tcp://127.0.0.1:5555");
-                    socket.send("END");
-                    socket.recv();
-                    ctx.destroy();
-                }
-                MissionController.threadExecutor.shutdown();
-                try{
-                    if (!MissionController.threadExecutor.awaitTermination(10, TimeUnit.SECONDS)){
-                        MissionController.threadExecutor.shutdownNow();
+            public void handle(WindowEvent we) {
+                we.consume();
+                BackendDispatcher dispatcher = new BackendDispatcher(MessageStructure.END_PROGRAM, null);
+                dispatcher.setOnSucceeded(e -> {
+                    JsonObject obj = dispatcher.getValue();
+                    if(obj.get("status").getAsString().equals("error")){
+                        AlertBox.display(obj.get("err_msg").getAsString());
                     }
-                }
-                catch(InterruptedException e){
-                    MissionController.threadExecutor.shutdownNow();
-                }
-                System.exit(0);
+                    else{
+                        MissionController.threadExecutor.shutdown();
+                        try {
+                            if (!MissionController.threadExecutor.awaitTermination(3, TimeUnit.SECONDS)) {
+                                MissionController.threadExecutor.shutdownNow();
+                            }
+                        } catch (InterruptedException ex) {
+                            MissionController.threadExecutor.shutdownNow();
+                        }
+                        Platform.exit();
+                        System.exit(0);
+                    }
+                });
+                MissionController.threadExecutor.submit(dispatcher);
             }
         });
     }

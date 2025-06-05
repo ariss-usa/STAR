@@ -17,8 +17,11 @@ class APRSUpdater:
         self.socket = self.context.socket(zmq.REQ)
         self.socket.bind("tcp://127.0.0.1:5559")
         if current_platform == "Windows":
-            module = helper.import_module_by_platform("winpty", current_platform)
-            self.ptyModule = module.PtyProcess
+            try:
+                module = helper.import_module_by_platform("winpty", current_platform)
+                self.ptyModule = module.PtyProcess
+            except Exception as e:
+                print("Failed to import pywinpty")
     def checkAPRSUpdates(self):
         direwolf = self.processList[0]
         serialPort = helper.getSerial()

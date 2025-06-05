@@ -138,7 +138,8 @@ public class MissionController {
     @FXML
     protected void gpredictMenuItemPressed(ActionEvent event) throws IOException {
         if(System.getProperty("os.name").toLowerCase().contains("win")){
-            new ProcessBuilder("..\\gpredict-win32-2.2.1\\gpredict-win32-2.2.1\\gpredict.exe").start();
+            //new ProcessBuilder("..\\gpredict-win32-2.2.1\\gpredict-win32-2.2.1\\gpredict.exe").start();
+            new ProcessBuilder(".\\gpredict-win32-2.2.1\\gpredict-win32-2.2.1\\gpredict.exe").start();
         }
         else{
             new ProcessBuilder("gpredict").start();

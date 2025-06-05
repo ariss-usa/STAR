@@ -16,11 +16,12 @@ import json
 from rtlsdr import RtlSdr
 from playsound3 import playsound
 from DisconnectMonitor import USBDisconnectWatcher
+import sys
 
-ACTIVE_ROBOTS_ENDPOINT = "http://localhost:8000/robots/active"
-UPDATE_ROBOT_ENDPOINT = "http://localhost:8000/robots/update"
-SEND_COMMAND_ENDPOINT = "http://localhost:8000/send_command"
-WEBSOCKET_ENDPOINT = "ws://localhost:8000/ws"
+ACTIVE_ROBOTS_ENDPOINT = "https://star-44oa.onrender.com/robots/active"
+UPDATE_ROBOT_ENDPOINT = "https://star-44oa.onrender.com/robots/update"
+SEND_COMMAND_ENDPOINT = "https://star-44oa.onrender.com/send_command"
+WEBSOCKET_ENDPOINT = "wss://star-44oa.onrender.com/ws"
 REQUEST_TIMEOUT = (3.05, 5)
 USER_DATA_FILE = "important.json"
 GLOBAL_MODE = False
@@ -248,6 +249,15 @@ async def handle_request(msg):
         case "stop_aprs_receive":
             aprsUpdater.stop()
             return {"status": "ok"}
+        
+        case "end_program":
+            try:
+                socket.send_json({"status": "ok"})
+                context.destroy()
+                sys.exit(0)
+            except Exception as e:
+                socket.send_json({"status": "error"})
+                print(f"[DEBUG] Error {str(e)}")
 
 async def zmq_loop():
     while True:
