@@ -322,7 +322,6 @@ public class MissionController {
                     dispatcher.attachDefaultErrorHandler();
                 }
                 threadExecutor.submit(dispatcher);
-                sentListView.getItems().add(string_command);
             }
             else{
                 if(!ConfigManager.hasCallsignConfig() || ConfigManager.callsignEntry == null){
@@ -344,6 +343,7 @@ public class MissionController {
                 dispatcher.attachDefaultErrorHandler();
                 threadExecutor.submit(dispatcher);
             }
+            sentListView.getItems().add(string_command);
             Power.clear();
             type.setValue("N/A");
             command.clear();

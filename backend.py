@@ -241,9 +241,9 @@ async def handle_request(msg):
                 return {"status": "error", "err_msg": str(e)}
 
             if(platform.system() == "Linux"):
-                thread = Thread(target=aprsUpdater.checkAPRSUpdates_Linux)
+                thread = Thread(target=aprsUpdater.checkAPRSUpdates_Linux, daemon=True)
             else:
-                thread = Thread(target=aprsUpdater.checkAPRSUpdates)
+                thread = Thread(target=aprsUpdater.checkAPRSUpdates, daemon=True)
 
             thread.start()
             return {"status": "ok"}
