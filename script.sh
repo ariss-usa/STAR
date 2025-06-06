@@ -8,7 +8,7 @@ echo -e "Decoding AX.25 packets on $(FREQ/1000) kHz"
 
 #run direwolf file
 
-direwolf -r 48000 -c /home/pi/CubeSatSim/groundstation/direwolf/direwolf.conf -t 0 &
+direwolf -r 48000 -c ./direwolf.conf -t 0 &
 
 #loop it to microphone input for direwolf and then get packets at particular frequency, and play it 
 sleep 5

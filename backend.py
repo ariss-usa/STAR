@@ -1,6 +1,7 @@
 import asyncio
 import platform
 from threading import Thread
+import time
 import requests
 from requests import RequestException, Timeout
 from zmq import PUSH, Context
@@ -18,13 +19,23 @@ from DisconnectMonitor import USBDisconnectWatcher
 import sys
 from robot_link import RobotLink
 
-ACTIVE_ROBOTS_ENDPOINT = "https://star-44oa.onrender.com/robots/active"
-UPDATE_ROBOT_ENDPOINT = "https://star-44oa.onrender.com/robots/update"
-SEND_COMMAND_ENDPOINT = "https://star-44oa.onrender.com/send_command"
-WEBSOCKET_ENDPOINT = "wss://star-44oa.onrender.com/ws"
+#ACTIVE_ROBOTS_ENDPOINT = "https://star-44oa.onrender.com/robots/active"
+#UPDATE_ROBOT_ENDPOINT = "https://star-44oa.onrender.com/robots/update"
+#SEND_COMMAND_ENDPOINT = "https://star-44oa.onrender.com/send_command"
+#HEALTH_ENDPOINT = "https://star-44oa.onrender.com/health"
+#WEBSOCKET_ENDPOINT = "wss://star-44oa.onrender.com/ws"
+
+ACTIVE_ROBOTS_ENDPOINT = "http://127.0.0.1:8000/robots/active"
+UPDATE_ROBOT_ENDPOINT = "http://127.0.0.1:8000/robots/update"
+SEND_COMMAND_ENDPOINT = "http://127.0.0.1:8000/send_command"
+HEALTH_ENDPOINT = "http://127.0.0.1:8000/health"
+WEBSOCKET_ENDPOINT = "ws://127.0.0.1:8000/ws"
+
 REQUEST_TIMEOUT = (3.05, 5)
 USER_DATA_FILE = "important.json"
 GLOBAL_MODE = False
+HEAT_RETRIES_LEFT = 6
+SERVER_WARMED = False
 
 myMC = schoolName = city = state = None
 do_not_disturb = True
@@ -60,7 +71,7 @@ def update_robot(doNotDisturb: bool):
     """
     Add/push changes into view
     """
-    global do_not_disturb
+    global do_not_disturb, SERVER_WARMED
     do_not_disturb = doNotDisturb
     robot_data = {
         "id": myMC,
@@ -72,9 +83,14 @@ def update_robot(doNotDisturb: bool):
 
     try:
         requests.post(UPDATE_ROBOT_ENDPOINT, json=robot_data, timeout=REQUEST_TIMEOUT)
-    except Timeout:
-        raise RuntimeError("Server did not reply in time")
-    except RequestException:
+        SERVER_WARMED = True
+    except Timeout as e:
+        if SERVER_WARMED:
+            raise RuntimeError("Server did not reply in time")
+        else:
+            raise RuntimeError("Server is warming up - this may take up to 1 minute")
+    except RequestException as e:
+        print(f"IN REQUEST EXCEPTION: {str(e)}")
         raise RuntimeError("A network error has occured")
 
     return {"status": "ok"}
@@ -91,10 +107,15 @@ def send_command(msg):
     Precondition: msg must be consistent with 
     the Command class defined in models.py
     """
+    global SERVER_WARMED
     try:
         requests.post(SEND_COMMAND_ENDPOINT, json=msg, timeout=REQUEST_TIMEOUT)
+        SERVER_WARMED = True
     except Timeout:
-        raise RuntimeError("Server did not reply in time")
+        if SERVER_WARMED:
+            raise RuntimeError("Server did not reply in time")
+        else:
+            raise RuntimeError("Server is warming up - this may take up to 1 minute")
     except RequestException:
         raise RuntimeError("A network error has occured")
     
@@ -277,15 +298,42 @@ async def main():
     read_config()
     await asyncio.gather(
         zmq_loop(),
-        auto_reconnect_loop()
+        auto_reconnect_loop(),
+        health_check()
     )
+
+def ping_health_endpoint():
+    try:
+        requests.get(HEALTH_ENDPOINT, timeout=REQUEST_TIMEOUT)
+        print("[DEBUG] keep alive ping succeeded")
+        return True
+    except Exception as e:
+        print("[DEBUG] Keep alive ping failed")
+        return False
+
+async def health_check():
+    global HEAT_RETRIES_LEFT, SERVER_WARMED
+    
+    while True:
+        if GLOBAL_MODE and HEAT_RETRIES_LEFT > 0:
+            if ping_health_endpoint():
+                SERVER_WARMED = True
+                HEAT_RETRIES_LEFT = 0
+            HEAT_RETRIES_LEFT -= 1
+            await asyncio.sleep(10)
+
+        elif GLOBAL_MODE:
+            ping_health_endpoint() # Prevent sleeping
+            await asyncio.sleep(600)
+        else:
+            await asyncio.sleep(10)
 
 async def auto_reconnect_loop():
     while True:
         if GLOBAL_MODE and not websocket_started:
             print("[DEBUG] Retry websocket connection")
             await connect_to_ws()
-        await asyncio.sleep(10)    
+        await asyncio.sleep(10)
 
 async def connect_to_ws():
     global websocket_started

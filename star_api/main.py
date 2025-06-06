@@ -8,6 +8,10 @@ app = FastAPI()
 active_robots: dict[str, RobotEntry] = {}
 active_connections: dict[str, WebSocket] = {}
 
+@app.get("/health")
+def check_health():
+    return {"status": "ok"}
+
 @app.get("/robots/active")
 def get_active_robots():
     return {

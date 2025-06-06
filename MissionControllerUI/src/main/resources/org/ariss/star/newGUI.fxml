@@ -97,7 +97,7 @@
                   <Font name="Verdana" size="12.0" />
               </font>
                <tooltip>
-                  <Tooltip text="Time of operation" />
+                  <Tooltip text="Time of operation in seconds" />
                </tooltip>
             </TextField>
             <Button fx:id="enter" layoutX="241.0" layoutY="64.0" mnemonicParsing="false" onMouseClicked="#sendPressed" prefHeight="17.0" prefWidth="78.0" text="Send">
@@ -128,7 +128,7 @@
                 <Font name="Verdana" size="12.0" />
               </font>
                <tooltip>
-                  <Tooltip text="Speed of robot (1, 120)" />
+                  <Tooltip text="Speed of robot (values from 1 to 255)" />
                </tooltip>
             </TextField>
             <ComboBox fx:id="localRobotConnection" layoutX="365.0" layoutY="25.0" prefHeight="26.0" prefWidth="158.0" promptText="BT Connections" styleClass="combo-box">
@@ -153,7 +153,7 @@
             <Circle fx:id="circle1" fill="DODGERBLUE" layoutX="496.0" layoutY="80.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
             <Circle fx:id="circle2" fill="#1fc4ff" layoutX="507.0" layoutY="80.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
             <Circle fx:id="circle3" fill="#1fffda" layoutX="519.0" layoutY="80.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
-            <CheckBox fx:id="recAPRSCheckBox" layoutX="155.0" layoutY="108.0" mnemonicParsing="false" onAction="#receive" text="Receive APRS" />
+            <CheckBox fx:id="recAPRSCheckBox" layoutX="155.0" layoutY="108.0" mnemonicParsing="false" text="Receive APRS" />
       </children>
     </AnchorPane>
       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="200.0" prefWidth="320.0" />

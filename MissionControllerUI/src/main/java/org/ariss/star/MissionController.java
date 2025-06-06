@@ -263,11 +263,17 @@ public class MissionController {
         }
     }
     
-    @FXML
-    protected void receive(ActionEvent event) throws IOException{
+    protected void receive(){
         MessageStructure structure = recAPRSCheckBox.isSelected() ? MessageStructure.RECEIVE_APRS : MessageStructure.STOP_APRS_RECEIVE;
         BackendDispatcher dispatcher = new BackendDispatcher(structure, null);
-        dispatcher.attachDefaultErrorHandler();
+        dispatcher.setOnSucceeded(e -> {
+            JsonObject recv = dispatcher.getValue();
+            if(recv.get("status").getAsString().equals("error")){
+                if (recAPRSCheckBox.isSelected())
+                    recAPRSCheckBox.setSelected(false);
+                AlertBox.display("Error: " + recv.get("err_msg"));
+            }
+        });
         threadExecutor.submit(dispatcher);
     }
     
@@ -536,6 +542,17 @@ public class MissionController {
             }
             doNotDisturb.setSelected(!doNotDisturb.isSelected());
             handleDoNotDisturbUpdate();
+            event.consume();
+        });
+
+        recAPRSCheckBox.addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
+            if(!pairingStatus){
+                event.consume();
+                AlertBox.display("Robot must be paired");
+                return;
+            }
+            recAPRSCheckBox.setSelected(!recAPRSCheckBox.isSelected());
+            receive();
             event.consume();
         });
 
