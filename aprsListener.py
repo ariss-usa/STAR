@@ -79,10 +79,8 @@ class APRSUpdater:
     def startAPRSprocesses(self):
         #gets mic input
         if platform.system() == 'Windows':
-            if shutil.which("direwolf") is None:
-                raise RuntimeError("Direwolf not found in PATH. Please install it or add to PATH")
             try:
-                direwolf = self.ptyModule.spawn("direwolf -c ./direwolf-win.conf")
+                direwolf = self.ptyModule.spawn(".\\direwolf.exe -c .\\direwolf-win.conf")
                 self.processList.append(direwolf)
             except Exception as e:
                 raise RuntimeError(f"Failed to launch Direwolf")
