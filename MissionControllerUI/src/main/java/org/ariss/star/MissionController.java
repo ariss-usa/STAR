@@ -221,6 +221,9 @@ public class MissionController {
         loader.setLocation(getClass().getResource("commandBuilder.fxml"));
         root = loader.load();
 
+        commandBuilderController cbController = loader.getController();
+        cbController.setBaseController(this);
+
         parent = (Stage) VBox.getScene().getWindow();
         Stage dialogStage = new Stage();
         dialogStage.setResizable(false);
@@ -229,6 +232,7 @@ public class MissionController {
         dialogStage.initOwner(parent);
         Scene scene = new Scene(root, 273, 207);
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
+
         dialogStage.setScene(scene);
 
         dialogStage.showAndWait();
@@ -546,7 +550,7 @@ public class MissionController {
         });
 
         recAPRSCheckBox.addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
-            if(!pairingStatus){
+            if(!pairingStatus && !recAPRSCheckBox.isSelected()){
                 event.consume();
                 AlertBox.display("Robot must be paired");
                 return;
@@ -628,6 +632,9 @@ public class MissionController {
     }
     public static boolean getPairingStatus(){
         return pairingStatus;
+    }
+    public void addToSendList(String item){
+        sentListView.getItems().add(item);
     }
 
     private void handleDoNotDisturbUpdate(){

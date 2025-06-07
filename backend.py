@@ -19,17 +19,17 @@ from DisconnectMonitor import USBDisconnectWatcher
 import sys
 from robot_link import RobotLink
 
-#ACTIVE_ROBOTS_ENDPOINT = "https://star-44oa.onrender.com/robots/active"
-#UPDATE_ROBOT_ENDPOINT = "https://star-44oa.onrender.com/robots/update"
-#SEND_COMMAND_ENDPOINT = "https://star-44oa.onrender.com/send_command"
-#HEALTH_ENDPOINT = "https://star-44oa.onrender.com/health"
-#WEBSOCKET_ENDPOINT = "wss://star-44oa.onrender.com/ws"
+ACTIVE_ROBOTS_ENDPOINT = "https://star-bvjn.onrender.com/robots/active"
+UPDATE_ROBOT_ENDPOINT = "https://star-bvjn.onrender.com/robots/update"
+SEND_COMMAND_ENDPOINT = "https://star-bvjn.onrender.com/send_command"
+HEALTH_ENDPOINT = "https://star-bvjn.onrender.com/health"
+WEBSOCKET_ENDPOINT = "wss://star-bvjn.onrender.com/ws"
 
-ACTIVE_ROBOTS_ENDPOINT = "http://127.0.0.1:8000/robots/active"
-UPDATE_ROBOT_ENDPOINT = "http://127.0.0.1:8000/robots/update"
-SEND_COMMAND_ENDPOINT = "http://127.0.0.1:8000/send_command"
-HEALTH_ENDPOINT = "http://127.0.0.1:8000/health"
-WEBSOCKET_ENDPOINT = "ws://127.0.0.1:8000/ws"
+#ACTIVE_ROBOTS_ENDPOINT = "http://127.0.0.1:8000/robots/active"
+#UPDATE_ROBOT_ENDPOINT = "http://127.0.0.1:8000/robots/update"
+#SEND_COMMAND_ENDPOINT = "http://127.0.0.1:8000/send_command"
+#HEALTH_ENDPOINT = "http://127.0.0.1:8000/health"
+#WEBSOCKET_ENDPOINT = "ws://127.0.0.1:8000/ws"
 
 REQUEST_TIMEOUT = (3.05, 5)
 USER_DATA_FILE = "important.json"
@@ -146,7 +146,7 @@ def send_aprs(msg):
         payload = f"[{', '.join(formatted)}]"
 
         if platform.system() == "Windows":
-            oscommand = f"echo {mycallsign}^^^>{destination}: {payload} | gen_packets -a 25 -o aprs_commands.wav -"
+            oscommand = f"echo {mycallsign}^^^>{destination}: {payload} | .\\gen_packets -a 25 -o aprs_commands.wav -"
         elif platform.system() == "Linux":
             oscommand = f"echo -n '{mycallsign}>{destination}: {payload}' | gen_packets -a 25 -o aprs_commands.wav -"
         

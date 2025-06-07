@@ -15,6 +15,7 @@ import javafx.stage.Stage;
 public class commandBuilderController {
     @FXML
     private TextArea CBTextBox;
+    private MissionController baseController;
     @FXML
     public void initialize() throws IOException{
         CBTextBox.appendText("100 forward 3\r\n");
@@ -36,12 +37,20 @@ public class commandBuilderController {
                 String [] split = txt.split("\n| ");
                 HashMap<String, Object> params = new HashMap<>();
                 ArrayList<HashMap<String, Object>> cmds = new ArrayList<>();
+                String readableCommand = "";
                 for(int i = 0; i < split.length; i+=3){
                     HashMap<String, Object> map = new HashMap<>();
                     map.put("power", split[i]);
                     map.put("direction", split[i+1]);
                     map.put("time", split[i+2]);
                     cmds.add(map);
+
+                    if (split.length == 1 || i == split.length - 1){
+                        readableCommand += split[i] + " " + split[i+1] + " " + split[i+2];
+                    }
+                    else{
+                        readableCommand += split[i] + " " + split[i+1] + " " + split[i+2] + ", ";
+                    }
                 }
                 params.put("commands", cmds);
                 BackendDispatcher dispatcher;
@@ -59,6 +68,8 @@ public class commandBuilderController {
                     params.put("destination", currRobot.destinationCallsign);
                     dispatcher = new BackendDispatcher(MessageStructure.SEND_APRS, params);
                 }
+                dispatcher.attachDefaultErrorHandler();
+                baseController.addToSendList(readableCommand);
                 MissionController.threadExecutor.submit(dispatcher);
             }
         }
@@ -106,5 +117,8 @@ public class commandBuilderController {
             }
         }
         return true;
+    }
+    public void setBaseController(MissionController controller){
+        baseController = controller;
     }
 }
