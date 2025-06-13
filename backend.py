@@ -146,9 +146,9 @@ def send_aprs(msg):
         payload = f"[{', '.join(formatted)}]"
 
         if platform.system() == "Windows":
-            oscommand = f"echo {mycallsign}^^^>{destination}: {payload} | .\\gen_packets -a 25 -o aprs_commands.wav -"
+            oscommand = f"echo {mycallsign}^^^>APDW16::{destination:<9}:{payload} | .\\gen_packets -a 25 -o aprs_commands.wav -"
         elif platform.system() == "Linux":
-            oscommand = f"echo -n '{mycallsign}>{destination}: {payload}' | gen_packets -a 25 -o aprs_commands.wav -"
+            oscommand = f"echo -n '{mycallsign}>APDW16::{destination:<9}:{payload}' | gen_packets -a 25 -o aprs_commands.wav -"
         
         os.system(oscommand)
         playsound("./aprs_commands.wav")

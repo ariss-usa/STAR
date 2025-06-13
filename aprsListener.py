@@ -20,9 +20,9 @@ class APRSUpdater:
                 print("Failed to import pywinpty")
     
     def postCommands(self, line):
-        match = re.search(r'(\w+)>[^:]+:\s*\[(.*?)\]', line)
+        match = re.search(r'([a-zA-Z\d-]+)>[a-zA-Z\d,-]+::([a-zA-Z\d-]+ {0,8}):\[([\da-zA-Z, ]+)\]', line)
         if match:
-            commands = match.group(2).split(",")
+            commands = match.group(3).split(",")
             json_cmds = []
 
             if self.checkFormat(commands):
@@ -74,6 +74,7 @@ class APRSUpdater:
         while self.continueFlag:
             line = direwolf.stdout.readline()
             if line != '':
+                print(line)
                 self.postCommands(line)
 
     def startAPRSprocesses(self):
