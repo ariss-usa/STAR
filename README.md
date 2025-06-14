@@ -39,7 +39,28 @@ The STAR framework includes the following built-in communication methods:
 2. Launch the application using the appropriate launcher file:
    - On **Windows**: double-click `launch-windows.bat`
    - On **Linux**: run `./launch-linux.sh` from the terminal.
-If you have downloaded the `lite` package, make sure any required dependencies (e.g., `Direwolf`, `gen_packets`, `rtl_fm`, `gpredict`) are installed and configured according to the platform you’re using.
+
+> [!NOTE]  
+> If you have downloaded the `lite` package, make sure any required dependencies (e.g., `Direwolf`, `gen_packets`, `rtl_fm`, `gpredict`) are installed and configured according to the platform you’re using.
+
+To control your mBot using this app, you simply need to plug the Bluetooth dongle into the device running the application, and turn on the mBot. The mBot's flashing blue light should turn to a solid blue light to indicate successful pairing. Click the pair dropdown &rarr; Select the Bluetooth dongle's COM port &rarr; click pair. To send commands, select a robot (select the COM port for local control) and enter power, direction, and time values, then hit the send button.
+
+To access remote mBots via the internet, enter your information in the config page, which can be accessed from the setup menu item. After this is done, remote robots will populate the left hand side dropdown. 
+> [!tip]
+> If controlling a remote mbot, ensure the receiver has turned their do not disturb setting turned off.
+
+The default behaviour for receiving APRS is different on Windows and Linux.
+
+- Windows
+    - 
+    - There is no direct software pipeline between `rtl_fm` and **Direwolf**.
+    - To receive packets, you must either:
+        - Use virtual audio cable or stereo mix to route audio output into **Direwolf**, or
+        - Place the radio's speaker near your computer's microphone (less reliable)
+- Linux
+    -
+    - APRS audio is piped directly from `rtl_fm` into **Direwolf** using `snd-aloop` kernel module
+    - No physical audio routing or sound mixer/ configuration is needed, its handled entirely in software
 
 ---
 ## Installing From Source
