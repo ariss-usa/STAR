@@ -11,9 +11,6 @@ env:
 jobs:
   package-windows:
     runs-on: windows-latest
-    #defaults:
-    #  run:
-    #    working-directory: STAR
     steps:
       - uses: actions/checkout@v4
 
@@ -35,12 +32,12 @@ jobs:
 
       - name: Build Java Project
         run: mvn clean package
-        working-directory: ./MissionController
+        working-directory: STAR/STAR/MissionController
 
       - name: Package Java App
         run: |
           jpackage --name MissionController `
-                   --input ./MissionController/target `
+                   --input STAR/STAR/MissionController/target `
                    --main-jar star-1.0-SNAPSHOT-jar-with-dependencies.jar `
                    --main-class org.ariss.star.Main `
                    --type app-image `
@@ -49,6 +46,7 @@ jobs:
 
       - name: Package Python App
         run: pyinstaller --distpath dist --workpath build --hidden-import pywinpty backend.py
+        working-directory: STAR
 
       - name: Rename and Organize Output
         run: |
@@ -65,9 +63,6 @@ jobs:
 
   package-linux:
     runs-on: ubuntu-latest
-    #defaults:
-    #  run:
-    #    working-directory: STAR
     steps:
       - uses: actions/checkout@v4
 
@@ -89,12 +84,12 @@ jobs:
 
       - name: Build Java Project
         run: mvn clean package
-        working-directory: ./MissionController
+        working-directory: STAR/STAR/MissionController
 
       - name: Package Java App
         run: |
           jpackage --name MissionController \
-                   --input ./MissionController/target \
+                   --input STAR/STAR/MissionController/target \
                    --main-jar star-1.0-SNAPSHOT-jar-with-dependencies.jar \
                    --main-class org.ariss.star.Main \
                    --type app-image \
@@ -103,6 +98,7 @@ jobs:
 
       - name: Package Python App
         run: pyinstaller --distpath dist --workpath build backend.py
+        working-directory: STAR
 
       - name: Rename and Organize Output
         run: |
