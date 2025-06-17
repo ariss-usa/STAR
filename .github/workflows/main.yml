@@ -112,10 +112,16 @@ jobs:
       - name: Package Python App
         run: pyinstaller --distpath dist --workpath build backend.py
 
-      - name: Rename and Organize Output
+      - name: Download WebGL Mars Sim from Release
         run: |
           outDir="MissionController-linux-v$VERSION"
           mkdir "$outDir"
+          curl -L -o "webGL_Mars_Sim.zip" https://github.com/unshrawal/star-binaries/releases/download/1.0/webGL_Mars_Sim.zip
+          unzip webGL_Mars_Sim.zip -d "$outDir"
+
+      - name: Rename and Organize Output
+        run: |
+          outDir="MissionController-linux-v$VERSION"
           mv dist "$outDir/dist"
           cp cleanup.sh direwolf.conf script.sh start.sh "$outDir/"
           tar -czf "$outDir.tar.gz" "$outDir"
