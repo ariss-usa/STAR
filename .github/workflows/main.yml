@@ -46,11 +46,18 @@ jobs:
 
       - name: Package Python App
         run: pyinstaller --distpath dist --workpath build --hidden-import pywinpty backend.py
+
+      - name: Download and Extract Gpredict
+        run: |
+          $outDir = "MissionController-windows-v${env:VERSION}"
+          mkdir $outDir
+
+          Invoke-WebRequest -Uri "https://sourceforge.net/projects/gpredict/files/Gpredict/2.2.1/gpredict-win32-2.2.1.zip/download" -OutFile "gpredict.zip"
+          Expand-Archive -Path gpredict.zip -DestinationPath "$outDir"
         
       - name: Rename and Organize Output
         run: |
           $outDir = "MissionController-windows-v${env:VERSION}"
-          mkdir $outDir
           Move-Item dist $outDir\dist
           Copy-Item direwolf-win.conf -Destination $outDir
           Copy-Item launcher.bat -Destination $outDir
