@@ -66,13 +66,12 @@ jobs:
           Move-Item dist $outDir\dist
           Copy-Item direwolf-win.conf -Destination $outDir
           Copy-Item launcher.bat -Destination $outDir
-          Compress-Archive -Path $outDir -DestinationPath "${outDir}.zip"
           
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: missioncontroller-windows
-          path: MissionController-windows-v${{ env.VERSION }}.zip
+          path: MissionController-windows-v${{ env.VERSION }}
 
   package-linux:
     runs-on: ubuntu-latest
