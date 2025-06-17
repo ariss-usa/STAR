@@ -4,11 +4,11 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.example</groupId>
-    <artifactId>hello</artifactId>
+    <groupId>org.ariss</groupId>
+    <artifactId>star</artifactId>
     <packaging>jar</packaging>
     <version>1.0-SNAPSHOT</version>
-    <name>hello</name>
+    <name>star</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -61,6 +61,11 @@
             <artifactId>jetty-server</artifactId>
             <version>9.4.52.v20230823</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.13.1</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -82,7 +87,7 @@
                     <execution>
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>com.example.hello.Main</mainClass>
+                            <mainClass>org.ariss.star.Main</mainClass>
                         </configuration>
                     </execution>
                 </executions>
@@ -94,7 +99,7 @@
                     <archive>
                         <manifest>
                         <addClasspath>true</addClasspath>
-                        <mainClass>com.example.hello.Main</mainClass>
+                        <mainClass>org.ariss.star.Main</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
@@ -115,8 +120,12 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>3.1.0</version>
-                <configuration>
-                </configuration>
+                <executions>
+                    <execution>
+                        <id>default-jar</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <artifactId>maven-jlink-plugin</artifactId>

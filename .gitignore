@@ -7,3 +7,15 @@ MissionControllerUI/target/
 important.txt
 packagedMissionController/
 venv/
+direwolf-1.5-win/
+aprs_commands.wav
+callsign.txt
+__pycache__/
+callsign.json
+important.json
+MARS-SIM/
+gpredict-win32-2.2.1
+package/
+MissionController-win-v1.3
+MissionController-Linux-full-v1.3
+MissionController-Linux-lite-v1.3
