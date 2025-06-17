@@ -47,13 +47,15 @@ jobs:
       - name: Package Python App
         run: pyinstaller --distpath dist --workpath build --hidden-import pywinpty backend.py
 
-      - name: Download and Extract Gpredict
+      - name: Download Binaries from Release
         run: |
           $outDir = "MissionController-windows-v${env:VERSION}"
           mkdir $outDir
 
-          Invoke-WebRequest -Uri "https://sourceforge.net/projects/gpredict/files/Gpredict/2.2.1/gpredict-win32-2.2.1.zip/download" -OutFile "gpredict.zip"
-          Expand-Archive -Path gpredict.zip -DestinationPath "$outDir"
+          Invoke-WebRequest -Uri "https://github.com/unshrawal/star-binaries/releases/download/1.0/direwolf.exe" -OutFile "$outDir/direwolf.exe"
+          Invoke-WebRequest -Uri "https://github.com/unshrawal/star-binaries/releases/download/1.0/gen_packets.exe" -OutFile "$outDir/gen_packets.exe"
+          Invoke-WebRequest -Uri "https://github.com/unshrawal/star-binaries/releases/download/1.0/gpredict-win32-2.2.1.zip" -OutFile "gpredict-win32-2.2.1.zip"
+          Expand-Archive -Path "gpredict-win32-2.2.1.zip" -DestinationPath "$outDir"
         
       - name: Rename and Organize Output
         run: |
