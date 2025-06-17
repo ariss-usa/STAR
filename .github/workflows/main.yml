@@ -35,12 +35,12 @@ jobs:
 
       - name: Build Java Project
         run: mvn clean package
-        working-directory: MissionController
+        working-directory: ./MissionController
 
       - name: Package Java App
         run: |
           jpackage --name MissionController `
-                   --input MissionController\target `
+                   --input ./MissionController/target `
                    --main-jar star-1.0-SNAPSHOT-jar-with-dependencies.jar `
                    --main-class org.ariss.star.Main `
                    --type app-image `
@@ -89,12 +89,12 @@ jobs:
 
       - name: Build Java Project
         run: mvn clean package
-        working-directory: MissionController
+        working-directory: ./MissionController
 
       - name: Package Java App
         run: |
           jpackage --name MissionController \
-                   --input MissionController/target \
+                   --input ./MissionController/target \
                    --main-jar star-1.0-SNAPSHOT-jar-with-dependencies.jar \
                    --main-class org.ariss.star.Main \
                    --type app-image \
