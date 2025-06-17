@@ -11,9 +11,9 @@ env:
 jobs:
   package-windows:
     runs-on: windows-latest
-    defaults:
-      run:
-        working-directory: STAR
+    #defaults:
+    #  run:
+    #    working-directory: STAR
     steps:
       - uses: actions/checkout@v4
 
@@ -35,7 +35,7 @@ jobs:
 
       - name: Build Java Project
         run: mvn clean package
-        working-directory: STAR/MissionController
+        working-directory: MissionController
 
       - name: Package Java App
         run: |
@@ -61,13 +61,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: missioncontroller-windows
-          path: STAR/MissionController-windows-v${{ env.VERSION }}.zip
+          path: MissionController-windows-v${{ env.VERSION }}.zip
 
   package-linux:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: STAR
+    #defaults:
+    #  run:
+    #    working-directory: STAR
     steps:
       - uses: actions/checkout@v4
 
@@ -89,7 +89,7 @@ jobs:
 
       - name: Build Java Project
         run: mvn clean package
-        working-directory: STAR/MissionController
+        working-directory: MissionController
 
       - name: Package Java App
         run: |
@@ -115,4 +115,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: missioncontroller-linux
-          path: STAR/MissionController-linux-v${{ env.VERSION }}.tar.gz
+          path: MissionController-linux-v${{ env.VERSION }}.tar.gz
