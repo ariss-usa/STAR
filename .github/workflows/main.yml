@@ -46,14 +46,16 @@ jobs:
 
       - name: Package Python App
         run: pyinstaller --distpath dist --workpath build --hidden-import pywinpty backend.py
-
+        
       - name: Rename and Organize Output
         run: |
           $outDir = "MissionController-windows-v${env:VERSION}"
           mkdir $outDir
           Move-Item dist $outDir\dist
+          Copy-Item direwolf-win.conf -Destination $outDir
+          Copy-Item launcher.bat -Destination $outDir
           Compress-Archive -Path $outDir -DestinationPath "${outDir}.zip"
-
+          
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -103,6 +105,7 @@ jobs:
           outDir="MissionController-linux-v$VERSION"
           mkdir "$outDir"
           mv dist "$outDir/dist"
+          cp cleanup.sh direwolf.conf script.sh start.sh "$outDir/"
           tar -czf "$outDir.tar.gz" "$outDir"
 
       - name: Upload Artifact
