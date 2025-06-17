@@ -1,0 +1,118 @@
+name: Build and Package MissionController
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+env:
+  VERSION: "1.3"
+
+jobs:
+  package-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: STAR
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller winpty pywinpty
+
+      - name: Build Java Project
+        run: mvn clean package
+        working-directory: STAR/MissionController
+
+      - name: Package Java App
+        run: |
+          jpackage --name MissionController `
+                   --input MissionController\target `
+                   --main-jar star-1.0-SNAPSHOT-jar-with-dependencies.jar `
+                   --main-class org.ariss.star.Main `
+                   --type app-image `
+                   --dest dist `
+                   --app-version $env:VERSION
+
+      - name: Package Python App
+        run: pyinstaller --distpath dist --workpath build --hidden-import=winpty --hidden-import pywinpty backend.py
+
+      - name: Rename and Organize Output
+        run: |
+          $outDir = "MissionController-windows-v${env:VERSION}"
+          mkdir $outDir
+          Move-Item dist $outDir\dist
+          Compress-Archive -Path $outDir -DestinationPath "${outDir}.zip"
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: missioncontroller-windows
+          path: STAR/MissionController-windows-v${{ env.VERSION }}.zip
+
+  package-linux:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: STAR
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+
+      - name: Build Java Project
+        run: mvn clean package
+        working-directory: STAR/MissionController
+
+      - name: Package Java App
+        run: |
+          jpackage --name MissionController \
+                   --input MissionController/target \
+                   --main-jar star-1.0-SNAPSHOT-jar-with-dependencies.jar \
+                   --main-class org.ariss.star.Main \
+                   --type app-image \
+                   --dest dist \
+                   --app-version $VERSION
+
+      - name: Package Python App
+        run: pyinstaller --distpath dist --workpath build backend.py
+
+      - name: Rename and Organize Output
+        run: |
+          outDir="MissionController-linux-v$VERSION"
+          mkdir "$outDir"
+          mv dist "$outDir/dist"
+          tar -czf "$outDir.tar.gz" "$outDir"
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: missioncontroller-linux
+          path: STAR/MissionController-linux-v${{ env.VERSION }}.tar.gz
