@@ -27,8 +27,8 @@ pyrtlsdrlib==0.0.3
 pyserial==3.5
 python-dotenv==1.1.0
 python-multipart==0.0.20
-pywin32==310
-pywinpty==2.0.15
+pywin32==310; platform_system == "Windows"
+pywinpty==2.0.15; platform_system == "Windows"
 PyYAML==6.0.2
 pyzmq==26.4.0
 requests==2.32.3
