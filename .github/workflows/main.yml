@@ -11,9 +11,6 @@ env:
 jobs:
   package-windows:
     runs-on: windows-latest
-    defaults:
-      run:
-        working-directory: STAR
     steps:
       - uses: actions/checkout@v4
 
@@ -31,16 +28,17 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pyinstaller winpty pywinpty
+          pip install pyinstaller pywinpty
+          pip install -r requirements.txt
 
       - name: Build Java Project
         run: mvn clean package
-        working-directory: STAR/MissionController
+        working-directory: MissionControllerUI
 
       - name: Package Java App
         run: |
           jpackage --name MissionController `
-                   --input MissionController\target `
+                   --input MissionControllerUI/target `
                    --main-jar star-1.0-SNAPSHOT-jar-with-dependencies.jar `
                    --main-class org.ariss.star.Main `
                    --type app-image `
@@ -48,26 +46,36 @@ jobs:
                    --app-version $env:VERSION
 
       - name: Package Python App
-        run: pyinstaller --distpath dist --workpath build --hidden-import=winpty --hidden-import pywinpty backend.py
+        run: pyinstaller --distpath dist --workpath build --hidden-import winpty --hidden-import pywinpty backend.py
 
-      - name: Rename and Organize Output
+      - name: Download Binaries from Release
         run: |
           $outDir = "MissionController-windows-v${env:VERSION}"
           mkdir $outDir
-          Move-Item dist $outDir\dist
-          Compress-Archive -Path $outDir -DestinationPath "${outDir}.zip"
 
+          Invoke-WebRequest -Uri "https://github.com/unshrawal/star-binaries/releases/download/1.0/direwolf.exe" -OutFile "$outDir/direwolf.exe"
+          Invoke-WebRequest -Uri "https://github.com/unshrawal/star-binaries/releases/download/1.0/gen_packets.exe" -OutFile "$outDir/gen_packets.exe"
+          Invoke-WebRequest -Uri "https://github.com/unshrawal/star-binaries/releases/download/1.0/gpredict-win32-2.2.1.zip" -OutFile "gpredict-win32-2.2.1.zip"
+          Expand-Archive -Path "gpredict-win32-2.2.1.zip" -DestinationPath "$outDir"
+
+          Invoke-WebRequest -Uri "https://github.com/unshrawal/star-binaries/releases/download/1.0/MARS-SIM.zip" -OutFile "MARS-SIM.zip"
+          Expand-Archive -Path "MARS-SIM.zip" -DestinationPath "$outDir"
+        
+      - name: Rename and Organize Output
+        run: |
+          $outDir = "MissionController-windows-v${env:VERSION}"
+          Move-Item dist $outDir\dist
+          Copy-Item direwolf-win.conf -Destination $outDir
+          Copy-Item launcher.bat -Destination $outDir
+          
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: missioncontroller-windows
-          path: STAR/MissionController-windows-v${{ env.VERSION }}.zip
+          path: MissionController-windows-v${{ env.VERSION }}
 
   package-linux:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: STAR
     steps:
       - uses: actions/checkout@v4
 
@@ -86,15 +94,16 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pyinstaller
+          pip install -r requirements.txt
 
       - name: Build Java Project
         run: mvn clean package
-        working-directory: STAR/MissionController
+        working-directory: MissionControllerUI
 
       - name: Package Java App
         run: |
           jpackage --name MissionController \
-                   --input MissionController/target \
+                   --input MissionControllerUI/target \
                    --main-jar star-1.0-SNAPSHOT-jar-with-dependencies.jar \
                    --main-class org.ariss.star.Main \
                    --type app-image \
@@ -104,15 +113,22 @@ jobs:
       - name: Package Python App
         run: pyinstaller --distpath dist --workpath build backend.py
 
-      - name: Rename and Organize Output
+      - name: Download WebGL Mars Sim from Release
         run: |
           outDir="MissionController-linux-v$VERSION"
           mkdir "$outDir"
+          curl -L -o "webGL_Mars_Sim.zip" https://github.com/unshrawal/star-binaries/releases/download/1.0/webGL_Mars_Sim.zip
+          unzip webGL_Mars_Sim.zip -d "$outDir"
+
+      - name: Rename and Organize Output
+        run: |
+          outDir="MissionController-linux-v$VERSION"
           mv dist "$outDir/dist"
+          cp cleanup.sh direwolf.conf script.sh start.sh "$outDir/"
           tar -czf "$outDir.tar.gz" "$outDir"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: missioncontroller-linux
-          path: STAR/MissionController-linux-v${{ env.VERSION }}.tar.gz
+          path: MissionController-linux-v${{ env.VERSION }}.tar.gz
