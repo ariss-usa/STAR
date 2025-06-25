@@ -36,10 +36,14 @@ public class BackendDispatcher extends Task<JsonObject>{
         try(ZContext ctx = new ZContext()){
             ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
             socket.connect(ZMQ_ENDPOINT);
+            socket.setReceiveTimeOut(2000);
             socket.send(gson.toJson(msg));
             String returnStr = socket.recvStr();
+
+            if (returnStr == null) {
+                throw new RuntimeException("Backend did not respond in time");
+            }
             obj = gson.fromJson(returnStr, JsonObject.class);
-            ctx.destroy();
         }
         return obj;
     }

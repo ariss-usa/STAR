@@ -11,9 +11,6 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-
-import com.google.gson.JsonObject;
 
 public class StarApp extends Application {
     @Override
@@ -40,24 +37,15 @@ public class StarApp extends Application {
             public void handle(WindowEvent we) {
                 we.consume();
                 BackendDispatcher dispatcher = new BackendDispatcher(MessageStructure.END_PROGRAM, null);
-                dispatcher.setOnSucceeded(e -> {
-                    JsonObject obj = dispatcher.getValue();
-                    if(obj.get("status").getAsString().equals("error")){
-                        AlertBox.display(obj.get("err_msg").getAsString());
-                    }
-                    else{
-                        MissionController.threadExecutor.shutdown();
-                        try {
-                            if (!MissionController.threadExecutor.awaitTermination(3, TimeUnit.SECONDS)) {
-                                MissionController.threadExecutor.shutdownNow();
-                            }
-                        } catch (InterruptedException ex) {
-                            MissionController.threadExecutor.shutdownNow();
-                        }
-                        Platform.exit();
-                        System.exit(0);
-                    }
-                });
+                
+                Runnable shutdown = () -> {
+                    MissionController.threadExecutor.shutdownNow();
+                    Platform.exit();
+                    System.exit(0);
+                };
+                dispatcher.setOnSucceeded(e -> shutdown.run());
+                dispatcher.setOnFailed(e -> shutdown.run());
+
                 MissionController.threadExecutor.submit(dispatcher);
             }
         });
