@@ -19,16 +19,16 @@ public class StarApp extends Application {
         System.out.println(StarApp.class.getResource("newGUI.fxml"));
         FXMLLoader fxmlLoader = new FXMLLoader(StarApp.class.getResource("newGUI.fxml"));
         Parent root = fxmlLoader.load();
-        Scene scene = new Scene(root, 665, 466);
+        Scene scene = new Scene(root, 990, 493);
 
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
         stage.setTitle("Mission Controller");
-        stage.setResizable(false);
+        //stage.setResizable(false);
         stage.setScene(scene);
 
         Platform.runLater(()-> {
-            stage.setWidth(665);
-            stage.setHeight(466);
+            stage.setWidth(990);
+            stage.setHeight(493);
             stage.centerOnScreen();
         });
         stage.show();

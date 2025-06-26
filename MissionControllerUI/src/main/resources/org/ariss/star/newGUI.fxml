@@ -41,15 +41,15 @@
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
-<?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.Tooltip?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
 
-<VBox fx:id="VBox" prefHeight="466.0" prefWidth="665.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="org.ariss.star.MissionController">
+<VBox fx:id="VBox" prefHeight="493.0" prefWidth="990.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="org.ariss.star.MissionController">
   <children>
     <MenuBar fx:id="MenuBar" VBox.vgrow="NEVER">
       <menus>
@@ -117,8 +117,7 @@
             </Label>
             <ListView fx:id="sentListView" layoutX="17.0" layoutY="169.0" prefHeight="270.0" prefWidth="280.0" />
             <ListView fx:id="recListView" layoutX="369.0" layoutY="169.0" prefHeight="270.0" prefWidth="280.0" />
-            <Separator layoutX="336.0" layoutY="38.0" orientation="VERTICAL" prefHeight="374.0" prefWidth="0.0" />
-            <CheckBox fx:id="doNotDisturb" layoutX="367.0" layoutY="70.0" mnemonicParsing="false" text="Do Not Disturb">
+            <CheckBox fx:id="doNotDisturb" layoutX="369.0" layoutY="70.0" mnemonicParsing="false" text="Do Not Disturb">
               <font>
                   <Font name="Verdana" size="12.0" />
               </font>
@@ -131,11 +130,11 @@
                   <Tooltip text="Speed of robot (values from 1 to 255)" />
                </tooltip>
             </TextField>
-            <ComboBox fx:id="localRobotConnection" layoutX="365.0" layoutY="25.0" prefHeight="26.0" prefWidth="158.0" promptText="BT Connections" styleClass="combo-box">
+            <ComboBox fx:id="localRobotConnection" layoutX="367.0" layoutY="25.0" prefHeight="26.0" prefWidth="158.0" promptText="BT Connections" styleClass="combo-box">
                <tooltip>
                   <Tooltip text="Pair with your local robot" />
                </tooltip></ComboBox>
-            <Button fx:id="pairButton" layoutX="534.0" layoutY="22.0" mnemonicParsing="false" onMouseClicked="#pairPressed" prefHeight="32.0" prefWidth="113.0" text="Pair">
+            <Button fx:id="pairButton" layoutX="536.0" layoutY="22.0" mnemonicParsing="false" onMouseClicked="#pairPressed" prefHeight="32.0" prefWidth="113.0" text="Pair">
               <font>
                   <Font name="Verdana" size="12.0" />
               </font>
@@ -145,15 +144,21 @@
                   <Font name="Verdana" size="12.0" />
               </font>
             </CheckBox>
-            <CheckBox fx:id="visualizerCheck" layoutX="367.0" layoutY="108.0" mnemonicParsing="false" onAction="#visualize" text="Enable Visualizer">
+            <CheckBox fx:id="visualizerCheck" layoutX="369.0" layoutY="108.0" mnemonicParsing="false" onAction="#visualize" text="Enable Visualizer">
               <font>
                   <Font name="Verdana" size="12.0" />
               </font>
             </CheckBox>
-            <Circle fx:id="circle1" fill="DODGERBLUE" layoutX="496.0" layoutY="80.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
-            <Circle fx:id="circle2" fill="#1fc4ff" layoutX="507.0" layoutY="80.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
-            <Circle fx:id="circle3" fill="#1fffda" layoutX="519.0" layoutY="80.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
+            <Circle fx:id="circle1" fill="DODGERBLUE" layoutX="498.0" layoutY="80.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
+            <Circle fx:id="circle2" fill="#1fc4ff" layoutX="509.0" layoutY="80.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
+            <Circle fx:id="circle3" fill="#1fffda" layoutX="521.0" layoutY="80.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
             <CheckBox fx:id="recAPRSCheckBox" layoutX="155.0" layoutY="108.0" mnemonicParsing="false" text="Receive APRS" />
+            <Label fx:id="recText1" layoutX="780.0" layoutY="146.0" text="SSTV Decoding">
+               <font>
+                  <Font name="Verdana" size="15.0" />
+               </font>
+            </Label>
+            <ImageView fitHeight="270.0" fitWidth="280.0" layoutX="698.0" layoutY="169.0" pickOnBounds="true" preserveRatio="true" />
       </children>
     </AnchorPane>
       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="200.0" prefWidth="320.0" />
