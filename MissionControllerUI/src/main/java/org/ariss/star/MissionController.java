@@ -21,6 +21,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Circle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -106,6 +107,8 @@ public class MissionController {
     private Circle circle3;
     @FXML
     private ImageView sstv_image;
+    @FXML
+    private StackPane stackpane;
 
     private Stage parent;
     private Parent root;
@@ -610,9 +613,11 @@ public class MissionController {
 
         //sstvImage = new WritableImage(240, 320);
         //pixelWriter = sstvImage.getPixelWriter();
-        sstvWritable = new WritableImage(240, 320);
-        sstv_image.setImage(sstvWritable);
-
+        sstv_image.fitWidthProperty().bind(stackpane.widthProperty());
+        sstv_image.fitHeightProperty().bind(stackpane.heightProperty());
+        sstv_image.setPreserveRatio(true);
+        
+        sstvWritable = new WritableImage(320, 256);
         updater.startListeningQSSTV(sstvWritable);
     }
 

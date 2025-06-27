@@ -54,7 +54,6 @@ public class onUpdateV3 {
         pullSocket1.bind("tcp://127.0.0.1:5557");
         qsstvThread = new Thread(() -> {
             while (true) {
-                System.out.println("status");
                 byte[] message = pullSocket1.recv(0);
                 ByteBuffer buffer = ByteBuffer.wrap(message);
                 buffer.order(ByteOrder.LITTLE_ENDIAN);
@@ -73,7 +72,7 @@ public class onUpdateV3 {
                 if (lineNum < lastLineNum) {
                     Platform.runLater(() -> {
                         for (int i = 0; i < 320; i++) {
-                            for (int j = 0; j < 240; j++) {
+                            for (int j = 0; j < 256; j++) {
                                 pix.getPixelWriter().setColor(i, j, Color.TRANSPARENT);
                             }
                         }
@@ -82,15 +81,13 @@ public class onUpdateV3 {
                 lastLineNum = lineNum;
 
                 Platform.runLater(() -> {
-                    for(int x = 0; x < 240; x++) {
+                    for(int x = 0; x < Math.min(256, width); x++) {
                         int r = red[x] & 0xFF;
                         int g = green[x] & 0xFF;
                         int b = blue[x] & 0xFF;
                         pix.getPixelWriter().setColor(x, lineNum, Color.rgb(r, g, b));
                     }
                 });
-
-                System.out.println("RECEIVED LINE NUMBER " + lineNum);
             }
         });
 
