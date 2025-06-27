@@ -180,3 +180,7 @@
     -fx-background-color: -fx-my-menu-color; 
 }
 
+.image-wrapper {
+    -fx-border-color: white;
+    -fx-background-color: darkgray;
+}

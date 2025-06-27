@@ -17,7 +17,11 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
+import javafx.scene.image.ImageView;
+import javafx.scene.image.PixelWriter;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Circle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -101,6 +105,12 @@ public class MissionController {
     private Circle circle2;
     @FXML
     private Circle circle3;
+    @FXML
+    private ImageView sstv_image;
+    @FXML
+    private StackPane stackpane;
+    @FXML
+    private CheckBox qsstv_checkbox;
 
     private Stage parent;
     private Parent root;
@@ -112,6 +122,22 @@ public class MissionController {
     final private String LOCALHOST_URL = "http://localhost:8080/index.html";
     private AvailableRobotsManager robotsManager;
     static ConfigManager configManager;
+    private WritableImage sstvWritable;
+    private PixelWriter pixelWriter;
+    private Process qsstv;
+
+    @FXML
+    protected void qsstvCheckboxClicked(MouseEvent event) throws IOException {
+        if (qsstv_checkbox.isSelected()) {
+            qsstv = new ProcessBuilder("./qsstv").start();
+        }
+        else {
+            if (qsstv != null && qsstv.isAlive()) {
+                qsstv.destroy();
+                qsstv = null;
+            }
+        }
+    }
 
     @FXML
     protected void onLinkPressed(ActionEvent event) throws IOException, URISyntaxException{
@@ -600,6 +626,17 @@ public class MissionController {
                     break;
             }
         });
+
+        //sstvImage = new WritableImage(240, 320);
+        //pixelWriter = sstvImage.getPixelWriter();
+
+        if (System.getProperty("os.name").toLowerCase().contains("win")) {
+            qsstv_checkbox.setDisable(true);
+        }
+        
+        sstvWritable = new WritableImage(320, 256);
+        sstv_image.setImage(sstvWritable);
+        updater.startListeningQSSTV(sstvWritable);
     }
 
     private void loadingAnimation(){
