@@ -159,9 +159,9 @@
                   <Font name="Verdana" size="15.0" />
                </font>
             </Label>
-            <StackPane fx:id="stackpane" layoutX="698.0" layoutY="169.0" prefHeight="270.0" prefWidth="280.0" styleClass="image-wrapper">
+            <StackPane fx:id="stackpane" layoutX="698.0" layoutY="169.0" prefHeight="270.0" prefWidth="280.0" alignment="TOP_LEFT" styleClass="image-wrapper">
               <children>
-                <ImageView fx:id="sstv_image" fitHeight="270.0" fitWidth="280.0" layoutX="698.0" layoutY="169.0" pickOnBounds="true" preserveRatio="true" />
+                <ImageView fx:id="sstv_image" fitHeight="270.0" fitWidth="280.0" pickOnBounds="true" preserveRatio="true" />
               </children>
             </StackPane>
             <CheckBox fx:id="qsstv_checkbox" layoutX="698.0" layoutY="108.0" mnemonicParsing="false" onMouseClicked="#qsstvCheckboxClicked" text="Start QSSTV" />
