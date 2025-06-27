@@ -87,13 +87,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y bellsoft-java21-full
 
-      - name: Locate Java and Validate JAVA_HOME
+      - name: Set JAVA_HOME and update PATH
         run: |
+          export JAVA_HOME=/usr/lib/jvm/bellsoft-java21-full
+          echo "JAVA_HOME=$JAVA_HOME" >> $GITHUB_ENV
+          echo "$JAVA_HOME/bin" >> $GITHUB_PATH
           which java
-          readlink -f $(which java)
-          echo "JAVA_HOME=$JAVA_HOME"
-          ls -l $JAVA_HOME
-          ls -l $JAVA_HOME/bin/java || echo "java binary not found in JAVA_HOME"
 
       - name: Set up Python
         uses: actions/setup-python@v5
