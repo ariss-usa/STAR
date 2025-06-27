@@ -79,11 +79,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Java 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '21'
+      - name: Install Liberica JDK 21 Full (with JavaFX)
+        run: |
+          sudo mkdir -m 0755 -p /etc/apt/keyrings/
+          wget -q -O - https://download.bell-sw.com/pki/GPG-KEY-bellsoft | gpg --dearmor | sudo tee /etc/apt/keyrings/GPG-KEY-bellsoft.gpg > /dev/null
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/GPG-KEY-bellsoft.gpg] https://apt.bell-sw.com/ stable main" | sudo tee /etc/apt/sources.list.d/bellsoft.list
+          sudo apt-get update
+          sudo apt-get install -y bellsoft-java21-full
+
+      - name: Set JAVA_HOME
+        run: |
+          echo "JAVA_HOME=/usr/lib/jvm/bellsoft-java21-full" >> $GITHUB_ENV
+          echo "/usr/lib/jvm/bellsoft-java21-full/bin" >> $GITHUB_PATH
 
       - name: Set up Python
         uses: actions/setup-python@v5
