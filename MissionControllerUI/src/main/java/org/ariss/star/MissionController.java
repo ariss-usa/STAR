@@ -109,6 +109,8 @@ public class MissionController {
     private ImageView sstv_image;
     @FXML
     private StackPane stackpane;
+    @FXML
+    private CheckBox qsstv_checkbox;
 
     private Stage parent;
     private Parent root;
@@ -122,6 +124,20 @@ public class MissionController {
     static ConfigManager configManager;
     private WritableImage sstvWritable;
     private PixelWriter pixelWriter;
+    private Process qsstv;
+
+    @FXML
+    protected void qsstvCheckboxClicked(MouseEvent event) throws IOException {
+        if (qsstv_checkbox.isSelected()) {
+            qsstv = new ProcessBuilder("./qsstv").start();
+        }
+        else {
+            if (qsstv != null && qsstv.isAlive()) {
+                qsstv.destroy();
+                qsstv = null;
+            }
+        }
+    }
 
     @FXML
     protected void onLinkPressed(ActionEvent event) throws IOException, URISyntaxException{
