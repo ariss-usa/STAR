@@ -141,15 +141,19 @@ jobs:
         run: |
           outDir="MissionController-linux-v$VERSION"
           curl -L -o "$outDir/qsstv" https://github.com/unshrawal/star-binaries/releases/download/1.0/qsstv
+          chmod +x "$outDir/qsstv"
           
       - name: Rename and Organize Output
         run: |
           outDir="MissionController-linux-v$VERSION"
           mv dist "$outDir/dist"
           cp cleanup.sh direwolf.conf script.sh start.sh "$outDir/"
+          mkdir "MissionController-linux"
+          mv "$outDir" "MissionController-linux/"
+          
           
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: missioncontroller-linux
-          path: MissionController-linux-v${{ env.VERSION }}
+          path: MissionController-linux
