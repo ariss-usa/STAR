@@ -92,6 +92,7 @@ jobs:
 
       - name: Install Python dependencies
         run: |
+          sudo apt install -y librtlsdr-dev libusb-1.0-0-dev build-essential cmake pkg-config
           python -m pip install --upgrade pip
           pip install pyinstaller
           pip install -r requirements.txt
