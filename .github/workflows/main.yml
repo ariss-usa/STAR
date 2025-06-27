@@ -120,6 +120,11 @@ jobs:
           curl -L -o "webGL_Mars_Sim.zip" https://github.com/unshrawal/star-binaries/releases/download/1.0/webGL_Mars_Sim.zip
           unzip webGL_Mars_Sim.zip -d "$outDir"
 
+      - name: Download QSSTV Binary
+        run: |
+          outDir="MissionController-linux-v$VERSION"
+          curl -L -o "$outDir/qsstv" https://github.com/unshrawal/star-binaries/releases/download/1.0/qsstv
+          
       - name: Rename and Organize Output
         run: |
           outDir="MissionController-linux-v$VERSION"
