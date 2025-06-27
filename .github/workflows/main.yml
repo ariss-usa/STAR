@@ -86,13 +86,13 @@ jobs:
           echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/GPG-KEY-bellsoft.gpg] https://apt.bell-sw.com/ stable main" | sudo tee /etc/apt/sources.list.d/bellsoft.list
           sudo apt-get update
           sudo apt-get install -y bellsoft-java21-full
+          update-alternatives --query java | grep Value:
 
       - name: Set JAVA_HOME and update PATH
         run: |
           export JAVA_HOME=/usr/lib/jvm/bellsoft-java21-full
           echo "JAVA_HOME=$JAVA_HOME" >> $GITHUB_ENV
           echo "$JAVA_HOME/bin" >> $GITHUB_PATH
-          which java
 
       - name: Set up Python
         uses: actions/setup-python@v5
