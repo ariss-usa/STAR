@@ -86,13 +86,20 @@ jobs:
           echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/GPG-KEY-bellsoft.gpg] https://apt.bell-sw.com/ stable main" | sudo tee /etc/apt/sources.list.d/bellsoft.list
           sudo apt-get update
           sudo apt-get install -y bellsoft-java21-full
-          update-alternatives --query java | grep Value:
 
-      - name: Set JAVA_HOME and update PATH
-        run: |
-          export JAVA_HOME=/usr/lib/jvm/bellsoft-java21-full
-          echo "JAVA_HOME=$JAVA_HOME" >> $GITHUB_ENV
-          echo "$JAVA_HOME/bin" >> $GITHUB_PATH
+          LIBERICA_PATH=$(find /usr/lib/jvm -name "*bellsoft*" -type d | head -1)
+          echo "Found Liberica at: $LIBERICA_PATH"
+
+          sudo update-alternatives --install /usr/bin/java java $LIBERICA_PATH/bin/java 100
+          sudo update-alternatives --install /usr/bin/javac javac $LIBERICA_PATH/bin/javac 100
+          sudo update-alternatives --install /usr/bin/jpackage jpackage $LIBERICA_PATH/bin/jpackage 100
+
+          echo "JAVA_HOME=$LIBERICA_PATH" >> $GITHUB_ENV
+          echo "$LIBERICA_PATH/bin" >> $GITHUB_PATH
+          
+          java -version
+          javac -version
+          echo "JAVA_HOME is set to: $LIBERICA_PATH"
 
       - name: Set up Python
         uses: actions/setup-python@v5
