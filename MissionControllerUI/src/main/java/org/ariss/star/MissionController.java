@@ -17,6 +17,9 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
+import javafx.scene.image.ImageView;
+import javafx.scene.image.PixelWriter;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.shape.Circle;
 import javafx.stage.Modality;
@@ -101,6 +104,8 @@ public class MissionController {
     private Circle circle2;
     @FXML
     private Circle circle3;
+    @FXML
+    private ImageView sstv_image;
 
     private Stage parent;
     private Parent root;
@@ -112,6 +117,8 @@ public class MissionController {
     final private String LOCALHOST_URL = "http://localhost:8080/index.html";
     private AvailableRobotsManager robotsManager;
     static ConfigManager configManager;
+    private WritableImage sstvWritable;
+    private PixelWriter pixelWriter;
 
     @FXML
     protected void onLinkPressed(ActionEvent event) throws IOException, URISyntaxException{
@@ -600,6 +607,13 @@ public class MissionController {
                     break;
             }
         });
+
+        //sstvImage = new WritableImage(240, 320);
+        //pixelWriter = sstvImage.getPixelWriter();
+        sstvWritable = new WritableImage(240, 320);
+        sstv_image.setImage(sstvWritable);
+
+        updater.startListeningQSSTV(sstvWritable);
     }
 
     private void loadingAnimation(){

@@ -7,7 +7,12 @@ import com.google.gson.JsonObject;
 
 import org.zeromq.ZContext;
 import javafx.application.Platform;
+import javafx.scene.image.PixelWriter;
+import javafx.scene.image.WritableImage;
+import javafx.scene.paint.Color;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.function.Consumer;
 
 import org.zeromq.SocketType;
@@ -16,6 +21,10 @@ public class onUpdateV3 {
     private Thread listenerThread;
     private ZContext context;
     private ZMQ.Socket pullSocket;
+
+    private Thread qsstvThread;
+    private ZMQ.Socket pullSocket1;
+    private int lastLineNum;
 
     public void startListening(Consumer<JsonObject> onUpdate) {
         context = new ZContext();
@@ -38,6 +47,55 @@ public class onUpdateV3 {
 
         listenerThread.setDaemon(true);
         listenerThread.start();
+    }
+
+    public void startListeningQSSTV(WritableImage pix) {
+        pullSocket1 = context.createSocket(SocketType.PULL);
+        pullSocket1.bind("tcp://127.0.0.1:5557");
+        qsstvThread = new Thread(() -> {
+            while (true) {
+                System.out.println("status");
+                byte[] message = pullSocket1.recv(0);
+                ByteBuffer buffer = ByteBuffer.wrap(message);
+                buffer.order(ByteOrder.LITTLE_ENDIAN);
+
+                int lineNum = buffer.getInt();
+                int width = buffer.getInt();
+
+                byte[] red = new byte[width];
+                byte[] green = new byte[width];
+                byte[] blue = new byte[width];
+
+                buffer.get(red);
+                buffer.get(green);
+                buffer.get(blue);
+
+                if (lineNum < lastLineNum) {
+                    Platform.runLater(() -> {
+                        for (int i = 0; i < 320; i++) {
+                            for (int j = 0; j < 240; j++) {
+                                pix.getPixelWriter().setColor(i, j, Color.TRANSPARENT);
+                            }
+                        }
+                    });
+                }
+                lastLineNum = lineNum;
+
+                Platform.runLater(() -> {
+                    for(int x = 0; x < 240; x++) {
+                        int r = red[x] & 0xFF;
+                        int g = green[x] & 0xFF;
+                        int b = blue[x] & 0xFF;
+                        pix.getPixelWriter().setColor(x, lineNum, Color.rgb(r, g, b));
+                    }
+                });
+
+                System.out.println("RECEIVED LINE NUMBER " + lineNum);
+            }
+        });
+
+        qsstvThread.setDaemon(true);
+        qsstvThread.start();
     }
 
     public void stopListening() {

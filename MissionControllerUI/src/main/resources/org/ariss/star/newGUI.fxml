@@ -48,6 +48,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
+<?import javafx.scene.layout.StackPane?>
 
 <VBox fx:id="VBox" prefHeight="493.0" prefWidth="990.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="org.ariss.star.MissionController">
   <children>
@@ -158,7 +159,11 @@
                   <Font name="Verdana" size="15.0" />
                </font>
             </Label>
-            <ImageView fitHeight="270.0" fitWidth="280.0" layoutX="698.0" layoutY="169.0" pickOnBounds="true" preserveRatio="true" />
+            <StackPane layoutX="698.0" layoutY="169.0" prefHeight="150.0" prefWidth="280.0" styleClass="image-wrapper">
+              <children>
+                <ImageView fx:id="sstv_image" fitHeight="270.0" fitWidth="280.0" layoutX="698.0" layoutY="169.0" pickOnBounds="true" preserveRatio="true" />
+              </children>
+            </StackPane>
       </children>
     </AnchorPane>
       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="200.0" prefWidth="320.0" />
