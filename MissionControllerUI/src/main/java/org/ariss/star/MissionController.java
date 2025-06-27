@@ -613,11 +613,9 @@ public class MissionController {
 
         //sstvImage = new WritableImage(240, 320);
         //pixelWriter = sstvImage.getPixelWriter();
-        sstv_image.fitWidthProperty().bind(stackpane.widthProperty());
-        sstv_image.fitHeightProperty().bind(stackpane.heightProperty());
-        sstv_image.setPreserveRatio(true);
         
         sstvWritable = new WritableImage(320, 256);
+        sstv_image.setImage(sstvWritable);
         updater.startListeningQSSTV(sstvWritable);
     }
 
