@@ -629,6 +629,10 @@ public class MissionController {
 
         //sstvImage = new WritableImage(240, 320);
         //pixelWriter = sstvImage.getPixelWriter();
+
+        if (System.getProperty("os.name").toLowerCase().contains("win")) {
+            qsstv_checkbox.setDisable(true);
+        }
         
         sstvWritable = new WritableImage(320, 256);
         sstv_image.setImage(sstvWritable);

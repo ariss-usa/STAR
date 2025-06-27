@@ -50,7 +50,7 @@
 <?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
 
-<VBox fx:id="VBox" prefHeight="493.0" prefWidth="990.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.ariss.star.MissionController">
+<VBox fx:id="VBox" prefHeight="493.0" prefWidth="990.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="org.ariss.star.MissionController">
   <children>
     <MenuBar fx:id="MenuBar" VBox.vgrow="NEVER">
       <menus>
@@ -159,7 +159,7 @@
                   <Font name="Verdana" size="15.0" />
                </font>
             </Label>
-            <StackPane fx:id="stackpane" layoutX="698.0" layoutY="169.0" prefHeight="150.0" prefWidth="280.0" styleClass="image-wrapper">
+            <StackPane fx:id="stackpane" layoutX="698.0" layoutY="169.0" prefHeight="270.0" prefWidth="280.0" styleClass="image-wrapper">
               <children>
                 <ImageView fx:id="sstv_image" fitHeight="270.0" fitWidth="280.0" layoutX="698.0" layoutY="169.0" pickOnBounds="true" preserveRatio="true" />
               </children>
