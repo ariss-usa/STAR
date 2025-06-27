@@ -75,7 +75,7 @@ jobs:
           path: MissionController-windows-v${{ env.VERSION }}
 
   package-linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v4
 
@@ -130,10 +130,9 @@ jobs:
           outDir="MissionController-linux-v$VERSION"
           mv dist "$outDir/dist"
           cp cleanup.sh direwolf.conf script.sh start.sh "$outDir/"
-          tar -czf "$outDir.tar.gz" "$outDir"
-
+          
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: missioncontroller-linux
-          path: MissionController-linux-v${{ env.VERSION }}.tar.gz
+          path: MissionController-linux-v${{ env.VERSION }}
