@@ -634,7 +634,7 @@ public class MissionController {
             qsstv_checkbox.setDisable(true);
         }
         
-        sstvWritable = new WritableImage(320, 256);
+        sstvWritable = new WritableImage(280, 270);
         sstv_image.setImage(sstvWritable);
         updater.startListeningQSSTV(sstvWritable);
     }
