@@ -32,6 +32,7 @@
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ComboBox?>
@@ -44,15 +45,19 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
 
-<VBox fx:id="VBox" prefHeight="493.0" prefWidth="990.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="org.ariss.star.MissionController">
+<VBox fx:id="VBox" prefHeight="493.0" prefWidth="990.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.ariss.star.MissionController">
   <children>
-    <MenuBar fx:id="MenuBar" VBox.vgrow="NEVER">
+    <MenuBar fx:id="MenuBar" VBox.vgrow="ALWAYS">
       <menus>
             <Menu fx:id="setupMenu" mnemonicParsing="false" text="Setup">
                <items>
@@ -76,97 +81,203 @@
         </Menu>
       </menus>
     </MenuBar>
-    <AnchorPane fx:id="AnchorPane" maxHeight="-1.0" maxWidth="-1.0" prefHeight="427.0" prefWidth="702.0" VBox.vgrow="ALWAYS">
-      <children>
-            <ComboBox fx:id="availableRobots" layoutX="16.0" layoutY="25.0" prefHeight="26.0" prefWidth="213.0" promptText="Choose a robot" styleClass="combo-box">
-               <contextMenu>
-                  <ContextMenu>
-                    <items>
-                      <MenuItem mnemonicParsing="false" text="Unspecified Action" />
-                    </items>
-                  </ContextMenu>
-               </contextMenu>
-               <tooltip>
-                  <Tooltip text="Connect to a remote robot or select your own local robot" />
-               </tooltip></ComboBox>
-            <ComboBox fx:id="type" layoutX="78.0" layoutY="67.0" prefHeight="26.0" prefWidth="101.0" promptText="Direction" styleClass="combo-box">
-               <tooltip>
-                  <Tooltip text="Enter a direction" />
-               </tooltip></ComboBox>
-            <TextField fx:id="command" layoutX="184.0" layoutY="67.0" prefHeight="26.0" prefWidth="46.0" promptText="Time">
-              <font>
-                  <Font name="Verdana" size="12.0" />
-              </font>
-               <tooltip>
-                  <Tooltip text="Time of operation in seconds" />
-               </tooltip>
-            </TextField>
-            <Button fx:id="enter" layoutX="241.0" layoutY="64.0" mnemonicParsing="false" onMouseClicked="#sendPressed" prefHeight="17.0" prefWidth="78.0" text="Send">
-              <font>
-                  <Font name="Verdana" size="12.0" />
-              </font>
-            </Button>
-            <Label fx:id="sentText" layoutX="83.0" layoutY="146.0" text="Commands Sent">
-               <font>
-                  <Font name="Verdana" size="15.0" />
-               </font>
-            </Label>
-            <Label fx:id="recText" layoutX="413.0" layoutY="146.0" text="Commands Received">
-               <font>
-                  <Font name="Verdana" size="15.0" />
-               </font>
-            </Label>
-            <ListView fx:id="sentListView" layoutX="17.0" layoutY="169.0" prefHeight="270.0" prefWidth="280.0" />
-            <ListView fx:id="recListView" layoutX="369.0" layoutY="169.0" prefHeight="270.0" prefWidth="280.0" />
-            <CheckBox fx:id="doNotDisturb" layoutX="369.0" layoutY="70.0" mnemonicParsing="false" text="Do Not Disturb">
-              <font>
-                  <Font name="Verdana" size="12.0" />
-              </font>
-            </CheckBox>
-            <TextField fx:id="Power" layoutX="14.0" layoutY="67.0" prefHeight="26.0" prefWidth="59.0" promptText="Power">
-              <font>
-                <Font name="Verdana" size="12.0" />
-              </font>
-               <tooltip>
-                  <Tooltip text="Speed of robot (values from 1 to 255)" />
-               </tooltip>
-            </TextField>
-            <ComboBox fx:id="localRobotConnection" layoutX="367.0" layoutY="25.0" prefHeight="26.0" prefWidth="158.0" promptText="BT Connections" styleClass="combo-box">
-               <tooltip>
-                  <Tooltip text="Pair with your local robot" />
-               </tooltip></ComboBox>
-            <Button fx:id="pairButton" layoutX="536.0" layoutY="22.0" mnemonicParsing="false" onMouseClicked="#pairPressed" prefHeight="32.0" prefWidth="113.0" text="Pair">
-              <font>
-                  <Font name="Verdana" size="12.0" />
-              </font>
-            </Button>
-            <CheckBox fx:id="medium" layoutX="17.0" layoutY="108.0" mnemonicParsing="false" text="Send Via APRS">
-              <font>
-                  <Font name="Verdana" size="12.0" />
-              </font>
-            </CheckBox>
-            <CheckBox fx:id="visualizerCheck" layoutX="369.0" layoutY="108.0" mnemonicParsing="false" onAction="#visualize" text="Enable Visualizer">
-              <font>
-                  <Font name="Verdana" size="12.0" />
-              </font>
-            </CheckBox>
-            <Circle fx:id="circle1" fill="DODGERBLUE" layoutX="498.0" layoutY="80.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
-            <Circle fx:id="circle2" fill="#1fc4ff" layoutX="509.0" layoutY="80.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
-            <Circle fx:id="circle3" fill="#1fffda" layoutX="521.0" layoutY="80.0" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
-            <CheckBox fx:id="recAPRSCheckBox" layoutX="155.0" layoutY="108.0" mnemonicParsing="false" text="Receive APRS" />
-            <Label fx:id="recText1" layoutX="780.0" layoutY="146.0" text="SSTV Decoding">
-               <font>
-                  <Font name="Verdana" size="15.0" />
-               </font>
-            </Label>
-            <StackPane fx:id="stackpane" layoutX="698.0" layoutY="169.0" prefHeight="270.0" prefWidth="280.0" alignment="TOP_LEFT" styleClass="image-wrapper">
+      <Region prefHeight="26.0" prefWidth="990.0" />
+      <GridPane prefHeight="469.0" prefWidth="990.0" VBox.vgrow="ALWAYS">
+        <columnConstraints>
+          <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" percentWidth="33.0" prefWidth="100.0" />
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="0.0" percentWidth="33.0" prefWidth="100.0" />
+            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="33.0" prefWidth="100.0" />
+        </columnConstraints>
+        <rowConstraints>
+            <RowConstraints maxHeight="-Infinity" minHeight="10.0" prefHeight="50.0" vgrow="SOMETIMES" />
+            <RowConstraints maxHeight="-Infinity" minHeight="10.0" prefHeight="50.0" vgrow="SOMETIMES" />
+            <RowConstraints maxHeight="-Infinity" minHeight="10.0" percentHeight="10.0" prefHeight="50.0" vgrow="SOMETIMES" />
+            <RowConstraints maxHeight="-Infinity" minHeight="10.0" percentHeight="10.0" prefHeight="50.0" vgrow="SOMETIMES" />
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+        </rowConstraints>
+         <children>
+            <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" GridPane.rowIndex="4" GridPane.rowSpan="2147483647">
+               <children>
+                  <Label fx:id="sentText" text="Commands Sent">
+                     <font>
+                        <Font name="Verdana" size="15.0" />
+                     </font>
+                  </Label>
+                  <ListView fx:id="sentListView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="270.0" minWidth="280.0" VBox.vgrow="ALWAYS">
+                     <VBox.margin>
+                        <Insets bottom="15.0" />
+                     </VBox.margin></ListView>
+               </children>
+               <GridPane.margin>
+                  <Insets left="15.0" right="15.0" />
+               </GridPane.margin>
+            </VBox>
+            <VBox alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" GridPane.columnIndex="1" GridPane.rowIndex="4" GridPane.rowSpan="2147483647">
+               <children>
+                  <Label fx:id="recText" text="Commands Received">
+                     <font>
+                        <Font name="Verdana" size="15.0" />
+                     </font>
+                  </Label>
+                  <ListView fx:id="recListView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="270.0" minWidth="280.0" VBox.vgrow="ALWAYS">
+                     <VBox.margin>
+                        <Insets bottom="15.0" left="15.0" right="15.0" />
+                     </VBox.margin></ListView>
+               </children>
+            </VBox>
+            <VBox alignment="TOP_CENTER" prefHeight="289.0" prefWidth="330.0" GridPane.columnIndex="2" GridPane.rowIndex="4" GridPane.rowSpan="2147483647">
+               <children>
+                  <Label fx:id="recText1" text="SSTV Decoding">
+                     <font>
+                        <Font name="Verdana" size="15.0" />
+                     </font>
+                  </Label>
+            <StackPane fx:id="stackpane" alignment="TOP_LEFT" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="270.0" minWidth="280.0" styleClass="image-wrapper" VBox.vgrow="ALWAYS">
               <children>
-                <ImageView fx:id="sstv_image" fitHeight="270.0" fitWidth="280.0" pickOnBounds="true" preserveRatio="true" />
+                <ImageView fx:id="sstv_image" fitWidth="3.0" pickOnBounds="true" preserveRatio="true" />
               </children>
+                     <VBox.margin>
+                        <Insets bottom="15.0" left="15.0" right="10.0" />
+                     </VBox.margin>
             </StackPane>
-            <CheckBox fx:id="qsstv_checkbox" layoutX="698.0" layoutY="108.0" mnemonicParsing="false" onMouseClicked="#qsstvCheckboxClicked" text="Start QSSTV" />
-      </children>
-    </AnchorPane>
-      <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="200.0" prefWidth="320.0" />
+               </children>
+            </VBox>
+            <CheckBox fx:id="medium" mnemonicParsing="false" text="Send Via APRS" GridPane.rowIndex="2">
+               <font>
+                  <Font name="Verdana" size="14.0" />
+               </font>
+               <GridPane.margin>
+                  <Insets left="15.0" />
+               </GridPane.margin>
+            </CheckBox>
+            <CheckBox fx:id="recAPRSCheckBox" mnemonicParsing="false" text="Receive APRS" GridPane.halignment="RIGHT" GridPane.rowIndex="2" GridPane.valignment="CENTER">
+               <GridPane.margin>
+                  <Insets right="20.0" />
+               </GridPane.margin>
+               <font>
+                  <Font name="Verdana" size="14.0" />
+               </font>
+            </CheckBox>
+            <CheckBox fx:id="qsstv_checkbox" mnemonicParsing="false" onMouseClicked="#qsstvCheckboxClicked" text="Start QSSTV" GridPane.columnIndex="2" GridPane.halignment="CENTER" GridPane.rowIndex="2">
+               <font>
+                  <Font name="Verdana" size="14.0" />
+               </font></CheckBox>
+            <HBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" spacing="5.0" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1">
+               <children>
+                  <ComboBox fx:id="type" maxHeight="1.7976931348623157E308" prefWidth="101.0" promptText="Direction" styleClass="combo-box" HBox.hgrow="ALWAYS">
+                     <tooltip>
+                        <Tooltip text="Enter a direction" />
+                     </tooltip>
+                     <HBox.margin>
+                        <Insets left="15.0" />
+                     </HBox.margin>
+                  </ComboBox>
+                  <TextField fx:id="command" maxHeight="1.7976931348623157E308" prefWidth="49.0" promptText="Time" HBox.hgrow="ALWAYS">
+                     <font>
+                        <Font name="Verdana" size="12.0" />
+                     </font>
+                     <tooltip>
+                        <Tooltip text="Time of operation in seconds" />
+                     </tooltip>
+                  </TextField>
+                  <TextField fx:id="Power" maxHeight="1.7976931348623157E308" prefWidth="59.0" promptText="Power" HBox.hgrow="ALWAYS">
+                     <font>
+                        <Font name="Verdana" size="12.0" />
+                     </font>
+                     <tooltip>
+                        <Tooltip text="Speed of robot (values from 1 to 255)" />
+                     </tooltip>
+                  </TextField>
+                  <Button fx:id="enter" maxHeight="1.7976931348623157E308" mnemonicParsing="false" onMouseClicked="#sendPressed" prefWidth="75.0" text="Send" HBox.hgrow="ALWAYS">
+                     <font>
+                        <Font name="Verdana" size="12.0" />
+                     </font>
+                     <HBox.margin>
+                        <Insets />
+                     </HBox.margin>
+                  </Button>
+               </children>
+               <GridPane.margin>
+                  <Insets top="10.0" />
+               </GridPane.margin>
+            </HBox>
+            <HBox alignment="CENTER_LEFT" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS">
+               <GridPane.margin>
+                  <Insets left="15.0" />
+               </GridPane.margin>
+               <children>
+                  <ComboBox fx:id="availableRobots" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" promptText="Choose a robot" styleClass="combo-box" HBox.hgrow="ALWAYS">
+                     <contextMenu>
+                        <ContextMenu>
+                           <items>
+                              <MenuItem mnemonicParsing="false" text="Unspecified Action" />
+                           </items>
+                        </ContextMenu>
+                     </contextMenu>
+                     <tooltip>
+                        <Tooltip text="Connect to a remote robot or select your own local robot" />
+                     </tooltip>
+                     <HBox.margin>
+                        <Insets top="10.0" />
+                     </HBox.margin>
+                  </ComboBox>
+               </children>
+            </HBox>
+            <HBox alignment="CENTER_RIGHT" prefHeight="138.0" prefWidth="330.0" GridPane.columnIndex="1">
+               <children>
+                  <ComboBox fx:id="localRobotConnection" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="40.0" prefWidth="163.0" promptText="BT Connections" styleClass="combo-box">
+                     <tooltip>
+                        <Tooltip text="Pair with your local robot" />
+                     </tooltip>
+                     <HBox.margin>
+                        <Insets right="5.0" />
+                     </HBox.margin>
+                  </ComboBox>
+                  <Button fx:id="pairButton" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onMouseClicked="#pairPressed" prefHeight="40.0" prefWidth="117.0" text="Pair">
+                     <font>
+                        <Font name="Verdana" size="12.0" />
+                     </font>
+                  </Button>
+               </children>
+               <GridPane.margin>
+                  <Insets top="10.0" />
+               </GridPane.margin>
+            </HBox>
+            <CheckBox fx:id="visualizerCheck" alignment="CENTER_RIGHT" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#visualize" text="Enable Visualizer" GridPane.columnIndex="1" GridPane.halignment="RIGHT" GridPane.rowIndex="2">
+               <font>
+                  <Font name="Verdana" size="14.0" />
+               </font>
+               <GridPane.margin>
+                  <Insets right="29.0" />
+               </GridPane.margin>
+            </CheckBox>
+            <HBox alignment="CENTER_RIGHT" prefHeight="100.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
+               <children>
+                  <CheckBox fx:id="doNotDisturb" alignment="CENTER_RIGHT" contentDisplay="RIGHT" mnemonicParsing="false" prefHeight="19.0" prefWidth="138.0" text="Do Not Disturb">
+                     <font>
+                        <Font name="Verdana" size="14.0" />
+                     </font>
+                     <HBox.margin>
+                        <Insets right="10.0" />
+                     </HBox.margin>
+                  </CheckBox>
+                  <Circle fx:id="circle1" fill="DODGERBLUE" radius="3.0" stroke="BLACK" strokeType="INSIDE">
+                     <HBox.margin>
+                        <Insets right="3.0" />
+                     </HBox.margin>
+                  </Circle>
+                  <Circle fx:id="circle2" fill="#1fc4ff" radius="3.0" stroke="BLACK" strokeType="INSIDE">
+                     <HBox.margin>
+                        <Insets right="3.0" />
+                     </HBox.margin>
+                  </Circle>
+                  <Circle fx:id="circle3" fill="#1fffda" radius="3.0" stroke="BLACK" strokeType="INSIDE" />
+               </children>
+            </HBox>
+         </children>
+         <VBox.margin>
+            <Insets />
+         </VBox.margin>
+      </GridPane>
   </children>
 </VBox>
