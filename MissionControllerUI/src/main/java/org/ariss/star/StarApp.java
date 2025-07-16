@@ -23,8 +23,10 @@ public class StarApp extends Application {
 
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
         stage.setTitle("Mission Controller");
-        //stage.setResizable(false);
+
         stage.setScene(scene);
+        stage.setMinWidth(990);
+        stage.setMinHeight(493);
 
         Platform.runLater(()-> {
             stage.setWidth(990);
