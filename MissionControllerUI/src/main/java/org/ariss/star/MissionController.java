@@ -112,11 +112,16 @@ public class MissionController {
     @FXML
     private CheckBox qsstv_checkbox;
 
+    enum RobotType {
+        MBOT,
+        XRP
+    }
     private Stage parent;
     private Parent root;
     public static ExecutorService threadExecutor = Executors.newSingleThreadExecutor();
     private static RobotEntry currRobot;
     private static boolean pairingStatus = false;
+    private static RobotType robotType = RobotType.XRP;
     final private String ARISS_URL = "https://www.ariss.org/";
     final private String STAR_URL = "https://sites.google.com/view/ariss-starproject/home";
     final private String LOCALHOST_URL = "http://localhost:8080/index.html";
@@ -397,8 +402,8 @@ public class MissionController {
         if (availableRobots.getSelectionModel().isEmpty()) {
             AlertBox.display("Select a robot from the dropdown");
         }
-        else if (Power.getText().isEmpty() || Double.parseDouble(Power.getText()) < 1 || 
-                Double.parseDouble(Power.getText()) > 255 )  {
+        else if ((Power.getText().isEmpty() || Double.parseDouble(Power.getText()) < 1 || 
+                Double.parseDouble(Power.getText()) > 255) && Power.isVisible())  {
             AlertBox.display("Enter the power (from 1 to 255)");
         }
         else if (type.getSelectionModel().isEmpty() || type.getSelectionModel().getSelectedItem().equals("N/A"))  {
@@ -407,8 +412,11 @@ public class MissionController {
         else if (command.getText().isEmpty()){
             AlertBox.display("Enter the amount of seconds you would like to run the robot");
         }
-        else if (Double.parseDouble(command.getText()) < 0 || Double.parseDouble(command.getText()) > 120){
+        else if ((Double.parseDouble(command.getText()) < 0 || Double.parseDouble(command.getText()) > 120) && Power.isVisible()){
             AlertBox.display("Enter values between 0 and 120");
+        }
+        else if ((Double.parseDouble(command.getText()) < 0 || Double.parseDouble(command.getText()) > 180) && type.getValue().equals("arm")) {
+            AlertBox.display("Enter values between 0 and 180");
         }
         else{
             //Determine whether internet/APRS
@@ -417,6 +425,7 @@ public class MissionController {
             String selectedDirection = type.getSelectionModel().getSelectedItem();
             String string_command = Power.getText() + " " + selectedDirection + " " + s;
             BackendDispatcher dispatcher;
+            // through Internet
             if(!medium.isSelected()){
                 HashMap<String, Object> map = new HashMap<>();
                 if(selectedItem.getType() == EntryType.REMOTE){
@@ -432,14 +441,24 @@ public class MissionController {
                     dispatcher.attachDefaultErrorHandler();
                 }
                 else{
-                    HashMap<String, Object> cmd = new HashMap<>();
-                    cmd.put("power", Power.getText());
-                    cmd.put("direction", selectedDirection);
-                    cmd.put("time", s);
+                    if (robotType == RobotType.MBOT) {
+                        HashMap<String, Object> cmd = new HashMap<>();
+                        cmd.put("power", Power.getText());
+                        cmd.put("direction", selectedDirection);
+                        cmd.put("time", s);
 
-                    map.put("commands", Arrays.asList(cmd));
-                    dispatcher = new BackendDispatcher(MessageStructure.LOCAL_CONTROL, map);
-                    dispatcher.attachDefaultErrorHandler();
+                        map.put("commands", Arrays.asList(cmd));
+                        dispatcher = new BackendDispatcher(MessageStructure.LOCAL_CONTROL, map);
+                        dispatcher.attachDefaultErrorHandler();
+                    } else {
+                        HashMap<String, Object> cmd = new HashMap<>();
+                        cmd.put("distance", command.getText());
+                        cmd.put("direction", selectedDirection.charAt(0));
+
+                        map.put("commands", Arrays.asList(cmd));
+                        dispatcher = new BackendDispatcher(MessageStructure.LOCAL_CONTROL, map);
+                        dispatcher.attachDefaultErrorHandler();
+                    }
                 }
                 threadExecutor.submit(dispatcher);
             }
@@ -473,7 +492,7 @@ public class MissionController {
     @FXML
     void pairPressed(MouseEvent event) {
         if (localRobotConnection.getSelectionModel().isEmpty())  {
-            AlertBox.display("Choose a robot to pair with");
+            AlertBox.display("Choose a robot to pair with test lol");
         }
         else{
             String pairText = pairButton.getText();
@@ -489,6 +508,23 @@ public class MissionController {
                         localRobotConnection.setDisable(true);
                         pairingStatus = true;
                         pairButton.setText("Disconnect");
+                        if (response.get("robotType").getAsString().equals("XRP")) {
+                            robotType = RobotType.XRP;
+                            Power.setVisible(false);
+                            Power.setPrefWidth(0);
+                            command.getTooltip().setText("Distance to travel in cm/arm position in degrees");
+                            command.setPromptText("Distance/Degrees");
+                            type.getItems().add("arm");
+                        } else {
+                            robotType = RobotType.MBOT;
+                            Power.setVisible(true);
+                            Power.setPrefWidth(59);
+                            command.getTooltip().setText("Time of operation in seconds");
+                            Power.getTooltip().setText("Speed of robot (values from 1 to 255)");
+                            command.setPromptText("Time");
+                            Power.setPromptText("Power");
+                            type.getItems().remove("arm");
+                        }
                     }
                     else if(response.get("status").getAsString().equals("error")){
                         //Show user pairing failed
@@ -522,6 +558,9 @@ public class MissionController {
                         pairingStatus = false;
                         pairButton.setText("Pair");
                         pairButton.setDisable(false);
+                        if (robotType == RobotType.XRP) {
+                            type.getItems().remove("arm");
+                        }
                         robotsManager.removeLocalRobot();
                         localRobotConnection.setValue(null);
                         localRobotConnection.setDisable(false);

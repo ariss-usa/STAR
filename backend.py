@@ -1,7 +1,10 @@
+import sys
+sys.coinit_flags = 0 # type: ignore
 import asyncio
 import platform
 from threading import Thread
 import time
+from winsound import PlaySound
 import requests
 from requests import RequestException, Timeout
 from zmq import PUSH, Context
@@ -10,11 +13,13 @@ from aprsListener import APRSUpdater
 from serial import Serial, SerialException
 from serial import STOPBITS_ONE
 from serial.tools.list_ports import comports
+from enum import Flag
+from bleak import *
 import os
 import websockets
 import json
-from rtlsdr import RtlSdr
-from playsound3 import playsound
+# from rtlsdr import RtlSdr
+# from playsound3 import playsound
 from DisconnectMonitor import USBDisconnectWatcher
 import sys
 from robot_link import RobotLink
@@ -31,7 +36,11 @@ WEBSOCKET_ENDPOINT = "wss://star-bvjn.onrender.com/ws"
 #HEALTH_ENDPOINT = "http://127.0.0.1:8000/health"
 #WEBSOCKET_ENDPOINT = "ws://127.0.0.1:8000/ws"
 
-REQUEST_TIMEOUT = (1, 1.5)
+class RobotType(Flag):
+    MBOT = False
+    XRP = True
+
+REQUEST_TIMEOUT = (3.05, 5)
 USER_DATA_FILE = "important.json"
 GLOBAL_MODE = False
 HEAT_RETRIES_LEFT = 6
@@ -41,6 +50,28 @@ myMC = schoolName = city = state = None
 do_not_disturb = True
 websocket_started = False
 disconnectMonitor = None
+robotType = RobotType.XRP
+rxCharacteristic = "452af57e-ad27-422c-88ae-76805ea641a9"
+txCharacteristic = "266d9d74-3e10-4fcd-88d2-cb63b5324d0c"
+executingCommand = True
+isConnected = False
+disconnect = False
+XRPAddress = ""
+cmd = b""
+devices = []
+
+try:
+    from bleak.backends.winrt.util import allow_sta, uninitialize_sta
+
+    allow_sta()  # undo the unwanted side effect
+    uninitialize_sta()
+except ImportError:
+    # not Windows, so no problem
+    pass
+
+def callback(sender: BleakGATTCharacteristic, data: bytearray):
+    global executingCommand
+    executingCommand = False
 
 context = Context()
 socket = context.socket(REP)
@@ -50,6 +81,16 @@ push_update_socket = context.socket(PUSH)
 push_update_socket.bind("tcp://127.0.0.1:5556")
 link = RobotLink(push_update_socket)
 aprsUpdater = APRSUpdater(link)
+
+# try:
+#     from bleak.backends.winrt.util import allow_sta
+#     # tell Bleak we are using a graphical user interface that has been properly
+#     # configured to work with asyncio
+#     allow_sta()
+# except ImportError:
+#     # other OSes and older versions of Bleak will raise ImportError which we
+#     # can safely ignore
+#     pass
 
 def read_config():
     global myMC, schoolName, city, state, GLOBAL_MODE
@@ -123,18 +164,18 @@ def pair_with_bot(msg) -> bool:
     try:
         ser = Serial(port=msg['port'], baudrate=115200, bytesize=8, timeout=5, stopbits=STOPBITS_ONE)
         link.setSerial(ser)
-        link.getSerial().write(bytearray([255, 85, 7, 0, 2, 5, 0, 0, 0, 0])) #stop sequence
+        link.getSerial().write(bytearray([255, 85, 7, 0, 2, 5, 0, 0, 0, 0])) # type: ignore #stop sequence
     except Exception as e:
         raise RuntimeError(f"Error: {str(e)}")
     return True
 
-def check_rtlsdr():
-    try:
-        sdr = RtlSdr()
-        sdr.close()
-        return {"status": "ok"}
-    except Exception as e:
-        return {"status": "error", "err_msg": str(e)}
+# def check_rtlsdr():
+#     try:
+#         sdr = RtlSdr()
+#         sdr.close()
+#         return {"status": "ok"}
+#     except Exception as e:
+#         return {"status": "error", "err_msg": str(e)}
     
 def send_aprs(msg):
     try:
@@ -151,12 +192,17 @@ def send_aprs(msg):
             oscommand = f"echo -n '{mycallsign}>APDW16::{destination:<9}:{payload}' | gen_packets -a 25 -o aprs_commands.wav -"
         
         os.system(oscommand)
-        playsound("./aprs_commands.wav")
+        # PlaySound("./aprs_commands.wav")
     except Exception as e:
         raise RuntimeError(f"Error sending aprs: {str(e)}")
         
 async def handle_request(msg):
     global disconnectMonitor
+    global robotType
+    global XRPAddress
+    global executingCommand
+    global cmd
+    global disconnect
     match msg['type']:
         case "get_directory":
             """
@@ -208,7 +254,11 @@ async def handle_request(msg):
             }
             """
             try:
-                link.postToSerialJson(msg['commands'])
+                if (robotType == RobotType.MBOT):
+                    link.postToSerialJson(msg['commands'])
+                else:
+                    executingCommand = False
+                    cmd = ("1 " + msg["commands"][0]["direction"] + " " + msg["commands"][0]["distance"]).encode("utf-8")
             except (SerialException, RuntimeError) as e:
                 return {"status": "error", "err_msg": str(e)}
             return {"status": "ok"}
@@ -220,23 +270,53 @@ async def handle_request(msg):
             }
             """
             try:
-                pair_with_bot(msg)
-                disconnectMonitor = USBDisconnectWatcher(msg['port'], aprsUpdater, push_update_socket, link)
-                disconnectMonitor.start()
-                return {"status": "ok"}
+                if "XRP" in msg["port"]:
+                    robotType = RobotType.XRP
+                    asyncio.gather(XRPControl())
+                    return {"status": "ok", "robotType" : "XRP"}
+                else:
+                    robotType = RobotType.MBOT
+                    pair_with_bot(msg)
+                    disconnectMonitor = USBDisconnectWatcher(msg['port'], aprsUpdater, push_update_socket, link)
+                    disconnectMonitor.start()
+                    return {"status": "ok", "robotType" : "mBot"}
+                
+                # if (disconnectMonitor.vid == "1a86"):
+                #     robotType = RobotType.MBOT
+                #     return {"status": "ok", "robotType" : "mBot"}
+                # else:
+                #     robotType = RobotType.XRP
+                #     return {"status": "ok", "robotType" : "XRP"}
+                
             except Exception as e:
                 return {"status": "error", "err_msg": str(e)}
             
         case "pair_disconnect":
             try:
-                link.closeSerial()
-                disconnectMonitor.stop()
-                return {"status": "ok"}
+                if (robotType == RobotType.MBOT):
+                    link.closeSerial()
+                    disconnectMonitor.stop() # type: ignore
+                    return {"status": "ok"}
+                else:
+                    disconnect = True
+                    return {"status": "ok"}
             except Exception as e:
                 return {"status": "error", "err_msg": f"Error: {str(e)}"}
         
         case "get_ports":
             ports = [str(port.device) for port in comports()]
+            # ports = ["COM4"]
+            # XRP = BLEDevice(address="28:CD:C1:16:DA:9A", name="XRProver", details="XRProver")
+            for d in devices:
+                if (d.name is not None and "XRP" in d.name):
+                    XRP = d
+                    XRPAddress = d.address
+                    break
+            try:    
+                ports.append(XRP.name) # type: ignore
+            finally:
+                pass
+
             payload = {
                 "status": "ok",
                 "ports": ports
@@ -250,24 +330,24 @@ async def handle_request(msg):
             except Exception as e:
                 return {"status": "error", "err_msg": str(e)}
 
-        case "receive_aprs":
-            if platform.system() == "linux":
-                check = check_rtlsdr()
-                if check["status"] == "error":
-                    return check
+        # case "receive_aprs":
+        #     if platform.system() == "linux":
+        #         check = check_rtlsdr()
+        #         if check["status"] == "error":
+        #             return check
 
-            try:
-                aprsUpdater.startAPRSprocesses()
-            except Exception as e:
-                return {"status": "error", "err_msg": str(e)}
+        #     try:
+        #         aprsUpdater.startAPRSprocesses()
+        #     except Exception as e:
+        #         return {"status": "error", "err_msg": str(e)}
 
-            if(platform.system() == "Linux"):
-                thread = Thread(target=aprsUpdater.checkAPRSUpdates_Linux, daemon=True)
-            else:
-                thread = Thread(target=aprsUpdater.checkAPRSUpdates, daemon=True)
+        #     if(platform.system() == "Linux"):
+        #         thread = Thread(target=aprsUpdater.checkAPRSUpdates_Linux, daemon=True)
+        #     else:
+        #         thread = Thread(target=aprsUpdater.checkAPRSUpdates, daemon=True)
 
-            thread.start()
-            return {"status": "ok"}
+        #     thread.start()
+        #     return {"status": "ok"}
         case "stop_aprs_receive":
             aprsUpdater.stop()
             return {"status": "ok"}
@@ -295,11 +375,19 @@ async def zmq_loop():
 
 
 async def main():
+    global devices
     read_config()
+    devices = await BleakScanner.discover()
+    # await asyncio.gather(
+    #     zmq_loop(),
+    #     auto_reconnect_loop(),
+    #     health_check()
+    # )
+
     await asyncio.gather(
         zmq_loop(),
-        auto_reconnect_loop(),
-        health_check()
+        health_check(),
+        printAllCoroutines()
     )
 
 def ping_health_endpoint():
@@ -328,11 +416,17 @@ async def health_check():
         else:
             await asyncio.sleep(10)
 
+async def printAllCoroutines():
+    while True:
+        print(f"All currently running tasks: {[t.get_coro().__name__ for t in asyncio.all_tasks()]}") # type: ignore
+        await asyncio.sleep(10)
+
 async def auto_reconnect_loop():
     while True:
         if GLOBAL_MODE and not websocket_started:
             print("[DEBUG] Retry websocket connection")
             await connect_to_ws()
+        print(f"All currently running tasks: {[t.get_coro() for t in asyncio.all_tasks()]}")
         await asyncio.sleep(10)
 
 async def connect_to_ws():
@@ -341,7 +435,7 @@ async def connect_to_ws():
     try:
         websocket = await asyncio.wait_for(websockets.connect(WEBSOCKET_ENDPOINT), timeout=3)
 
-        async with websocket:
+        async with websocket: # type: ignore
             print("[DEBUG] Opening socket")
             await websocket.send(json.dumps({
                 "id": myMC,
@@ -364,5 +458,22 @@ async def connect_to_ws():
     except Exception as e:
         print(f"[WebSocket] Connection failed: {str(e)}")
         websocket_started = False
+
+async def XRPControl():
+    global executingCommand, isConnected, disconnect, XRPAddress
+    print("Trying to connect to XRP " + XRPAddress)
+    async with BleakClient(XRPAddress) as client:
+        # await client.start_notify(txCharacteristic, callback=callback)
+        print("Connected to XRP " + XRPAddress)
+        while True:
+            await asyncio.sleep(0.5)
+            if not executingCommand:
+                executingCommand = True
+                await client.write_gatt_char(rxCharacteristic, cmd, response=False)
+            if disconnect:
+                print("Disconnecting")
+                disconnect = False
+                # await client.disconnect()
+                return
 
 asyncio.run(main())

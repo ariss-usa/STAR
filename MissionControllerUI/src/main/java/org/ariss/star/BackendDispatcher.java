@@ -28,6 +28,7 @@ public class BackendDispatcher extends Task<JsonObject>{
             }
         }
         msg.addProperty("type", msg_type.name().toLowerCase());
+        // AlertBox.display(msg_type.name().toLowerCase());
     }
 
     @Override
@@ -36,7 +37,7 @@ public class BackendDispatcher extends Task<JsonObject>{
         try(ZContext ctx = new ZContext()){
             ZMQ.Socket socket = ctx.createSocket(SocketType.REQ);
             socket.connect(ZMQ_ENDPOINT);
-            socket.setReceiveTimeOut(2000);
+            socket.setReceiveTimeOut(10000);
             socket.send(gson.toJson(msg));
             String returnStr = socket.recvStr();
 
