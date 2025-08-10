@@ -4,7 +4,7 @@ import asyncio
 import platform
 from threading import Thread
 import time
-from winsound import PlaySound
+# from winsound import PlaySound
 import requests
 from requests import RequestException, Timeout
 from zmq import PUSH, Context
