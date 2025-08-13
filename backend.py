@@ -65,7 +65,7 @@ try:
 
     allow_sta()  # undo the unwanted side effect
     uninitialize_sta()
-except ImportError:
+except:
     # not Windows, so no problem
     pass
 
