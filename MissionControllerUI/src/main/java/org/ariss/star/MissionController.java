@@ -124,22 +124,81 @@ public class MissionController {
     static ConfigManager configManager;
     private WritableImage sstvWritable;
     private Process qsstv;
+    private Process rtlProcess; // process for rtl_fm -> aplay pipeline
+    private Thread qsstvWatcherThread;
 
     @FXML
     protected void qsstvCheckboxClicked(MouseEvent event) {
         try{
-            if (qsstv_checkbox.isSelected()) {
+            boolean enable = qsstv_checkbox.isSelected();
+
+            if (enable) {
+                // If APRS receive is running, refuse to start QSSTV and ask the user to stop APRS first
+                if (recAPRSCheckBox.isSelected()){
+                    AlertBox.display("APRS receive is running — stop it before starting QSSTV");
+                    Platform.runLater(() -> qsstv_checkbox.setSelected(false));
+                    return;
+                }
+
+                // QSSTV is Linux-only; refuse on Windows
+                if (System.getProperty("os.name").toLowerCase().contains("win")){
+                    AlertBox.display("QSSTV is only available on Linux");
+                    Platform.runLater(() -> qsstv_checkbox.setSelected(false));
+                    return;
+                }
+
+                // disable the APRS checkbox while QSSTV runs to prevent races
+                Platform.runLater(() -> recAPRSCheckBox.setDisable(true));
+
                 qsstv = new ProcessBuilder("./qsstv").start();
+
+                // start rtl_fm -> aplay pipeline via shell so piping works
+                rtlProcess = new ProcessBuilder("sh", "-c",
+                        "rtl_fm -M fm -f 434.9M -s 48k | aplay -r 48000 -f S16_LE -D pulse")
+                        .start();
+
+                // Watch the qsstv process and cleanup when it exits
+                qsstvWatcherThread = new Thread(() -> {
+                    try {
+                        if (qsstv != null) qsstv.waitFor();
+                    } catch (InterruptedException ignored) {}
+
+                    // ensure rtl process is stopped
+                    if (rtlProcess != null && rtlProcess.isAlive()){
+                        rtlProcess.destroy();
+                    }
+
+                    Platform.runLater(() -> {
+                        qsstv_checkbox.setSelected(false);
+                        recAPRSCheckBox.setDisable(false);
+                    });
+
+                    qsstv = null;
+                    rtlProcess = null;
+                    qsstvWatcherThread = null;
+                });
+                qsstvWatcherThread.setDaemon(true);
+                qsstvWatcherThread.start();
             }
             else {
-                if (qsstv != null && qsstv.isAlive()) {
+                // stop QSSTV and rtl pipeline
+                if (qsstv != null && qsstv.isAlive()){
                     qsstv.destroy();
                     qsstv = null;
                 }
+
+                if (rtlProcess != null && rtlProcess.isAlive()){
+                    rtlProcess.destroy();
+                    rtlProcess = null;
+                }
+
+                // Re-enable APRS checkbox so user can restart receive
+                Platform.runLater(() -> recAPRSCheckBox.setDisable(false));
             }
         }
         catch (IOException e) {
             AlertBox.display("Failed to start or stop QSSTV");
+            Platform.runLater(() -> recAPRSCheckBox.setDisable(false));
         }
     }
 
@@ -616,12 +675,22 @@ public class MissionController {
         });
 
         recAPRSCheckBox.addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
-            if(!pairingStatus && !recAPRSCheckBox.isSelected()){
+            boolean willEnable = !recAPRSCheckBox.isSelected();
+
+            // Prevent starting APRS receive while QSSTV (and rtl pipeline) is running
+            if (willEnable && qsstv != null && qsstv.isAlive()){
+                event.consume();
+                AlertBox.display("QSSTV is running — stop QSSTV before starting APRS receive");
+                return;
+            }
+
+            if(!pairingStatus && willEnable){
                 event.consume();
                 AlertBox.display("Robot must be paired");
                 return;
             }
-            recAPRSCheckBox.setSelected(!recAPRSCheckBox.isSelected());
+
+            recAPRSCheckBox.setSelected(willEnable);
             receive();
             event.consume();
         });
