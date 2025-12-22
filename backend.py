@@ -31,7 +31,7 @@ WEBSOCKET_ENDPOINT = "wss://star-bvjn.onrender.com/ws"
 #HEALTH_ENDPOINT = "http://127.0.0.1:8000/health"
 #WEBSOCKET_ENDPOINT = "ws://127.0.0.1:8000/ws"
 
-REQUEST_TIMEOUT = (3.05, 5)
+REQUEST_TIMEOUT = (1, 1.5)
 USER_DATA_FILE = "important.json"
 GLOBAL_MODE = False
 HEAT_RETRIES_LEFT = 6
