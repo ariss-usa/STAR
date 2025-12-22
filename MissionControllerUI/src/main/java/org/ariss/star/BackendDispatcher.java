@@ -55,6 +55,14 @@ public class BackendDispatcher extends Task<JsonObject>{
                 AlertBox.display("Error: " + recv.get("err_msg"));
             }
         });
+        this.setOnFailed(e -> {
+            Throwable exception = this.getException();
+            if (exception != null && exception.getMessage().contains("did not respond in time")) {
+                AlertBox.display("Server is asleep. Please try again in about 1 minute.");
+            } else if (exception != null) {
+                AlertBox.display("Error: " + exception.getMessage());
+            }
+        });
     }
 }
 
