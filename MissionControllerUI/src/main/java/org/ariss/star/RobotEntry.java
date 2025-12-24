@@ -5,16 +5,18 @@ import java.util.Objects;
 public class RobotEntry {
     String id, school, city, state, port;
     String myCallsign, destinationCallsign;
+    String robotType;
     EntryType type;
 
     /*
      * For Remote entries
      */
-    public RobotEntry(String id, String school, String city, String state){
+    public RobotEntry(String id, String school, String city, String state, String robotType){
         this.id = id;
         this.school = school;
         this.city = city;
         this.state = state;
+        this.robotType = robotType;
         this.type = EntryType.REMOTE;
     }
 
@@ -63,7 +65,11 @@ public class RobotEntry {
         else if(type == EntryType.APRS){
             return new RobotEntry(myCallsign, destinationCallsign);
         }
-        return new RobotEntry(id, school, city, state);
+        return new RobotEntry(id, school, city, state, robotType);
+    }
+
+    public String getRobotType() {
+        return robotType != null ? robotType : "mbot";
     }
 
     @Override

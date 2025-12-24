@@ -422,9 +422,17 @@ public class MissionController {
                 if(selectedItem.getType() == EntryType.REMOTE){
                     String selectedMCID = selectedItem.getId();
                     HashMap<String, Object> cmd = new HashMap<>();
-                    cmd.put("power", Power.getText());
+                    
                     cmd.put("direction", selectedDirection);
-                    cmd.put("time", s);
+                    if ("xrp".equalsIgnoreCase(selectedItem.getRobotType())){
+                        cmd.put("distance", s);
+                        map.put("robotType", "xrp");
+                    }
+                    else{
+                        cmd.put("power", Power.getText());
+                        cmd.put("time", s);
+                        map.put("robotType", "mbot");
+                    }
                     
                     map.put("receiver_id", selectedMCID);
                     map.put("commands", Arrays.asList(cmd));
@@ -433,10 +441,14 @@ public class MissionController {
                 }
                 else{
                     HashMap<String, Object> cmd = new HashMap<>();
-                    cmd.put("power", Power.getText());
                     cmd.put("direction", selectedDirection);
-                    cmd.put("time", s);
-
+                    if ("xrp".equalsIgnoreCase(selectedItem.getRobotType())){
+                        cmd.put("distance", s);
+                    }
+                    else{
+                        cmd.put("power", Power.getText());
+                        cmd.put("time", s);
+                    }
                     map.put("commands", Arrays.asList(cmd));
                     dispatcher = new BackendDispatcher(MessageStructure.LOCAL_CONTROL, map);
                     dispatcher.attachDefaultErrorHandler();
@@ -557,6 +569,14 @@ public class MissionController {
         
         hideLoadingAnimation();
         loadingAnimation();
+
+        availableRobots.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && "xrp".equalsIgnoreCase(newVal.getRobotType())) {
+                command.setPromptText("Distance");
+            } else {
+                command.setPromptText("Seconds");
+            }
+        });
 
         localRobotConnection.setButtonCell(new ListCell<>() {
             @Override

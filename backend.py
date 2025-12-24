@@ -1,4 +1,5 @@
 import asyncio
+from enum import Enum
 import platform
 from threading import Thread
 import time
@@ -18,6 +19,7 @@ from playsound3 import playsound
 from DisconnectMonitor import USBDisconnectWatcher
 import sys
 from robot_link import RobotLink
+from bleak import BleakClient, BleakScanner
 
 ACTIVE_ROBOTS_ENDPOINT = "https://star-bvjn.onrender.com/robots/active"
 UPDATE_ROBOT_ENDPOINT = "https://star-bvjn.onrender.com/robots/update"
@@ -41,6 +43,30 @@ myMC = schoolName = city = state = None
 do_not_disturb = True
 websocket_started = False
 disconnectMonitor = None
+
+XRP_RX_CHARACTERISTIC = "452af57e-ad27-422c-88ae-76805ea641a9"
+XRP_TX_CHARACTERISTIC = "266d9d74-3e10-4fcd-88d2-cb63b5324d0c"
+
+class RobotType(Enum):
+    MBOT = "mbot"
+    XRP = "xrp"
+
+robotType = None
+ble_devices = []
+xrp_address = None
+
+# XRP control state
+xrp_client = None
+xrp_command_queue = None
+xrp_running = False
+xrp_control_task = None
+
+try:
+    from bleak.backends.winrt.util import allow_sta, uninitialize_sta
+    allow_sta()
+    uninitialize_sta()
+except:
+    pass
 
 context = Context()
 socket = context.socket(REP)
@@ -71,14 +97,15 @@ def update_robot(doNotDisturb: bool):
     """
     Add/push changes into view
     """
-    global do_not_disturb, SERVER_WARMED
+    global do_not_disturb, SERVER_WARMED, robotType
     do_not_disturb = doNotDisturb
     robot_data = {
         "id": myMC,
         "schoolName": schoolName,
         "city": city,
         "state": state,
-        "doNotDisturb": doNotDisturb
+        "doNotDisturb": doNotDisturb,
+        "robotType": robotType.value if robotType else None
     }
 
     try:
@@ -128,6 +155,69 @@ def pair_with_bot(msg) -> bool:
         raise RuntimeError(f"Error: {str(e)}")
     return True
 
+async def start_xrp_connection(address: str) -> bool:
+    global xrp_client, xrp_command_queue, xrp_running, xrp_control_task
+    
+    try:
+        print(f"Connecting to XRP at {address}")
+        xrp_client = BleakClient(address)
+        status = await xrp_client.connect()
+        if status is None:
+            return False
+        print(f"Connected to XRP at {address}")
+        
+        xrp_command_queue = asyncio.Queue()
+        xrp_running = True
+        xrp_control_task = asyncio.create_task(xrp_control_loop())
+        return True
+    except Exception as e:
+        print(f"Failed to connect to XRP: {e}")
+        return False
+    
+async def xrp_control_loop():
+    global xrp_client, xrp_command_queue, xrp_running
+    
+    try:
+        while xrp_running:
+            cmd = await xrp_command_queue.get()
+            if xrp_client and xrp_client.is_connected:
+                await xrp_client.write_gatt_char(
+                    XRP_RX_CHARACTERISTIC,
+                    cmd,
+                    response=False
+                )
+            xrp_command_queue.task_done()
+    except Exception as e:
+        print(f"XRP control loop error: {e}")
+        xrp_running = False
+
+async def send_xrp_command(direction: str, distance: str):
+    global xrp_command_queue
+    if xrp_command_queue:
+        cmd = f"1 {direction} {distance}".encode("utf-8")
+        await xrp_command_queue.put(cmd)
+
+async def stop_xrp_connection():
+    global xrp_client, xrp_running, xrp_control_task
+    
+    xrp_running = False
+    
+    # Cancel control task
+    if xrp_control_task and not xrp_control_task.done():
+        xrp_control_task.cancel()
+        try:
+            await xrp_control_task
+        except asyncio.CancelledError:
+            pass
+    
+    # Disconnect client
+    if xrp_client and xrp_client.is_connected:
+        try:
+            await xrp_client.disconnect()
+            print("Disconnected from XRP")
+        except Exception as e:
+            print(f"Error disconnecting from XRP: {e}")
+
 def check_rtlsdr():
     try:
         sdr = RtlSdr()
@@ -156,7 +246,8 @@ def send_aprs(msg):
         raise RuntimeError(f"Error sending aprs: {str(e)}")
         
 async def handle_request(msg):
-    global disconnectMonitor
+    global disconnectMonitor, robotType, xrp_address, do_not_disturb
+    global ble_devices, xrp_address
     match msg['type']:
         case "get_directory":
             """
@@ -173,6 +264,7 @@ async def handle_request(msg):
             msg format: {
                 'type': 'remote_control',
                 'receiver_id': ,
+                'robotType': ,
                 'commands': List[RobotCommand]
             }
             """
@@ -180,7 +272,8 @@ async def handle_request(msg):
             payload = {
                 'sender_id': myMC,
                 'receiver_id': msg['receiver_id'],
-                'commands': msg['commands']
+                'commands': msg['commands'],
+                'robotType': msg['robotType']
             }
             try:
                 send_command(payload)
@@ -208,7 +301,15 @@ async def handle_request(msg):
             }
             """
             try:
-                link.postToSerialJson(msg['commands'])
+                if robotType == RobotType.MBOT:
+                    link.postToSerialJson(msg["commands"])
+                elif robotType == RobotType.XRP:
+                    await send_xrp_command(
+                        msg["commands"][0]["direction"],
+                        msg["commands"][0]["distance"]
+                    )
+                else:
+                    return {"status": "error", "err_msg": "No robot connected"}
             except (SerialException, RuntimeError) as e:
                 return {"status": "error", "err_msg": str(e)}
             return {"status": "ok"}
@@ -220,28 +321,62 @@ async def handle_request(msg):
             }
             """
             try:
-                pair_with_bot(msg)
-                disconnectMonitor = USBDisconnectWatcher(msg['port'], aprsUpdater, push_update_socket, link)
-                disconnectMonitor.start()
-                return {"status": "ok"}
+                port = msg['port']
+                if "XRP" in port:
+                    if not xrp_address:
+                        return {"status": "error", "err_msg": "XRP address not found"}
+                    if await start_xrp_connection(xrp_address):
+                        robotType = RobotType.XRP
+                        if GLOBAL_MODE:
+                            update_robot(do_not_disturb)
+                        return {"status": "ok"}
+                    else:
+                        return {"status": "error", "err_msg": "Failed to connect to XRP"}
+                else:
+                    pair_with_bot(msg)
+                    disconnectMonitor = USBDisconnectWatcher(msg['port'], aprsUpdater, push_update_socket, link)
+                    disconnectMonitor.start()
+                    robotType = RobotType.MBOT
+                    if GLOBAL_MODE:
+                        update_robot(do_not_disturb)
+                    return {"status": "ok"}
             except Exception as e:
                 return {"status": "error", "err_msg": str(e)}
             
         case "pair_disconnect":
             try:
-                link.closeSerial()
-                disconnectMonitor.stop()
+                if robotType == RobotType.MBOT:
+                    link.closeSerial()
+                    disconnectMonitor.stop()
+                elif robotType == RobotType.XRP:
+                    await stop_xrp_connection()
+                robotType = None
+                if GLOBAL_MODE:
+                    update_robot(do_not_disturb)
                 return {"status": "ok"}
             except Exception as e:
                 return {"status": "error", "err_msg": f"Error: {str(e)}"}
         
         case "get_ports":
             ports = [str(port.device) for port in comports()]
-            payload = {
-                "status": "ok",
-                "ports": ports
-            }
-            return payload
+            
+            try:
+                ble_devices = await BleakScanner.discover()
+            except Exception as e:
+                ble_devices = []
+
+            xrp_device = None
+            for d in ble_devices:
+                print(d.name)
+                if d.name and "XRP" in d.name:
+                    xrp_device = d
+                    xrp_address = d.address
+                    break
+            
+            if xrp_device:
+                ports.append(xrp_device.name)
+            
+            return {"status": "ok", "ports": ports}
         
         case "send_aprs":
             try:
@@ -276,6 +411,8 @@ async def handle_request(msg):
             try:
                 socket.send_json({"status": "ok"})
                 aprsUpdater.stop()
+                if robotType == RobotType.XRP:
+                    await stop_xrp_connection()
                 context.destroy()
                 sys.exit(0)
             except Exception as e:
@@ -336,7 +473,7 @@ async def auto_reconnect_loop():
         await asyncio.sleep(10)
 
 async def connect_to_ws():
-    global websocket_started
+    global websocket_started, robotType
 
     try:
         websocket = await asyncio.wait_for(websockets.connect(WEBSOCKET_ENDPOINT), timeout=3)
@@ -357,7 +494,18 @@ async def connect_to_ws():
                     data = json.loads(msg)
                     if data["type"] == "command":
                         print("posting to Serial")
-                        link.postToSerialJson(data["commands"])
+                        incoming_cmd_format = data.get("robotType")
+                        current_robot_type = robotType.value if robotType else None
+                        if incoming_cmd_format != current_robot_type:
+                            print(f"[Error] Command for {incoming_cmd_format} but connected to {current_robot_type}")
+                            continue
+                        if robotType == RobotType.MBOT:
+                            link.postToSerialJson(data["commands"])
+                        elif robotType == RobotType.XRP:
+                            await send_xrp_command(
+                                data["commands"][0]["direction"],
+                                data["commands"][0]["distance"]
+                            )
                         print("[WebSocket] Received:", data)
                 except json.JSONDecodeError:
                     print("[Error] JSON decode error")
