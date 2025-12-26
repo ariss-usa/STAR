@@ -2,7 +2,7 @@ import sys
 sys.coinit_flags = 0 # type: ignore
 import asyncio
 import platform
-from threading import Thread
+from threading import Thread, Event
 import time
 # from winsound import PlaySound
 import requests
@@ -53,12 +53,19 @@ disconnectMonitor = None
 robotType = RobotType.XRP
 rxCharacteristic = "452af57e-ad27-422c-88ae-76805ea641a9"
 txCharacteristic = "266d9d74-3e10-4fcd-88d2-cb63b5324d0c"
-executingCommand = True
+isFirstCommand = True
 isConnected = False
 disconnect = False
+isLookingForBluetooth = True
 XRPAddress = ""
-cmd = b""
+cmdQueue = []
 devices = []
+myScanner = BleakScanner()
+feedbackEvent = asyncio.Event()
+
+async def unlockCommandMutex(sender, data):
+    print(f"received {data}")
+    feedbackEvent.set()
 
 try:
     from bleak.backends.winrt.util import allow_sta, uninitialize_sta
@@ -68,10 +75,6 @@ try:
 except:
     # not Windows, so no problem
     pass
-
-def callback(sender: BleakGATTCharacteristic, data: bytearray):
-    global executingCommand
-    executingCommand = False
 
 context = Context()
 socket = context.socket(REP)
@@ -195,14 +198,24 @@ def send_aprs(msg):
         # PlaySound("./aprs_commands.wav")
     except Exception as e:
         raise RuntimeError(f"Error sending aprs: {str(e)}")
-        
+
+async def monitorBluetooth():
+    global devices
+    while True:
+        if isLookingForBluetooth:
+            devices = await myScanner.discover()
+            #print(f"devices = {devices}")
+        await asyncio.sleep(5)
+
 async def handle_request(msg):
     global disconnectMonitor
     global robotType
     global XRPAddress
-    global executingCommand
-    global cmd
+    global cmdQueue
     global disconnect
+    global connected
+    global isLookingForBluetooth
+    global myScanner
     match msg['type']:
         case "get_directory":
             """
@@ -257,8 +270,8 @@ async def handle_request(msg):
                 if (robotType == RobotType.MBOT):
                     link.postToSerialJson(msg['commands'])
                 else:
-                    executingCommand = False
-                    cmd = ("1 " + msg["commands"][0]["direction"] + " " + msg["commands"][0]["distance"]).encode("utf-8")
+                    cmdQueue = msg["commands"]
+                    print(f"cmdQueue should now be {cmdQueue}")
             except (SerialException, RuntimeError) as e:
                 return {"status": "error", "err_msg": str(e)}
             return {"status": "ok"}
@@ -272,6 +285,8 @@ async def handle_request(msg):
             try:
                 if "XRP" in msg["port"]:
                     robotType = RobotType.XRP
+                    connected = True
+                    await myScanner.stop()
                     asyncio.gather(XRPControl())
                     return {"status": "ok", "robotType" : "XRP"}
                 else:
@@ -289,8 +304,7 @@ async def handle_request(msg):
                 #     return {"status": "ok", "robotType" : "XRP"}
                 
             except Exception as e:
-                return {"status": "error", "err_msg": str(e)}
-            
+                return {"status": "error", "err_msg": str(e)}     
         case "pair_disconnect":
             try:
                 if (robotType == RobotType.MBOT):
@@ -301,10 +315,10 @@ async def handle_request(msg):
                     disconnect = True
                     return {"status": "ok"}
             except Exception as e:
-                return {"status": "error", "err_msg": f"Error: {str(e)}"}
-        
+                return {"status": "error", "err_msg": f"Error: {str(e)}"}   
         case "get_ports":
             ports = [str(port.device) for port in comports()]
+            devices = myScanner.discovered_devices
             # ports = ["COM4"]
             # XRP = BLEDevice(address="28:CD:C1:16:DA:9A", name="XRProver", details="XRProver")
             for d in devices:
@@ -314,6 +328,8 @@ async def handle_request(msg):
                     break
             try:    
                 ports.append(XRP.name) # type: ignore
+            except:
+                print("XRP not found!")
             finally:
                 pass
 
@@ -322,14 +338,12 @@ async def handle_request(msg):
                 "ports": ports
             }
             return payload
-        
         case "send_aprs":
             try:
                 send_aprs(msg)
                 return {"status": "ok"}
             except Exception as e:
                 return {"status": "error", "err_msg": str(e)}
-
         # case "receive_aprs":
         #     if platform.system() == "linux":
         #         check = check_rtlsdr()
@@ -351,7 +365,6 @@ async def handle_request(msg):
         case "stop_aprs_receive":
             aprsUpdater.stop()
             return {"status": "ok"}
-        
         case "end_program":
             try:
                 socket.send_json({"status": "ok"})
@@ -367,23 +380,20 @@ async def zmq_loop():
         try:
             msg = await asyncio.get_running_loop().run_in_executor(None, socket.recv_json) # Run blocking recv_json() in separate thread
             print(f"[ZMQ] Received: {msg}")
+            print(f"cmd = {cmdQueue}")
             response = await handle_request(msg)
             print(f"[ZMQ] Response: {response}")
             socket.send_json(response)
         except Exception as e:
             socket.send_json({"status": "error", "detail": str(e)})
-
-
 async def main():
-    global devices
     read_config()
-    devices = await BleakScanner.discover()
     # await asyncio.gather(
     #     zmq_loop(),
     #     auto_reconnect_loop(),
     #     health_check()
     # )
-
+    await myScanner.start()
     await asyncio.gather(
         zmq_loop(),
         health_check(),
@@ -418,7 +428,7 @@ async def health_check():
 
 async def printAllCoroutines():
     while True:
-        print(f"All currently running tasks: {[t.get_coro().__name__ for t in asyncio.all_tasks()]}") # type: ignore
+        #print(f"All currently running tasks: {[t.get_coro().__name__ for t in asyncio.all_tasks()]}") # type: ignore
         await asyncio.sleep(10)
 
 async def auto_reconnect_loop():
@@ -426,7 +436,7 @@ async def auto_reconnect_loop():
         if GLOBAL_MODE and not websocket_started:
             print("[DEBUG] Retry websocket connection")
             await connect_to_ws()
-        print(f"All currently running tasks: {[t.get_coro() for t in asyncio.all_tasks()]}")
+        #print(f"All currently running tasks: {[t.get_coro() for t in asyncio.all_tasks()]}")
         await asyncio.sleep(10)
 
 async def connect_to_ws():
@@ -434,7 +444,6 @@ async def connect_to_ws():
 
     try:
         websocket = await asyncio.wait_for(websockets.connect(WEBSOCKET_ENDPOINT), timeout=3)
-
         async with websocket: # type: ignore
             print("[DEBUG] Opening socket")
             await websocket.send(json.dumps({
@@ -459,21 +468,36 @@ async def connect_to_ws():
         print(f"[WebSocket] Connection failed: {str(e)}")
         websocket_started = False
 
+async def sendXRPCommand(client: BleakClient, cmd: Buffer):
+    await client.write_gatt_char(rxCharacteristic, cmd, response=True)
+
 async def XRPControl():
-    global executingCommand, isConnected, disconnect, XRPAddress
+    global isFirstCommand, isConnected, disconnect, XRPAddress
     print("Trying to connect to XRP " + XRPAddress)
-    async with BleakClient(XRPAddress) as client:
-        # await client.start_notify(txCharacteristic, callback=callback)
-        print("Connected to XRP " + XRPAddress)
-        while True:
-            await asyncio.sleep(0.5)
-            if not executingCommand:
-                executingCommand = True
-                await client.write_gatt_char(rxCharacteristic, cmd, response=False)
-            if disconnect:
-                print("Disconnecting")
-                disconnect = False
-                # await client.disconnect()
-                return
+    client = BleakClient(XRPAddress)
+    await client.connect()
+    print("Connected to XRP " + XRPAddress)
+    await client.start_notify(txCharacteristic, callback=unlockCommandMutex)
+    while True:
+        await asyncio.sleep(0.5)
+        for c in cmdQueue:
+            #print(f"cmdQueue is currently {cmdQueue}")
+            print(f"Currently executing {c}")
+            if not isFirstCommand:
+                await feedbackEvent.wait()
+            isFirstCommand = False
+            cmd = ("1 " + c["direction"][0] + " " + c["amount"]).encode("utf-8")
+            if (c["direction"][0] == "d"):
+                time.sleep(float(c["amount"]))
+            else:
+                print(f"Sending {cmd}")
+                await sendXRPCommand(client=client, cmd=cmd)
+        
+        cmdQueue.clear()
+        if disconnect:
+            print("Disconnecting")
+            disconnect = False
+            # await client.disconnect()
+            return
 
 asyncio.run(main())

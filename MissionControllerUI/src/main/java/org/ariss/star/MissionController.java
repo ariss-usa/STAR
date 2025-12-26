@@ -360,7 +360,7 @@ public class MissionController {
 
         parent = (Stage) VBox.getScene().getWindow();
         Stage dialogStage = new Stage();
-        dialogStage.setResizable(false);
+        dialogStage.setResizable(true);
         dialogStage.setTitle("Setup Dialog");
         dialogStage.initModality(Modality.WINDOW_MODAL);
         dialogStage.initOwner(parent);
@@ -452,7 +452,7 @@ public class MissionController {
                         dispatcher.attachDefaultErrorHandler();
                     } else {
                         HashMap<String, Object> cmd = new HashMap<>();
-                        cmd.put("distance", command.getText());
+                        cmd.put("amount", command.getText());
                         cmd.put("direction", selectedDirection.charAt(0));
 
                         map.put("commands", Arrays.asList(cmd));
@@ -492,7 +492,7 @@ public class MissionController {
     @FXML
     void pairPressed(MouseEvent event) {
         if (localRobotConnection.getSelectionModel().isEmpty())  {
-            AlertBox.display("Choose a robot to pair with test lol");
+            AlertBox.display("Choose a robot to pair with.");
         }
         else{
             String pairText = pairButton.getText();
@@ -819,6 +819,11 @@ public class MissionController {
     public static RobotEntry getSelectedRobot(){
         return currRobot;
     }
+
+    public static RobotType getRobotType() {
+        return robotType;
+    }
+
     public static boolean getPairingStatus(){
         return pairingStatus;
     }
