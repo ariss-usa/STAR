@@ -431,9 +431,18 @@ public class MissionController {
                 if(selectedItem.getType() == EntryType.REMOTE){
                     String selectedMCID = selectedItem.getId();
                     HashMap<String, Object> cmd = new HashMap<>();
-                    cmd.put("power", Power.getText());
-                    cmd.put("direction", selectedDirection);
-                    cmd.put("time", s);
+                    
+                    if (selectedItem.robotType.equals("XRP")) {
+                        cmd.put("direction", selectedDirection.charAt(0));
+                        cmd.put("amount", command.getText());
+                        cmd.put("cmdType", "XRP");
+                    }
+                    else if (selectedItem.robotType.equals("mBot")) {
+                        cmd.put("direction", selectedDirection);
+                        cmd.put("power", Power.getText());
+                        cmd.put("time", s);
+                        cmd.put("cmdType", "mBot");
+                    }
                     
                     map.put("receiver_id", selectedMCID);
                     map.put("commands", Arrays.asList(cmd));

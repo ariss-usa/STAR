@@ -49,7 +49,8 @@ async def send_command(command: Command):
         "type": "command",
         "commands": [c.model_dump() for c in command.commands],
         "sender_id": command.sender_id,
-        "receiver_id": command.receiver_id
+        "receiver_id": command.receiver_id,
+        "cmdType": command.cmdType
     })
 
     return {"status": "ok"}
