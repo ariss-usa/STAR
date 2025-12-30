@@ -1,10 +1,14 @@
 import sys
+from platform import system
+if system() == "Windows":
+    from winsound import PlaySound
+else:
+    from playsound3 import playsound as PlaySound
 sys.coinit_flags = 0 # type: ignore
 import asyncio
 import platform
 from threading import Thread, Event
 import time
-# from winsound import PlaySound
 import requests
 from requests import RequestException, Timeout
 from zmq import PUSH, Context
@@ -19,7 +23,6 @@ import os
 import websockets
 import json
 # from rtlsdr import RtlSdr
-# from playsound3 import playsound
 from DisconnectMonitor import USBDisconnectWatcher
 import sys
 from robot_link import RobotLink
@@ -330,7 +333,6 @@ async def handle_request(msg):
                 return {"status": "error", "err_msg": str(e)}     
         case "pair_disconnect":
             try:
-                robotType = None
                 update_robot(do_not_disturb)
                 if (robotType == RobotType.MBOT):
                     link.closeSerial()

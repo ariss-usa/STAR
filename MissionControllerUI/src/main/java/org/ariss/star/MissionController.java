@@ -523,7 +523,9 @@ public class MissionController {
                             Power.setPrefWidth(0);
                             command.getTooltip().setText("Distance to travel in cm/arm position in degrees");
                             command.setPromptText("Distance/Degrees");
-                            type.getItems().add("arm");
+                            if (!type.getItems().contains("arm")) {
+                                type.getItems().add("arm");
+                            }
                         } else {
                             robotType = RobotType.MBOT;
                             Power.setVisible(true);
@@ -666,6 +668,27 @@ public class MissionController {
             else if(newValue.getType() == EntryType.REMOTE){
                 medium.setDisable(true);
                 medium.setSelected(false);
+            }
+
+            if (newValue.robotType.equals("XRP")) {
+                robotType = RobotType.XRP;
+                Power.setVisible(false);
+                Power.setPrefWidth(0);
+                command.getTooltip().setText("Distance to travel in cm/arm position in degrees");
+                command.setPromptText("Distance/Degrees");
+                if (!type.getItems().contains("arm")) {
+                    type.getItems().add("arm");
+                }
+            } else {
+                robotType = RobotType.MBOT;
+                Power.setVisible(true);
+                Power.setPrefWidth(59);
+                command.getTooltip().setText("Time of operation in seconds");
+                Power.getTooltip().setText("Speed of robot (values from 1 to 255)");
+                command.setPromptText("Time");
+                Power.setPromptText("Power");
+                type.getItems().remove("arm");
+                
             }
         });
 
