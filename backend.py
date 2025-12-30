@@ -505,30 +505,33 @@ async def sendXRPCommand(client: BleakClient, cmd: Buffer):
 async def XRPControl():
     global isFirstCommand, isConnected, disconnect, XRPAddress
     print("Trying to connect to XRP " + XRPAddress)
-    client = BleakClient(XRPAddress)
-    await client.connect()
-    print("Connected to XRP " + XRPAddress)
-    await client.start_notify(txCharacteristic, callback=unlockCommandMutex)
-    while True:
-        await asyncio.sleep(0.5)
-        for c in cmdQueue:
-            #print(f"cmdQueue is currently {cmdQueue}")
-            print(f"Currently executing {c}")
-            if not isFirstCommand:
-                await feedbackEvent.wait()
-            isFirstCommand = False
-            cmd = ("1 " + c["direction"][0] + " " + c["amount"]).encode("utf-8")
-            if (c["direction"][0] == "d"):
-                time.sleep(float(c["amount"]))
-            else:
-                print(f"Sending {cmd}")
-                await sendXRPCommand(client=client, cmd=cmd)
-        
-        cmdQueue.clear()
-        if disconnect:
-            print("Disconnecting")
-            disconnect = False
-            # await client.disconnect()
-            return
+
+    async with BleakClient(XRPAddress) as client:
+        print("Connected to XRP " + XRPAddress)
+        await client.start_notify(txCharacteristic, callback=unlockCommandMutex)
+        while True:
+            await asyncio.sleep(0.5)
+            for c in cmdQueue:
+                print(f"Currently executing {c}")
+                if not isFirstCommand:
+                    await feedbackEvent.wait()
+                    feedbackEvent.clear()
+
+                isFirstCommand = False
+                cmd = ("1 " + c["direction"][0] + " " + c["amount"]).encode("utf-8")
+                if (c["direction"][0] == "d"):
+                    await asyncio.sleep(float(c["amount"]))
+                    feedbackEvent.set()
+                else:
+                    print(f"Sending {cmd}")
+                    await sendXRPCommand(client=client, cmd=cmd)
+
+            cmdQueue.clear()
+            if disconnect:
+                print("Disconnecting")
+                cmdQueue.clear()
+                disconnect = False
+                await client.disconnect()
+                return
 
 asyncio.run(main())
