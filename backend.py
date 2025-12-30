@@ -422,6 +422,7 @@ async def main():
     await asyncio.gather(
         zmq_loop(),
         health_check(),
+        auto_reconnect_loop(),
         printAllCoroutines()
     )
 
