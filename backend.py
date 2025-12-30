@@ -247,7 +247,7 @@ async def handle_request(msg):
                 'sender_id': myMC,
                 'receiver_id': msg['receiver_id'],
                 'commands': msg['commands'],
-                'cmdType': msg['cmdType']
+                'cmdType': msg['commands'][0]['cmdType']
             }
             try:
                 send_command(payload)
@@ -519,7 +519,7 @@ async def XRPControl():
                     feedbackEvent.clear()
 
                 isFirstCommand = False
-                cmd = ("1 " + c["direction"][0] + " " + c["amount"]).encode("utf-8")
+                cmd = ("1 " + c["direction"][0] + " " + str(c["amount"])).encode("utf-8")
                 if (c["direction"][0] == "d"):
                     await asyncio.sleep(float(c["amount"]))
                     feedbackEvent.set()
