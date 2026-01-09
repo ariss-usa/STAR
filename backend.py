@@ -193,8 +193,12 @@ def send_aprs(msg):
         mycallsign = msg["callsign"]
         commands = msg["commands"]
         destination = msg["destination"]
-
-        formatted = [f"{c['power']} {c['direction']} {c['time']}" for c in commands]
+        
+        if (robotType == RobotType.MBOT):
+            formatted = [f"{c['power']} {c['direction']} {c['time']}" for c in commands]
+        else:
+            formatted = [f"{c['direction'][0]} {c['amount']}" for c in commands]
+            
         payload = f"[{', '.join(formatted)}]"
 
         if platform.system() == "Windows":
