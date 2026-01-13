@@ -22,7 +22,7 @@ from bleak import *
 import os
 import websockets
 import json
-# from rtlsdr import RtlSdr
+from rtlsdr import RtlSdr
 from DisconnectMonitor import USBDisconnectWatcher
 import sys
 from robot_link import RobotLink
@@ -53,7 +53,7 @@ myMC = schoolName = city = state = None
 do_not_disturb = True
 websocket_started = False
 disconnectMonitor = None
-robotType = RobotType.XRP
+robotType = None
 rxCharacteristic = "452af57e-ad27-422c-88ae-76805ea641a9"
 txCharacteristic = "266d9d74-3e10-4fcd-88d2-cb63b5324d0c"
 isFirstCommand = True
@@ -123,6 +123,12 @@ def update_robot(doNotDisturb: bool):
     if not GLOBAL_MODE:
         return
 
+    type_str = None
+    if robotType == RobotType.XRP:
+        type_str = "XRP"
+    elif robotType == RobotType.MBOT:
+        type_str = "mBot"
+
     do_not_disturb = doNotDisturb
     robot_data = {
         "id": myMC,
@@ -130,7 +136,7 @@ def update_robot(doNotDisturb: bool):
         "city": city,
         "state": state,
         "doNotDisturb": doNotDisturb,
-        "robotType": "XRP" if robotType == RobotType.XRP else "mBot"
+        "robotType": type_str
     }
 
     try:
@@ -180,13 +186,13 @@ def pair_with_bot(msg) -> bool:
         raise RuntimeError(f"Error: {str(e)}")
     return True
 
-# def check_rtlsdr():
-#     try:
-#         sdr = RtlSdr()
-#         sdr.close()
-#         return {"status": "ok"}
-#     except Exception as e:
-#         return {"status": "error", "err_msg": str(e)}
+def check_rtlsdr():
+    try:
+        sdr = RtlSdr()
+        sdr.close()
+        return {"status": "ok"}
+    except Exception as e:
+        return {"status": "error", "err_msg": str(e)}
     
 def send_aprs(msg):
     try:
@@ -194,10 +200,10 @@ def send_aprs(msg):
         commands = msg["commands"]
         destination = msg["destination"]
         
-        if (robotType == RobotType.MBOT):
-            formatted = [f"{c['power']} {c['direction']} {c['time']}" for c in commands]
-        else:
+        if (robotType == RobotType.XRP):
             formatted = [f"{c['direction'][0]} {c['amount']}" for c in commands]
+        else:
+            formatted = [f"{c['power']} {c['direction']} {c['time']}" for c in commands]
             
         payload = f"[{', '.join(formatted)}]"
 
@@ -375,24 +381,24 @@ async def handle_request(msg):
                 return {"status": "ok"}
             except Exception as e:
                 return {"status": "error", "err_msg": str(e)}
-        # case "receive_aprs":
-        #     if platform.system() == "linux":
-        #         check = check_rtlsdr()
-        #         if check["status"] == "error":
-        #             return check
+        case "receive_aprs":
+            if platform.system() == "linux":
+                check = check_rtlsdr()
+                if check["status"] == "error":
+                    return check
 
-        #     try:
-        #         aprsUpdater.startAPRSprocesses()
-        #     except Exception as e:
-        #         return {"status": "error", "err_msg": str(e)}
+            try:
+                aprsUpdater.startAPRSprocesses()
+            except Exception as e:
+                return {"status": "error", "err_msg": str(e)}
 
-        #     if(platform.system() == "Linux"):
-        #         thread = Thread(target=aprsUpdater.checkAPRSUpdates_Linux, daemon=True)
-        #     else:
-        #         thread = Thread(target=aprsUpdater.checkAPRSUpdates, daemon=True)
+            if(platform.system() == "Linux"):
+                thread = Thread(target=aprsUpdater.checkAPRSUpdates_Linux, daemon=True)
+            else:
+                thread = Thread(target=aprsUpdater.checkAPRSUpdates, daemon=True)
 
-        #     thread.start()
-        #     return {"status": "ok"}
+            thread.start()
+            return {"status": "ok"}
         case "stop_aprs_receive":
             aprsUpdater.stop()
             return {"status": "ok"}

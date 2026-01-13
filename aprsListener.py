@@ -25,17 +25,33 @@ class APRSUpdater:
             commands = match.group(3).split(",")
             json_cmds = []
 
-            if self.checkFormat(commands):
-                for cmd in commands:
-                    div = cmd.split()
-                    json_cmds.append({"power":div[0], "direction":div[1], "time":div[2]})
+            import backend
+            from backend import RobotType
 
-                try:
+            if backend.robotType is None:
+                print("[DEBUG] Received APRS packet, but no robot is paired. Ignoring.")
+                return
+
+            if not self.checkFormat(commands):
+                print("[DEBUG] Received incorrect format")
+                return
+
+            for cmd in commands:
+                div = cmd.split()
+                
+                if backend.robotType == RobotType.MBOT:
+                    if len(div) == 3:
+                        json_cmds.append({"power": div[0], "direction": div[1], "time": div[2]})
+                
+                elif backend.robotType == RobotType.XRP:
+                    if len(div) == 2:
+                        json_cmds.append({"direction": div[0], "amount": div[1]})
+
+            if json_cmds:
+                if backend.robotType == RobotType.MBOT:
                     self.link.postToSerialJson(json_cmds)
-                except (RuntimeError, SerialException):
-                    #Log this
-                    print("[DEBUG] Error executing command from direwolf - check robot connection")
-                    pass
+                elif backend.robotType == RobotType.XRP:
+                    backend.cmdQueue = json_cmds
 
     def checkAPRSUpdates(self):
         direwolf = self.processList[0]
@@ -57,16 +73,28 @@ class APRSUpdater:
             return True
         except ValueError:
             return False
+        
     def checkFormat(self, commands):
+        import backend
+        from backend import RobotType
+        
+        if backend.robotType is None:
+            return False
+
         for command in commands:
-            linearr = command.split()             
-            if(len(linearr) != 3):
-                return False
-            else:
-                if (not (self.isFloat(linearr[0]) and (linearr[1] == "left" or linearr[1] == "right" or linearr[1] == "forward" or linearr[1] == "backward" or linearr[1] == "delay") and self.isFloat(linearr[2]) and
-                    float(linearr[0]) >= 0 and float(linearr[0]) <= 255 and float(linearr[2]) >= 0 and float(linearr[2]) <= 120)
-                    ):
-                        return False
+            linearr = command.split()
+            
+            if backend.robotType == RobotType.MBOT:
+                if len(linearr) != 3: return False
+                if not (self.isFloat(linearr[0]) and 0 <= float(linearr[0]) <= 255): return False
+                if linearr[1] not in ["left", "right", "forward", "backward", "delay"]: return False
+                if not (self.isFloat(linearr[2]) and 0 <= float(linearr[2]) <= 120): return False
+
+            elif backend.robotType == RobotType.XRP:
+                if len(linearr) != 2: return False
+                if linearr[0] not in ["f", "b", "l", "r", "a", "d"]: return False
+                if not self.isFloat(linearr[1]): return False
+                
         return True
 
     def checkAPRSUpdates_Linux(self):

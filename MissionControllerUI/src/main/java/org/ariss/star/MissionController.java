@@ -653,7 +653,7 @@ public class MissionController {
         availableRobots.getSelectionModel().selectedItemProperty().addListener((options, oldValue, newValue) -> {
             currRobot = newValue;
 
-            if (newValue == null) {
+            if (newValue == null || newValue.robotType == null) {
                 return;
             }
             
@@ -670,7 +670,7 @@ public class MissionController {
                 medium.setSelected(false);
             }
 
-            if (newValue.robotType.equals("XRP")) {
+            if ("XRP".equals(newValue.robotType)) {
                 robotType = RobotType.XRP;
                 Power.setVisible(false);
                 Power.setPrefWidth(0);
@@ -688,7 +688,6 @@ public class MissionController {
                 command.setPromptText("Time");
                 Power.setPromptText("Power");
                 type.getItems().remove("arm");
-                
             }
         });
 
