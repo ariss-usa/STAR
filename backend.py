@@ -17,7 +17,6 @@ from aprsListener import APRSUpdater
 from serial import Serial, SerialException
 from serial import STOPBITS_ONE
 from serial.tools.list_ports import comports
-from enum import Flag
 from bleak import *
 import os
 import websockets
@@ -26,6 +25,7 @@ from rtlsdr import RtlSdr
 from DisconnectMonitor import USBDisconnectWatcher
 import sys
 from robot_link import RobotLink
+import shared_state
 
 ACTIVE_ROBOTS_ENDPOINT = "https://star-bvjn.onrender.com/robots/active"
 UPDATE_ROBOT_ENDPOINT = "https://star-bvjn.onrender.com/robots/update"
@@ -39,10 +39,6 @@ WEBSOCKET_ENDPOINT = "wss://star-bvjn.onrender.com/ws"
 #HEALTH_ENDPOINT = "http://127.0.0.1:8000/health"
 #WEBSOCKET_ENDPOINT = "ws://127.0.0.1:8000/ws"
 
-class RobotType(Flag):
-    MBOT = False
-    XRP = True
-
 REQUEST_TIMEOUT = (3.05, 5)
 USER_DATA_FILE = "important.json"
 GLOBAL_MODE = False
@@ -53,7 +49,6 @@ myMC = schoolName = city = state = None
 do_not_disturb = True
 websocket_started = False
 disconnectMonitor = None
-robotType = None
 rxCharacteristic = "452af57e-ad27-422c-88ae-76805ea641a9"
 txCharacteristic = "266d9d74-3e10-4fcd-88d2-cb63b5324d0c"
 isFirstCommand = True
@@ -61,7 +56,6 @@ isConnected = False
 disconnect = False
 isLookingForBluetooth = True
 XRPAddress = ""
-cmdQueue = []
 devices = []
 myScanner = BleakScanner()
 feedbackEvent = asyncio.Event()
@@ -118,15 +112,15 @@ def update_robot(doNotDisturb: bool):
     """
     Add/push changes into view
     """
-    global do_not_disturb, SERVER_WARMED, GLOBAL_MODE, robotType
+    global do_not_disturb, SERVER_WARMED, GLOBAL_MODE
 
     if not GLOBAL_MODE:
         return
 
     type_str = None
-    if robotType == RobotType.XRP:
+    if shared_state.robotType == shared_state.RobotType.XRP:
         type_str = "XRP"
-    elif robotType == RobotType.MBOT:
+    elif shared_state.robotType == shared_state.RobotType.MBOT:
         type_str = "mBot"
 
     do_not_disturb = doNotDisturb
@@ -200,7 +194,7 @@ def send_aprs(msg):
         commands = msg["commands"]
         destination = msg["destination"]
         
-        if (robotType == RobotType.XRP):
+        if (shared_state.robotType == shared_state.RobotType.XRP):
             formatted = [f"{c['direction'][0]} {c['amount']}" for c in commands]
         else:
             formatted = [f"{c['power']} {c['direction']} {c['time']}" for c in commands]
@@ -227,9 +221,7 @@ async def monitorBluetooth():
 
 async def handle_request(msg):
     global disconnectMonitor
-    global robotType
     global XRPAddress
-    global cmdQueue
     global disconnect
     global isConnected
     global isLookingForBluetooth
@@ -288,11 +280,11 @@ async def handle_request(msg):
             }
             """
             try:
-                if (robotType == RobotType.MBOT):
+                if (shared_state.robotType == shared_state.RobotType.MBOT):
                     link.postToSerialJson(msg['commands'])
                 else:
-                    cmdQueue = msg["commands"]
-                    print(f"cmdQueue should now be {cmdQueue}")
+                    shared_state.cmdQueue = msg["commands"]
+                    print(f"cmdQueue should now be {shared_state.cmdQueue}")
             except (SerialException, RuntimeError) as e:
                 return {"status": "error", "err_msg": str(e)}
             return {"status": "ok"}
@@ -306,10 +298,10 @@ async def handle_request(msg):
             try:
                 if "XRP" in msg["port"]:
                     changed = False
-                    if robotType == RobotType.MBOT or robotType is None:
+                    if shared_state.robotType == shared_state.RobotType.MBOT or shared_state.robotType is None:
                         changed = True
 
-                    robotType = RobotType.XRP
+                    shared_state.robotType = shared_state.RobotType.XRP
                     isConnected = True
                     await myScanner.stop()
                     #asyncio.gather(XRPControl())
@@ -320,10 +312,10 @@ async def handle_request(msg):
                     return {"status": "ok", "robotType" : "XRP"}
                 else:
                     changed = False
-                    if robotType == RobotType.XRP or robotType is None:
+                    if shared_state.robotType == shared_state.RobotType.XRP or shared_state.robotType is None:
                         changed = True
 
-                    robotType = RobotType.MBOT
+                    shared_state.robotType = shared_state.RobotType.MBOT
                     pair_with_bot(msg)
                     
                     if changed:
@@ -344,7 +336,7 @@ async def handle_request(msg):
         case "pair_disconnect":
             try:
                 update_robot(do_not_disturb)
-                if (robotType == RobotType.MBOT):
+                if (shared_state.robotType == shared_state.RobotType.MBOT):
                     link.closeSerial()
                     disconnectMonitor.stop() # type: ignore
                     return {"status": "ok"}
@@ -417,7 +409,7 @@ async def zmq_loop():
         try:
             msg = await asyncio.get_running_loop().run_in_executor(None, socket.recv_json) # Run blocking recv_json() in separate thread
             print(f"[ZMQ] Received: {msg}")
-            print(f"cmd = {cmdQueue}")
+            print(f"cmd = {shared_state.cmdQueue}")
             response = await handle_request(msg)
             print(f"[ZMQ] Response: {response}")
             socket.send_json(response)
@@ -478,7 +470,7 @@ async def auto_reconnect_loop():
         await asyncio.sleep(10)
 
 async def connect_to_ws():
-    global websocket_started, robotType, cmdQueue
+    global websocket_started
 
     try:
         websocket = await asyncio.wait_for(websockets.connect(WEBSOCKET_ENDPOINT), timeout=3)
@@ -498,13 +490,13 @@ async def connect_to_ws():
                 try:
                     data = json.loads(msg)
                     if data["type"] == "command":
-                        type = "mBot" if robotType == RobotType.MBOT else "XRP"
-                        if robotType is not None and type == data["cmdType"]:
+                        type = "mBot" if shared_state.robotType == shared_state.RobotType.MBOT else "XRP"
+                        if shared_state.robotType is not None and type == data["cmdType"]:
                             if type == "mBot":
                                 print("posting to Serial")
                                 link.postToSerialJson(data["commands"])
                             else:
-                                cmdQueue = data["commands"]
+                                shared_state.cmdQueue = data["commands"]
                         print("[WebSocket] Received:", data)
                 except json.JSONDecodeError:
                     print("[Error] JSON decode error")
@@ -524,7 +516,7 @@ async def XRPControl():
         await client.start_notify(txCharacteristic, callback=unlockCommandMutex)
         while True:
             await asyncio.sleep(0.5)
-            for c in cmdQueue:
+            for c in shared_state.cmdQueue:
                 print(f"Currently executing {c}")
                 if not isFirstCommand:
                     await feedbackEvent.wait()
@@ -539,10 +531,10 @@ async def XRPControl():
                     print(f"Sending {cmd}")
                     await sendXRPCommand(client=client, cmd=cmd)
 
-            cmdQueue.clear()
+            shared_state.cmdQueue.clear()
             if disconnect:
                 print("Disconnecting")
-                cmdQueue.clear()
+                shared_state.cmdQueue.clear()
                 disconnect = False
                 await client.disconnect()
                 return
