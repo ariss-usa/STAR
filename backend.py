@@ -508,7 +508,7 @@ async def sendXRPCommand(client: BleakClient, cmd: Buffer):
     await client.write_gatt_char(rxCharacteristic, cmd, response=True)
 
 async def XRPControl():
-    global isFirstCommand, isConnected, disconnect, XRPAddress
+    global isFirstCommand, isConnected, disconnect, XRPAddress, push_update_socket
     print("Trying to connect to XRP " + XRPAddress)
 
     async with BleakClient(XRPAddress) as client:
@@ -516,22 +516,28 @@ async def XRPControl():
         await client.start_notify(txCharacteristic, callback=unlockCommandMutex)
         while True:
             await asyncio.sleep(0.5)
-            for c in shared_state.cmdQueue:
-                print(f"Currently executing {c}")
-                if not isFirstCommand:
-                    await feedbackEvent.wait()
-                    feedbackEvent.clear()
 
-                isFirstCommand = False
-                cmd = ("1 " + c["direction"][0] + " " + str(c["amount"])).encode("utf-8")
-                if (c["direction"][0] == "d"):
-                    await asyncio.sleep(float(c["amount"]))
-                    feedbackEvent.set()
-                else:
-                    print(f"Sending {cmd}")
-                    await sendXRPCommand(client=client, cmd=cmd)
+            if shared_state.cmdQueue:
+                isFirstCommand = True
+                current_commands = list(shared_state.cmdQueue)
+                shared_state.cmdQueue.clear()
+                push_update_socket.send_json({"type": "command", "cmdType": "XRP", "commands": current_commands})
 
-            shared_state.cmdQueue.clear()
+                for c in current_commands:
+                    print(f"Currently executing {c}")
+                    if not isFirstCommand:
+                        await feedbackEvent.wait()
+                        feedbackEvent.clear()
+
+                    isFirstCommand = False
+                    cmd = ("1 " + c["direction"][0] + " " + str(c["amount"])).encode("utf-8")
+                    if (c["direction"][0] == "d"):
+                        await asyncio.sleep(float(c["amount"]))
+                        feedbackEvent.set()
+                    else:
+                        print(f"Sending {cmd}")
+                        await sendXRPCommand(client=client, cmd=cmd)
+
             if disconnect:
                 print("Disconnecting")
                 shared_state.cmdQueue.clear()

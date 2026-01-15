@@ -791,9 +791,15 @@ public class MissionController {
                     for(int i = 0; i < commands.size(); i++){
                         JsonObject obj = commands.get(i).getAsJsonObject();
                         
-                        readableEntry += obj.get("power").getAsString() + " " +
+                        if ("mBot".equals(obj.get("cmdType").getAsString())) {
+                            readableEntry += obj.get("power").getAsString() + " " +
                                         obj.get("direction").getAsString() + " " +
                                         obj.get("time").getAsString();
+                        }
+                        else if ("XRP".equals(obj.get("cmdType").getAsString())) {
+                            readableEntry += obj.get("direction").getAsString() + " " +
+                                        obj.get("amount").getAsString() + " ";
+                        }
 
                         if(commands.size() > 0 && i != commands.size() - 1){
                             readableEntry += ", ";

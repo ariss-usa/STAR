@@ -10,7 +10,7 @@ class RobotLink:
         if self.serialPort is None or not self.serialPort.isOpen():
             raise RuntimeError("Robot is not properly connected")
 
-        self.socket.send_json({"type": "command", "commands": commandList})
+        self.socket.send_json({"type": "command", "cmdType": "mBot", "commands": commandList})
         for i in range(0, len(commandList)):
             command = commandList[i]
             #splitCommands[0] = power, [1] = direction, [2] = time
