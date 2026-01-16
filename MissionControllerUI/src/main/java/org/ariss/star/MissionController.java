@@ -132,6 +132,18 @@ public class MissionController {
     private Process rtlProcess; // process for rtl_fm -> aplay pipeline
     private Thread qsstvWatcherThread;
 
+    public void shutdownProcesses() {
+        if (qsstv != null && qsstv.isAlive()) {
+            qsstv.destroy();
+        }
+        if (rtlProcess != null && rtlProcess.isAlive()) {
+            rtlProcess.destroy();
+        }
+        if (process != null && process.isAlive()) {
+            process.destroy();
+        }
+    }
+
     @FXML
     protected void qsstvCheckboxClicked(MouseEvent event) {
         try{

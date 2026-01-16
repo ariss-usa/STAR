@@ -21,6 +21,7 @@ public class StarApp extends Application {
         System.out.println(StarApp.class.getResource("newGUI.fxml"));
         FXMLLoader fxmlLoader = new FXMLLoader(StarApp.class.getResource("newGUI.fxml"));
         Parent root = fxmlLoader.load();
+        MissionController controller = fxmlLoader.getController();
         Scene scene = new Scene(root, 990, 493);
 
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
@@ -43,6 +44,7 @@ public class StarApp extends Application {
                 BackendDispatcher dispatcher = new BackendDispatcher(MessageStructure.END_PROGRAM, null);
                 
                 Runnable shutdown = () -> {
+                    controller.shutdownProcesses();
                     MissionController.threadExecutor.shutdownNow();
                     Platform.exit();
                     System.exit(0);
