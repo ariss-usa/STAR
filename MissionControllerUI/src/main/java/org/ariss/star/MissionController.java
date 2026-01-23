@@ -800,21 +800,23 @@ public class MissionController {
                     JsonArray commands = update.get("commands").getAsJsonArray();
                     String readableEntry = "";
 
-                    for(int i = 0; i < commands.size(); i++){
-                        JsonObject obj = commands.get(i).getAsJsonObject();
-                        
-                        if ("mBot".equals(obj.get("cmdType").getAsString())) {
-                            readableEntry += obj.get("power").getAsString() + " " +
-                                        obj.get("direction").getAsString() + " " +
-                                        obj.get("time").getAsString();
-                        }
-                        else if ("XRP".equals(obj.get("cmdType").getAsString())) {
-                            readableEntry += obj.get("direction").getAsString() + " " +
-                                        obj.get("amount").getAsString() + " ";
-                        }
-
-                        if(commands.size() > 0 && i != commands.size() - 1){
-                            readableEntry += ", ";
+                    if (!(obj.get("cmdType") instanceof null)) {
+                        for(int i = 0; i < commands.size(); i++){
+                            JsonObject obj = commands.get(i).getAsJsonObject();
+                            
+                            if ("mBot".equals(obj.get("cmdType").getAsString())) {
+                                readableEntry += obj.get("power").getAsString() + " " +
+                                            obj.get("direction").getAsString() + " " +
+                                            obj.get("time").getAsString();
+                            }
+                            else if ("XRP".equals(obj.get("cmdType").getAsString())) {
+                                readableEntry += obj.get("direction").getAsString() + " " +
+                                            obj.get("amount").getAsString() + " ";
+                            }
+    
+                            if(commands.size() > 0 && i != commands.size() - 1){
+                                readableEntry += ", ";
+                            }
                         }
                     }
 
