@@ -799,26 +799,28 @@ public class MissionController {
                     //Someone sent us a command
                     JsonArray commands = update.get("commands").getAsJsonArray();
                     String readableEntry = "";
+                    
+                    String cmdType = update.has("cmdType") && !update.get("cmdType").isJsonNull()
+                                    ? update.get("cmdType").getAsString()
+                                    : null;
+                    
+                    for(int i = 0; i < commands.size(); i++){
+                        JsonObject obj = commands.get(i).getAsJsonObject();
+                        if ("mBot".equals(cmdType)){
+                            readableEntry += obj.get("power").getAsString() + " " +
+                                        obj.get("direction").getAsString() + " " +
+                                        obj.get("time").getAsString();      
+                        }
+                        else if ("XRP".equals(cmdType)) {
+                            readableEntry += obj.get("direction").getAsString() + " " +
+                                        obj.get("amount").getAsString() + " ";
+                        }
 
-                    if (!(obj.get("cmdType") instanceof null)) {
-                        for(int i = 0; i < commands.size(); i++){
-                            JsonObject obj = commands.get(i).getAsJsonObject();
-                            
-                            if ("mBot".equals(obj.get("cmdType").getAsString())) {
-                                readableEntry += obj.get("power").getAsString() + " " +
-                                            obj.get("direction").getAsString() + " " +
-                                            obj.get("time").getAsString();
-                            }
-                            else if ("XRP".equals(obj.get("cmdType").getAsString())) {
-                                readableEntry += obj.get("direction").getAsString() + " " +
-                                            obj.get("amount").getAsString() + " ";
-                            }
-    
-                            if(commands.size() > 0 && i != commands.size() - 1){
-                                readableEntry += ", ";
-                            }
+                        if(i != commands.size() - 1){
+                            readableEntry += ", ";
                         }
                     }
+                    
 
                     if (!readableEntry.equals(""))
                         recListView.getItems().add(readableEntry);
