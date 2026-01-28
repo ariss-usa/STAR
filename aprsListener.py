@@ -122,13 +122,15 @@ class APRSUpdater:
 
     def stop(self):
         self.continueFlag = False
+        if platform.system() == "Linux":
+            os.system("./cleanup.sh")
+            import time
+            time.sleep(3)
+
         for i in self.processList:
             if i.pid is not None:
                 i.terminate()
                 i.wait()
         self.processList = []
-        
-        if platform.system() == "Linux":
-            os.system("./cleanup.sh")
             
         print("[DEBUG] APRS processes killed")
