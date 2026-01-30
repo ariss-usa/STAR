@@ -13,11 +13,11 @@ sudo killall -9 CubicSDR &>/dev/null
 sudo killall -9 zenity &>/dev/null
 
 echo "[CLEANUP] Killing rtl_fm (first pass)..."
-sudo killall -9 rtl_fm &>/dev/null
+sudo killall rtl_fm &>/dev/null
 
-sleep 1
+sleep 5
 
-echo "[CLEANUP] Killing rtl_fm (second pass)..."
+echo "[CLEANUP] Force killing rtl_fm (second pass)..."
 sudo killall -9 rtl_fm &>/dev/null
 
 sleep 1
@@ -34,5 +34,6 @@ for i in {1..10}; do
 done
 
 echo "[CLEANUP] Waiting for USB device to release..."
-sleep 10
-echo "[CLEANUP] All processes killed, device released"
+sleep 5
+
+echo "[cleanup] all processes killed, device released"
