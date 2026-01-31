@@ -21,7 +21,7 @@ from bleak import *
 import os
 import websockets
 import json
-from rtlsdr import RtlSdr
+#from rtlsdr import RtlSdr
 from DisconnectMonitor import USBDisconnectWatcher
 import sys
 from robot_link import RobotLink
@@ -180,13 +180,13 @@ def pair_with_bot(msg) -> bool:
         raise RuntimeError(f"Error: {str(e)}")
     return True
 
-def check_rtlsdr():
-    try:
-        sdr = RtlSdr()
-        sdr.close()
-        return {"status": "ok"}
-    except Exception as e:
-        return {"status": "error", "err_msg": str(e)}
+# def check_rtlsdr():
+#     try:
+#         sdr = RtlSdr()
+#         sdr.close()
+#         return {"status": "ok"}
+#     except Exception as e:
+#         return {"status": "error", "err_msg": str(e)}
     
 def send_aprs(msg):
     try:
@@ -375,9 +375,10 @@ async def handle_request(msg):
                 return {"status": "error", "err_msg": str(e)}
         case "receive_aprs":
             if platform.system() == "linux":
-                check = check_rtlsdr()
-                if check["status"] == "error":
-                    return check
+                # check = check_rtlsdr()
+                # if check["status"] == "error":
+                #     return check
+                pass
 
             try:
                 aprsUpdater.startAPRSprocesses()
