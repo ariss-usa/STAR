@@ -1,35 +1,11 @@
 #!/bin/bash
 
-# script to auto decode packet using rtl_fm and Direwolf
-sudo modprobe snd-aloop
-
-pkill -o chromium &>/dev/null
-
-sudo killall -9 direwolf &>/dev/null
-
-sudo killall -9 rtl_fm &>/dev/null
-
-sudo killall -9 aplay &>/dev/null
-
-sudo killall -9 qsstv &>/dev/null
-
-sudo killall -9 rtl_tcp &>/dev/null
-
-#sudo killall -9 java &>/dev/null
-
-sudo killall -9 CubicSDR &>/dev/null
-
-sudo killall -9 zenity &>/dev/null
-
-echo
-
+# This creates a "Virtual Cable" named 'aprs_bridge'
+if ! pactl list sinks short | grep -q "aprs_bridge"; then
+    pactl load-module module-null-sink sink_name=aprs_bridge sink_properties=device.description="APRS_Virtual_Cable"
+fi
 
 direwolf -r 48000 -c direwolf.conf -t 0 &
-sleep 5
+sleep 2
 
-value=`aplay -l | grep "Loopback"`
-echo "$value" > /dev/null
-set -- $value
-
-rtl_fm -M fm -f 144390000 -s 48k | (aplay -D hw:${2:0:1},0,0 -r 48000 -t raw -f S16_LE -c 1)
-sleep 5
+rtl_fm -M fm -f 144390000 -s 48k | pacat --playback --device=aprs_bridge --format=s16le --channels=1 --rate=48000
