@@ -144,6 +144,28 @@ public class MissionController {
         }
     }
 
+    private void runExternalCleanup() {
+        try {
+            if (qsstv != null && qsstv.isAlive()) {
+                qsstv.destroy();
+            }
+
+            // Execute your cleanup script to kill radio/SSTV processes
+            new ProcessBuilder("./cleanup.sh").start();
+
+            // Reset the UI components
+            Platform.runLater(() -> {
+                qsstv_checkbox.setSelected(false);
+                recAPRSCheckBox.setDisable(false);
+            });
+
+            qsstv = null;
+            qsstvWatcherThread = null;
+        } catch (IOException e) {
+            System.err.println("Error running cleanup.sh: " + e.getMessage());
+        }
+    }
+
     @FXML
     protected void qsstvCheckboxClicked(MouseEvent event) {
         try{
@@ -167,50 +189,20 @@ public class MissionController {
                 // disable the APRS checkbox while QSSTV runs to prevent races
                 Platform.runLater(() -> recAPRSCheckBox.setDisable(true));
 
-                qsstv = new ProcessBuilder("./qsstv").start();
-
-                // start rtl_fm -> aplay pipeline via shell so piping works
-                rtlProcess = new ProcessBuilder("sh", "-c",
-                        "rtl_fm -M fm -f 434.9M -s 48k | aplay -r 48000 -f S16_LE -D pulse")
-                        .start();
+                qsstv = new ProcessBuilder("./start_qsstv.sh").start();
 
                 // Watch the qsstv process and cleanup when it exits
                 qsstvWatcherThread = new Thread(() -> {
                     try {
                         if (qsstv != null) qsstv.waitFor();
                     } catch (InterruptedException ignored) {}
-
-                    // ensure rtl process is stopped
-                    if (rtlProcess != null && rtlProcess.isAlive()){
-                        rtlProcess.destroy();
-                    }
-
-                    Platform.runLater(() -> {
-                        qsstv_checkbox.setSelected(false);
-                        recAPRSCheckBox.setDisable(false);
-                    });
-
-                    qsstv = null;
-                    rtlProcess = null;
-                    qsstvWatcherThread = null;
+                    runExternalCleanup();
                 });
                 qsstvWatcherThread.setDaemon(true);
                 qsstvWatcherThread.start();
             }
             else {
-                // stop QSSTV and rtl pipeline
-                if (qsstv != null && qsstv.isAlive()){
-                    qsstv.destroy();
-                    qsstv = null;
-                }
-
-                if (rtlProcess != null && rtlProcess.isAlive()){
-                    rtlProcess.destroy();
-                    rtlProcess = null;
-                }
-
-                // Re-enable APRS checkbox so user can restart receive
-                Platform.runLater(() -> recAPRSCheckBox.setDisable(false));
+                runExternalCleanup();
             }
         }
         catch (IOException e) {

@@ -1,8 +1,19 @@
 #!/bin/bash
-echo "[CLEANUP] Stopping PulseAudio streams..."
 
-sudo killall -15 rtl_fm direwolf qsstv pacat 2>/dev/null
-sleep 1
-sudo killall -9 rtl_fm direwolf qsstv pacat 2>/dev/null
+pkill -o chromium &>/dev/null
 
-echo "[CLEANUP] Audio pipeline cleared."
+sudo killall -9 direwolf &>/dev/null
+
+sudo killall -9 rtl_fm &>/dev/null
+
+sudo killall -9 aplay &>/dev/null
+
+sudo killall -9 qsstv &>/dev/null
+
+sudo killall -9 rtl_tcp &>/dev/null
+
+#sudo killall -9 java &>/dev/null
+
+sudo killall -9 CubicSDR &>/dev/null
+
+sudo killall -9 zenity &>/dev/null
