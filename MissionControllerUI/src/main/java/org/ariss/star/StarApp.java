@@ -15,10 +15,13 @@ import java.io.IOException;
 public class StarApp extends Application {
     @Override
     public void start(Stage stage) throws IOException {
-        stage.getIcons().add(new Image(getClass().getResource("/org/ariss/images/arissLogo.jpg").toExternalForm()));
+        // TODO: Fix Ariss Logo Loading Error
+        // System.out.println("test: " + getClass().getResource("/org/ariss/images/arissLogo.jpg"));
+        // stage.getIcons().add(new Image(getClass().getResource("/resources/org/ariss/images/arissLogo.jpg").toExternalForm()));
         System.out.println(StarApp.class.getResource("newGUI.fxml"));
         FXMLLoader fxmlLoader = new FXMLLoader(StarApp.class.getResource("newGUI.fxml"));
         Parent root = fxmlLoader.load();
+        MissionController controller = fxmlLoader.getController();
         Scene scene = new Scene(root, 990, 493);
 
         scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
@@ -26,7 +29,7 @@ public class StarApp extends Application {
 
         stage.setScene(scene);
         stage.setMinWidth(990);
-        stage.setMinHeight(493);
+        stage.setMinHeight(530);
 
         Platform.runLater(()-> {
             stage.setWidth(990);
@@ -41,6 +44,7 @@ public class StarApp extends Application {
                 BackendDispatcher dispatcher = new BackendDispatcher(MessageStructure.END_PROGRAM, null);
                 
                 Runnable shutdown = () -> {
+                    controller.shutdownProcesses();
                     MissionController.threadExecutor.shutdownNow();
                     Platform.exit();
                     System.exit(0);

@@ -3,19 +3,20 @@ package org.ariss.star;
 import java.util.Objects;
 
 public class RobotEntry {
-    String id, school, city, state, port;
+    String id, school, city, state, port, robotType;
     String myCallsign, destinationCallsign;
     EntryType type;
 
     /*
      * For Remote entries
      */
-    public RobotEntry(String id, String school, String city, String state){
+    public RobotEntry(String id, String school, String city, String state, String robotType){
         this.id = id;
         this.school = school;
         this.city = city;
         this.state = state;
         this.type = EntryType.REMOTE;
+        this.robotType = robotType;
     }
 
     /*
@@ -53,7 +54,11 @@ public class RobotEntry {
         if(type == EntryType.APRS){
             return String.format("My callsign: %s, send to %s", this.myCallsign, this.destinationCallsign);
         }
-        return String.format("Robot Id: %s\nSchool: %s\nCity: %s\nState: %s", this.id, this.school, this.city, this.state);
+        String readable_robot_type = this.robotType;
+        if (robotType == null) {
+            readable_robot_type = "Not connected";
+        }
+        return String.format("Robot Id: %s\nSchool: %s\nCity: %s\nState: %s\n Robot Type: %s", this.id, this.school, this.city, this.state, readable_robot_type);
     }
 
     public RobotEntry get_copy(){
@@ -63,7 +68,7 @@ public class RobotEntry {
         else if(type == EntryType.APRS){
             return new RobotEntry(myCallsign, destinationCallsign);
         }
-        return new RobotEntry(id, school, city, state);
+        return new RobotEntry(id, school, city, state, robotType);
     }
 
     @Override
