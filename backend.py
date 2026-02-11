@@ -472,6 +472,12 @@ async def auto_reconnect_loop():
 
 async def connect_to_ws():
     global websocket_started
+    
+    type_str = None
+    if shared_state.robotType == shared_state.RobotType.XRP:
+        type_str = "XRP"
+    elif shared_state.robotType == shared_state.RobotType.MBOT:
+        type_str = "mBot"
 
     try:
         websocket = await asyncio.wait_for(websockets.connect(WEBSOCKET_ENDPOINT), timeout=3)
@@ -483,7 +489,7 @@ async def connect_to_ws():
                 "city": city,
                 "state": state,
                 "doNotDisturb": do_not_disturb,
-                "robotType": None
+                "robotType": type_str
             }))
             websocket_started = True
             while True:
