@@ -21,7 +21,7 @@ from bleak import *
 import os
 import websockets
 import json
-#from rtlsdr import RtlSdr
+from rtlsdr import RtlSdr
 from DisconnectMonitor import USBDisconnectWatcher
 import sys
 from robot_link import RobotLink
@@ -180,13 +180,13 @@ def pair_with_bot(msg) -> bool:
         raise RuntimeError(f"Error: {str(e)}")
     return True
 
-# def check_rtlsdr():
-#     try:
-#         sdr = RtlSdr()
-#         sdr.close()
-#         return {"status": "ok"}
-#     except Exception as e:
-#         return {"status": "error", "err_msg": str(e)}
+def check_rtlsdr():
+    try:
+        sdr = RtlSdr()
+        sdr.close()
+        return {"status": "ok"}
+    except Exception as e:
+        return {"status": "error", "err_msg": str(e)}
     
 def send_aprs(msg):
     try:
@@ -375,10 +375,9 @@ async def handle_request(msg):
                 return {"status": "error", "err_msg": str(e)}
         case "receive_aprs":
             if platform.system() == "linux":
-                # check = check_rtlsdr()
-                # if check["status"] == "error":
-                #     return check
-                pass
+                check = check_rtlsdr()
+                if check["status"] == "error":
+                    return check
 
             try:
                 aprsUpdater.startAPRSprocesses()
@@ -418,17 +417,11 @@ async def zmq_loop():
             socket.send_json({"status": "error", "detail": str(e)})
 async def main():
     read_config()
-    # await asyncio.gather(
-    #     zmq_loop(),
-    #     auto_reconnect_loop(),
-    #     health_check()
-    # )
     await myScanner.start()
     await asyncio.gather(
         zmq_loop(),
         health_check(),
         auto_reconnect_loop(),
-        printAllCoroutines()
     )
 
 def ping_health_endpoint():
@@ -456,11 +449,6 @@ async def health_check():
             await asyncio.sleep(600)
         else:
             await asyncio.sleep(10)
-
-async def printAllCoroutines():
-    while True:
-        #print(f"All currently running tasks: {[t.get_coro().__name__ for t in asyncio.all_tasks()]}") # type: ignore
-        await asyncio.sleep(10)
 
 async def auto_reconnect_loop():
     while True:
