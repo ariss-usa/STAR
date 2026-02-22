@@ -22,6 +22,8 @@ import os
 import websockets
 import json
 import ipaddress
+import subprocess
+import re
 from rtlsdr import RtlSdr
 from DisconnectMonitor import USBDisconnectWatcher
 import sys
@@ -301,7 +303,10 @@ async def handle_request(msg):
             }
             """
             try:
-                if "XRP" in msg["port"]:
+                selected_port = msg.get("port", "")
+                wifi_ip = parse_or_normalize_wifi_ip(selected_port)
+
+                if "XRP" in selected_port or wifi_ip is not None:
                     changed = False
                     if shared_state.robotType == shared_state.RobotType.MBOT or shared_state.robotType is None:
                         changed = True
@@ -310,9 +315,7 @@ async def handle_request(msg):
                     isConnected = True
                     await myScanner.stop()
 
-                    XRPWifiAddress = ""
-                    if is_wifi_xrp_port(msg["port"]):
-                        XRPWifiAddress = parse_wifi_xrp_ip(msg["port"])
+                    XRPWifiAddress = wifi_ip if wifi_ip is not None else ""
                     asyncio.create_task(XRPControl())
 
                     if changed:
@@ -533,6 +536,23 @@ def is_wifi_xrp_port(port_value: str) -> bool:
     return isinstance(port_value, str) and port_value.startswith(XRP_WIFI_PREFIX)
 
 
+def parse_or_normalize_wifi_ip(port_value: str) -> str | None:
+    if not isinstance(port_value, str):
+        return None
+
+    raw = port_value.strip()
+    if not raw:
+        return None
+
+    if is_wifi_xrp_port(raw):
+        return parse_wifi_xrp_ip(raw)
+
+    try:
+        return str(ipaddress.ip_address(raw))
+    except ValueError:
+        return None
+
+
 def parse_wifi_xrp_ip(port_value: str) -> str:
     ip = port_value[len(XRP_WIFI_PREFIX):].strip()
     ipaddress.ip_address(ip)
@@ -544,14 +564,17 @@ def parse_wifi_xrp_ip(port_value: str) -> str:
 def discover_wifi_xrp_candidates() -> list[str]:
     candidates = set()
 
-    # Common XRP default AP address.
-    candidates.add("192.168.42.1")
-
-    # Optional explicit override when user knows the robot IP.
     try:
-        env_ip = os.environ.get("XRP_WIFI_IP")
-        if env_ip:
-            candidates.add(str(ipaddress.ip_address(env_ip.strip())))
+        arp_cmd = ["arp", "-a"]
+        output = subprocess.check_output(arp_cmd, text=True, stderr=subprocess.DEVNULL)
+        for match in re.finditer(r"(?:\d{1,3}\.){3}\d{1,3}", output):
+            raw_ip = match.group(0)
+            try:
+                parsed = ipaddress.ip_address(raw_ip)
+            except ValueError:
+                continue
+            if parsed.is_private:
+                candidates.add(str(parsed))
     except Exception:
         pass
 

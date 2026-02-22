@@ -504,14 +504,19 @@ public class MissionController {
 
     @FXML
     void pairPressed(MouseEvent event) {
-        if (localRobotConnection.getSelectionModel().isEmpty())  {
+        String selectedPort = localRobotConnection.getEditor().getText();
+        if (selectedPort == null || selectedPort.isBlank()) {
+            selectedPort = localRobotConnection.getSelectionModel().getSelectedItem();
+        }
+
+        if (selectedPort == null || selectedPort.isBlank())  {
             AlertBox.display("Choose a robot to pair with.");
         }
         else{
             String pairText = pairButton.getText();
             if(pairText.equals("Pair")){
                 HashMap<String, Object> map = new HashMap<>();
-                map.put("port", localRobotConnection.getSelectionModel().getSelectedItem());
+                map.put("port", selectedPort.trim());
                 BackendDispatcher dispatcher = new BackendDispatcher(MessageStructure.PAIR_CONNECT, map);
                 pairButton.setDisable(true);
                 dispatcher.setOnSucceeded(e -> {
@@ -611,6 +616,9 @@ public class MissionController {
         
         hideLoadingAnimation();
         loadingAnimation();
+
+        localRobotConnection.setEditable(true);
+        localRobotConnection.setPromptText("Select robot or enter XRP IP");
 
         localRobotConnection.setButtonCell(new ListCell<>() {
             @Override
