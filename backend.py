@@ -22,8 +22,6 @@ import os
 import websockets
 import json
 import ipaddress
-import subprocess
-import re
 from rtlsdr import RtlSdr
 from DisconnectMonitor import USBDisconnectWatcher
 import sys
@@ -543,73 +541,21 @@ def parse_wifi_xrp_ip(port_value: str) -> str:
 
 
 
-def is_probable_xrp_web_ui(ip: str) -> bool:
-    base_url = f"http://{ip}:5000"
-    probe_paths = ["/", "/config", "/api/config"]
-
-    for path in probe_paths:
-        try:
-            response = requests.get(base_url + path, timeout=(0.25, 0.5))
-        except Exception:
-            continue
-
-        body = response.text.lower()
-        ctype = response.headers.get("content-type", "").lower()
-
-        if "json" in ctype:
-            try:
-                payload = response.json()
-                joined = json.dumps(payload).lower()
-                if "xrp" in joined or "network" in joined or "ssid" in joined:
-                    return True
-            except Exception:
-                pass
-
-        if "xrp" in body and ("web ui" in body or "configuration" in body or "network" in body):
-            return True
-
-    return False
-
 def discover_wifi_xrp_candidates() -> list[str]:
-    forced_candidates = set()
-    arp_candidates = set()
+    candidates = set()
 
+    # Common XRP default AP address.
+    candidates.add("192.168.42.1")
+
+    # Optional explicit override when user knows the robot IP.
     try:
         env_ip = os.environ.get("XRP_WIFI_IP")
         if env_ip:
-            forced_candidates.add(str(ipaddress.ip_address(env_ip.strip())))
+            candidates.add(str(ipaddress.ip_address(env_ip.strip())))
     except Exception:
         pass
 
-    # Common XRP default AP address.
-    forced_candidates.add("192.168.42.1")
-
-    try:
-        arp_cmd = ["arp", "-a"]
-        output = subprocess.check_output(arp_cmd, text=True, stderr=subprocess.DEVNULL)
-        for match in re.finditer(r"(?:\d{1,3}\.){3}\d{1,3}", output):
-            raw_ip = match.group(0)
-            try:
-                parsed = ipaddress.ip_address(raw_ip)
-            except ValueError:
-                continue
-            if parsed.is_private:
-                arp_candidates.add(str(parsed))
-    except Exception:
-        pass
-
-    all_candidates = sorted(forced_candidates | arp_candidates)
-    verified = [ip for ip in all_candidates if is_probable_xrp_web_ui(ip)]
-
-    # Keep explicit/manual and default AP options available even when not verifiable
-    # from this host's current network context.
-    fallback = [ip for ip in sorted(forced_candidates) if ip not in verified]
-
-    if verified:
-        return [f"{XRP_WIFI_PREFIX}{ip}" for ip in (verified + fallback)]
-
-    # Backward-compatible fallback if HTTP probing cannot identify a specific XRP.
-    return [f"{XRP_WIFI_PREFIX}{ip}" for ip in all_candidates]
+    return [f"{XRP_WIFI_PREFIX}{ip}" for ip in sorted(candidates)]
 
 async def XRPControl():
     global isFirstCommand, isConnected, disconnect, XRPAddress, XRPWifiAddress, push_update_socket

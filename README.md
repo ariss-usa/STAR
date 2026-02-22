@@ -43,7 +43,7 @@ The STAR framework includes the following built-in communication methods:
 > [!NOTE]  
 > If you have downloaded the `lite` package, make sure any required dependencies (e.g., `Direwolf`, `gen_packets`, `rtl_fm`, `gpredict`) are installed and configured according to the platform you’re using.
 
-For XRP robots, STAR now supports both Bluetooth and local WiFi pairing. WiFi entries appear in the local robot dropdown as `XRP_WIFI:<ip>`. STAR discovers candidates from local ARP and prioritizes addresses that respond like the XRP Web UI on port `5000` (including the default `192.168.42.1`). Select one to pair over WiFi; Bluetooth XRP pairing continues to work as before. If discovery misses your robot, set `XRP_WIFI_IP` before launching STAR to add a manual candidate.
+For XRP robots, STAR now supports both Bluetooth and local WiFi pairing. WiFi entries appear in the local robot dropdown as `XRP_WIFI:<ip>`. By default STAR includes the XRP AP address `192.168.42.1`; if your robot uses a different address, set `XRP_WIFI_IP` before launching STAR to add that explicit IP. Select one to pair over WiFi; Bluetooth XRP pairing continues to work as before.
 
 For WiFi control, also update `XRP_firmware/bluetoothController.py` on the robot with `WIFI_SSID` and `WIFI_PASSWORD` so the XRP starts a command server on port `3540`.
 
