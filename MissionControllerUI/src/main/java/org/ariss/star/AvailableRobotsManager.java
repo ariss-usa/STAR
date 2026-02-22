@@ -71,7 +71,16 @@ public class AvailableRobotsManager {
                     String school = robot.get("schoolName").getAsString();
                     String city = robot.get("city").getAsString();
                     String state = robot.get("state").getAsString();
-                    remote.add(new RobotEntry(id, school, city, state));
+                    String robotType;
+                    JsonElement element = robot.get("robotType");
+                    if (element == null || element.isJsonNull()){
+                        robotType = "Not connected";
+                    }
+                    else{
+                        robotType = robot.get("robotType").getAsString();
+                    }
+                    
+                    remote.add(new RobotEntry(id, school, city, state, robotType));
                 }
                 cache = remote;
                 lastRefresh = System.currentTimeMillis();

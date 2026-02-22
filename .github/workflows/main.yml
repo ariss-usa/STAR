@@ -147,7 +147,7 @@ jobs:
         run: |
           outDir="MissionController-linux-v$VERSION"
           mv dist "$outDir/dist"
-          cp cleanup.sh direwolf.conf script.sh start.sh "$outDir/"
+          cp cleanup.sh direwolf.conf script.sh start.sh start_qsstv.sh "$outDir/"
           mkdir "MissionController-linux"
           mv "$outDir" "MissionController-linux/"
           

@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# script to cleanup processes
 pkill -o chromium &>/dev/null
 
 sudo killall -9 direwolf &>/dev/null

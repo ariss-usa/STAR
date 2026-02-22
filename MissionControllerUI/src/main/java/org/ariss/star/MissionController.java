@@ -112,11 +112,16 @@ public class MissionController {
     @FXML
     private CheckBox qsstv_checkbox;
 
+    enum RobotType {
+        MBOT,
+        XRP
+    }
     private Stage parent;
     private Parent root;
     public static ExecutorService threadExecutor = Executors.newSingleThreadExecutor();
     private static RobotEntry currRobot;
     private static boolean pairingStatus = false;
+    private static RobotType robotType = RobotType.XRP;
     final private String ARISS_URL = "https://www.ariss.org/";
     final private String STAR_URL = "https://sites.google.com/view/ariss-starproject/home";
     final private String LOCALHOST_URL = "http://localhost:8080/index.html";
@@ -126,6 +131,40 @@ public class MissionController {
     private Process qsstv;
     private Process rtlProcess; // process for rtl_fm -> aplay pipeline
     private Thread qsstvWatcherThread;
+
+    public void shutdownProcesses() {
+        if (qsstv != null && qsstv.isAlive()) {
+            qsstv.destroy();
+        }
+        if (rtlProcess != null && rtlProcess.isAlive()) {
+            rtlProcess.destroy();
+        }
+        if (process != null && process.isAlive()) {
+            process.destroy();
+        }
+    }
+
+    private void runExternalCleanup() {
+        try {
+            if (qsstv != null && qsstv.isAlive()) {
+                qsstv.destroy();
+            }
+
+            // Execute your cleanup script to kill radio/SSTV processes
+            new ProcessBuilder("./cleanup.sh").start();
+
+            // Reset the UI components
+            Platform.runLater(() -> {
+                qsstv_checkbox.setSelected(false);
+                recAPRSCheckBox.setDisable(false);
+            });
+
+            qsstv = null;
+            qsstvWatcherThread = null;
+        } catch (IOException e) {
+            System.err.println("Error running cleanup.sh: " + e.getMessage());
+        }
+    }
 
     @FXML
     protected void qsstvCheckboxClicked(MouseEvent event) {
@@ -150,50 +189,20 @@ public class MissionController {
                 // disable the APRS checkbox while QSSTV runs to prevent races
                 Platform.runLater(() -> recAPRSCheckBox.setDisable(true));
 
-                qsstv = new ProcessBuilder("./qsstv").start();
-
-                // start rtl_fm -> aplay pipeline via shell so piping works
-                rtlProcess = new ProcessBuilder("sh", "-c",
-                        "rtl_fm -M fm -f 434.9M -s 48k | aplay -r 48000 -f S16_LE -D pulse")
-                        .start();
+                qsstv = new ProcessBuilder("./start_qsstv.sh").start();
 
                 // Watch the qsstv process and cleanup when it exits
                 qsstvWatcherThread = new Thread(() -> {
                     try {
                         if (qsstv != null) qsstv.waitFor();
                     } catch (InterruptedException ignored) {}
-
-                    // ensure rtl process is stopped
-                    if (rtlProcess != null && rtlProcess.isAlive()){
-                        rtlProcess.destroy();
-                    }
-
-                    Platform.runLater(() -> {
-                        qsstv_checkbox.setSelected(false);
-                        recAPRSCheckBox.setDisable(false);
-                    });
-
-                    qsstv = null;
-                    rtlProcess = null;
-                    qsstvWatcherThread = null;
+                    runExternalCleanup();
                 });
                 qsstvWatcherThread.setDaemon(true);
                 qsstvWatcherThread.start();
             }
             else {
-                // stop QSSTV and rtl pipeline
-                if (qsstv != null && qsstv.isAlive()){
-                    qsstv.destroy();
-                    qsstv = null;
-                }
-
-                if (rtlProcess != null && rtlProcess.isAlive()){
-                    rtlProcess.destroy();
-                    rtlProcess = null;
-                }
-
-                // Re-enable APRS checkbox so user can restart receive
-                Platform.runLater(() -> recAPRSCheckBox.setDisable(false));
+                runExternalCleanup();
             }
         }
         catch (IOException e) {
@@ -355,7 +364,7 @@ public class MissionController {
 
         parent = (Stage) VBox.getScene().getWindow();
         Stage dialogStage = new Stage();
-        dialogStage.setResizable(false);
+        dialogStage.setResizable(true);
         dialogStage.setTitle("Setup Dialog");
         dialogStage.initModality(Modality.WINDOW_MODAL);
         dialogStage.initOwner(parent);
@@ -397,8 +406,8 @@ public class MissionController {
         if (availableRobots.getSelectionModel().isEmpty()) {
             AlertBox.display("Select a robot from the dropdown");
         }
-        else if (Power.getText().isEmpty() || Double.parseDouble(Power.getText()) < 1 || 
-                Double.parseDouble(Power.getText()) > 255 )  {
+        else if ((Power.getText().isEmpty() || Double.parseDouble(Power.getText()) < 1 || 
+                Double.parseDouble(Power.getText()) > 255) && Power.isVisible())  {
             AlertBox.display("Enter the power (from 1 to 255)");
         }
         else if (type.getSelectionModel().isEmpty() || type.getSelectionModel().getSelectedItem().equals("N/A"))  {
@@ -407,8 +416,11 @@ public class MissionController {
         else if (command.getText().isEmpty()){
             AlertBox.display("Enter the amount of seconds you would like to run the robot");
         }
-        else if (Double.parseDouble(command.getText()) < 0 || Double.parseDouble(command.getText()) > 120){
+        else if ((Double.parseDouble(command.getText()) < 0 || Double.parseDouble(command.getText()) > 120) && Power.isVisible()){
             AlertBox.display("Enter values between 0 and 120");
+        }
+        else if ((Double.parseDouble(command.getText()) < 0 || Double.parseDouble(command.getText()) > 180) && type.getValue().equals("arm")) {
+            AlertBox.display("Enter values between 0 and 180");
         }
         else{
             //Determine whether internet/APRS
@@ -417,14 +429,24 @@ public class MissionController {
             String selectedDirection = type.getSelectionModel().getSelectedItem();
             String string_command = Power.getText() + " " + selectedDirection + " " + s;
             BackendDispatcher dispatcher;
+            // through Internet
             if(!medium.isSelected()){
                 HashMap<String, Object> map = new HashMap<>();
                 if(selectedItem.getType() == EntryType.REMOTE){
                     String selectedMCID = selectedItem.getId();
                     HashMap<String, Object> cmd = new HashMap<>();
-                    cmd.put("power", Power.getText());
-                    cmd.put("direction", selectedDirection);
-                    cmd.put("time", s);
+                    
+                    if (selectedItem.robotType.equals("XRP")) {
+                        cmd.put("direction", selectedDirection.charAt(0));
+                        cmd.put("amount", command.getText());
+                        cmd.put("cmdType", "XRP");
+                    }
+                    else if (selectedItem.robotType.equals("mBot")) {
+                        cmd.put("direction", selectedDirection);
+                        cmd.put("power", Power.getText());
+                        cmd.put("time", s);
+                        cmd.put("cmdType", "mBot");
+                    }
                     
                     map.put("receiver_id", selectedMCID);
                     map.put("commands", Arrays.asList(cmd));
@@ -432,14 +454,24 @@ public class MissionController {
                     dispatcher.attachDefaultErrorHandler();
                 }
                 else{
-                    HashMap<String, Object> cmd = new HashMap<>();
-                    cmd.put("power", Power.getText());
-                    cmd.put("direction", selectedDirection);
-                    cmd.put("time", s);
+                    if (robotType == RobotType.MBOT) {
+                        HashMap<String, Object> cmd = new HashMap<>();
+                        cmd.put("power", Power.getText());
+                        cmd.put("direction", selectedDirection);
+                        cmd.put("time", s);
 
-                    map.put("commands", Arrays.asList(cmd));
-                    dispatcher = new BackendDispatcher(MessageStructure.LOCAL_CONTROL, map);
-                    dispatcher.attachDefaultErrorHandler();
+                        map.put("commands", Arrays.asList(cmd));
+                        dispatcher = new BackendDispatcher(MessageStructure.LOCAL_CONTROL, map);
+                        dispatcher.attachDefaultErrorHandler();
+                    } else {
+                        HashMap<String, Object> cmd = new HashMap<>();
+                        cmd.put("amount", command.getText());
+                        cmd.put("direction", selectedDirection.charAt(0));
+
+                        map.put("commands", Arrays.asList(cmd));
+                        dispatcher = new BackendDispatcher(MessageStructure.LOCAL_CONTROL, map);
+                        dispatcher.attachDefaultErrorHandler();
+                    }
                 }
                 threadExecutor.submit(dispatcher);
             }
@@ -473,7 +505,7 @@ public class MissionController {
     @FXML
     void pairPressed(MouseEvent event) {
         if (localRobotConnection.getSelectionModel().isEmpty())  {
-            AlertBox.display("Choose a robot to pair with");
+            AlertBox.display("Choose a robot to pair with.");
         }
         else{
             String pairText = pairButton.getText();
@@ -489,6 +521,25 @@ public class MissionController {
                         localRobotConnection.setDisable(true);
                         pairingStatus = true;
                         pairButton.setText("Disconnect");
+                        if (response.get("robotType").getAsString().equals("XRP")) {
+                            robotType = RobotType.XRP;
+                            Power.setVisible(false);
+                            Power.setPrefWidth(0);
+                            command.getTooltip().setText("Distance to travel in cm/arm position in degrees");
+                            command.setPromptText("Distance/Degrees");
+                            if (!type.getItems().contains("arm")) {
+                                type.getItems().add("arm");
+                            }
+                        } else {
+                            robotType = RobotType.MBOT;
+                            Power.setVisible(true);
+                            Power.setPrefWidth(59);
+                            command.getTooltip().setText("Time of operation in seconds");
+                            Power.getTooltip().setText("Speed of robot (values from 1 to 255)");
+                            command.setPromptText("Time");
+                            Power.setPromptText("Power");
+                            type.getItems().remove("arm");
+                        }
                     }
                     else if(response.get("status").getAsString().equals("error")){
                         //Show user pairing failed
@@ -522,6 +573,9 @@ public class MissionController {
                         pairingStatus = false;
                         pairButton.setText("Pair");
                         pairButton.setDisable(false);
+                        if (robotType == RobotType.XRP) {
+                            type.getItems().remove("arm");
+                        }
                         robotsManager.removeLocalRobot();
                         localRobotConnection.setValue(null);
                         localRobotConnection.setDisable(false);
@@ -603,7 +657,7 @@ public class MissionController {
         availableRobots.getSelectionModel().selectedItemProperty().addListener((options, oldValue, newValue) -> {
             currRobot = newValue;
 
-            if (newValue == null) {
+            if (newValue == null || newValue.robotType == null) {
                 return;
             }
             
@@ -618,6 +672,26 @@ public class MissionController {
             else if(newValue.getType() == EntryType.REMOTE){
                 medium.setDisable(true);
                 medium.setSelected(false);
+            }
+
+            if ("XRP".equals(newValue.robotType)) {
+                robotType = RobotType.XRP;
+                Power.setVisible(false);
+                Power.setPrefWidth(0);
+                command.getTooltip().setText("Distance to travel in cm/arm position in degrees");
+                command.setPromptText("Distance/Degrees");
+                if (!type.getItems().contains("arm")) {
+                    type.getItems().add("arm");
+                }
+            } else {
+                robotType = RobotType.MBOT;
+                Power.setVisible(true);
+                Power.setPrefWidth(59);
+                command.getTooltip().setText("Time of operation in seconds");
+                Power.getTooltip().setText("Speed of robot (values from 1 to 255)");
+                command.setPromptText("Time");
+                Power.setPromptText("Power");
+                type.getItems().remove("arm");
             }
         });
 
@@ -717,18 +791,28 @@ public class MissionController {
                     //Someone sent us a command
                     JsonArray commands = update.get("commands").getAsJsonArray();
                     String readableEntry = "";
-
+                    
+                    String cmdType = update.has("cmdType") && !update.get("cmdType").isJsonNull()
+                                    ? update.get("cmdType").getAsString()
+                                    : null;
+                    
                     for(int i = 0; i < commands.size(); i++){
                         JsonObject obj = commands.get(i).getAsJsonObject();
-                        
-                        readableEntry += obj.get("power").getAsString() + " " +
+                        if ("mBot".equals(cmdType)){
+                            readableEntry += obj.get("power").getAsString() + " " +
                                         obj.get("direction").getAsString() + " " +
-                                        obj.get("time").getAsString();
+                                        obj.get("time").getAsString();      
+                        }
+                        else if ("XRP".equals(cmdType)) {
+                            readableEntry += obj.get("direction").getAsString() + " " +
+                                        obj.get("amount").getAsString() + " ";
+                        }
 
-                        if(commands.size() > 0 && i != commands.size() - 1){
+                        if(i != commands.size() - 1){
                             readableEntry += ", ";
                         }
                     }
+                    
 
                     if (!readableEntry.equals(""))
                         recListView.getItems().add(readableEntry);
@@ -780,6 +864,11 @@ public class MissionController {
     public static RobotEntry getSelectedRobot(){
         return currRobot;
     }
+
+    public static RobotType getRobotType() {
+        return robotType;
+    }
+
     public static boolean getPairingStatus(){
         return pairingStatus;
     }
