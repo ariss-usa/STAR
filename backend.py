@@ -22,8 +22,7 @@ import os
 import websockets
 import json
 import ipaddress
-import subprocess
-import re
+import socket
 from rtlsdr import RtlSdr
 from DisconnectMonitor import USBDisconnectWatcher
 import sys
@@ -62,6 +61,9 @@ XRPAddress = ""
 XRPWifiAddress = ""
 XRP_WIFI_PREFIX = "XRP_WIFI:"
 XRP_WIFI_PORT = 3540
+XRP_DISCOVERY_PORT = 3541
+XRP_DISCOVERY_REQUEST = b"STAR_XRP_DISCOVER"
+XRP_DISCOVERY_RESPONSE_PREFIX = "STAR_XRP_HERE:"
 devices = []
 myScanner = BleakScanner()
 feedbackEvent = asyncio.Event()
@@ -80,8 +82,8 @@ except:
     pass
 
 context = Context()
-socket = context.socket(REP)
-socket.bind("tcp://127.0.0.1:5555")
+rep_socket = context.socket(REP)
+rep_socket.bind("tcp://127.0.0.1:5555")
 
 push_update_socket = context.socket(PUSH)
 push_update_socket.bind("tcp://127.0.0.1:5556")
@@ -411,25 +413,25 @@ async def handle_request(msg):
             return {"status": "ok"}
         case "end_program":
             try:
-                socket.send_json({"status": "ok"})
+                rep_socket.send_json({"status": "ok"})
                 aprsUpdater.stop()
                 context.destroy()
                 sys.exit(0)
             except Exception as e:
-                socket.send_json({"status": "error"})
+                rep_socket.send_json({"status": "error"})
                 print(f"[DEBUG] Error {str(e)}")
 
 async def zmq_loop():
     while True:
         try:
-            msg = await asyncio.get_running_loop().run_in_executor(None, socket.recv_json) # Run blocking recv_json() in separate thread
+            msg = await asyncio.get_running_loop().run_in_executor(None, rep_socket.recv_json) # Run blocking recv_json() in separate thread
             print(f"[ZMQ] Received: {msg}")
             print(f"cmd = {shared_state.cmdQueue}")
             response = await handle_request(msg)
             print(f"[ZMQ] Response: {response}")
-            socket.send_json(response)
+            rep_socket.send_json(response)
         except Exception as e:
-            socket.send_json({"status": "error", "detail": str(e)})
+            rep_socket.send_json({"status": "error", "detail": str(e)})
 async def main():
     read_config()
     await myScanner.start()
@@ -548,19 +550,46 @@ def parse_wifi_xrp_ip(port_value: str) -> str:
 def discover_wifi_xrp_candidates() -> list[str]:
     candidates = set()
 
+    discovery_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
-        arp_cmd = ["arp", "-a"]
-        output = subprocess.check_output(arp_cmd, text=True, stderr=subprocess.DEVNULL)
-        for match in re.finditer(r"(?:\d{1,3}\.){3}\d{1,3}", output):
-            raw_ip = match.group(0)
+        discovery_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        discovery_socket.settimeout(0.25)
+        discovery_socket.sendto(XRP_DISCOVERY_REQUEST, ("255.255.255.255", XRP_DISCOVERY_PORT))
+
+        for _ in range(10):
             try:
-                parsed = ipaddress.ip_address(raw_ip)
-            except ValueError:
-                continue
-            if parsed.is_private:
-                candidates.add(str(parsed))
-    except Exception:
+                payload, addr = discovery_socket.recvfrom(256)
+            except socket.timeout:
+                break
+            except OSError:
+                break
+
+            sender_ip = addr[0]
+            text_payload = payload.decode("utf-8", errors="ignore").strip()
+            parsed_ip = None
+
+            if text_payload.startswith(XRP_DISCOVERY_RESPONSE_PREFIX):
+                remainder = text_payload[len(XRP_DISCOVERY_RESPONSE_PREFIX):]
+                parts = remainder.split(":")
+                if parts:
+                    try:
+                        parsed_ip = str(ipaddress.ip_address(parts[0].strip()))
+                    except ValueError:
+                        parsed_ip = None
+
+            if parsed_ip is None:
+                try:
+                    parsed_ip = str(ipaddress.ip_address(sender_ip))
+                except ValueError:
+                    continue
+
+            ip_obj = ipaddress.ip_address(parsed_ip)
+            if ip_obj.is_private:
+                candidates.add(parsed_ip)
+    except OSError:
         pass
+    finally:
+        discovery_socket.close()
 
     return [f"{XRP_WIFI_PREFIX}{ip}" for ip in sorted(candidates)]
 

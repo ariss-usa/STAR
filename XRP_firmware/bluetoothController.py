@@ -15,6 +15,9 @@ robot_name = "XRProver"
 WIFI_SSID = ""
 WIFI_PASSWORD = ""
 WIFI_PORT = 3540
+WIFI_DISCOVERY_PORT = 3541
+DISCOVERY_REQUEST = "STAR_XRP_DISCOVER"
+DISCOVERY_RESPONSE_PREFIX = "STAR_XRP_HERE:"
 
 # Create an instance of the PestoLinkAgent class
 pestolink = PestoLinkAgent(robot_name)
@@ -27,7 +30,7 @@ active_cmd = None
 def setup_wifi_server():
     if not WIFI_SSID:
         print("WiFi control disabled (no WIFI_SSID set)")
-        return None
+        return None, None, None
 
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
@@ -41,7 +44,7 @@ def setup_wifi_server():
 
     if not wlan.isconnected():
         print("WiFi connection failed; BLE-only mode")
-        return None
+        return None, None, None
 
     ip = wlan.ifconfig()[0]
     print("WiFi connected, XRP IP:", ip)
@@ -51,9 +54,36 @@ def setup_wifi_server():
     server.bind(("0.0.0.0", WIFI_PORT))
     server.listen(1)
     server.settimeout(0)
-    print(f"WiFi command server listening on {ip}:{WIFI_PORT}")
-    return server
 
+    discovery_server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    discovery_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    discovery_server.bind(("0.0.0.0", WIFI_DISCOVERY_PORT))
+    discovery_server.settimeout(0)
+
+    print(f"WiFi command server listening on {ip}:{WIFI_PORT}")
+    return server, discovery_server, ip
+
+
+
+
+def service_discovery(discovery_server, wifi_ip):
+    if discovery_server is None or wifi_ip is None:
+        return
+
+    try:
+        payload, addr = discovery_server.recvfrom(128)
+    except OSError:
+        return
+
+    req = payload.decode("utf-8").strip()
+    if req != DISCOVERY_REQUEST:
+        return
+
+    response = f"{DISCOVERY_RESPONSE_PREFIX}{wifi_ip}:{WIFI_PORT}"
+    try:
+        discovery_server.sendto(response.encode("utf-8"), addr)
+    except OSError:
+        pass
 
 def read_ble_command():
     if not pestolink.is_connected():
@@ -120,10 +150,12 @@ def execute_command(raw_cmd):
         currentlyMoving = False
 
 
-wifi_server = setup_wifi_server()
+wifi_server, discovery_server, wifi_ip = setup_wifi_server()
 
 # Start an infinite loop
 while True:
+    service_discovery(discovery_server, wifi_ip)
+
     ble_cmd = read_ble_command()
     wifi_cmd = read_wifi_command(wifi_server)
 
