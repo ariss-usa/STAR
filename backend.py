@@ -304,9 +304,8 @@ async def handle_request(msg):
             """
             try:
                 selected_port = msg.get("port", "")
-                wifi_ip = parse_or_normalize_wifi_ip(selected_port)
 
-                if "XRP" in selected_port or wifi_ip is not None:
+                if "XRP" in selected_port:
                     changed = False
                     if shared_state.robotType == shared_state.RobotType.MBOT or shared_state.robotType is None:
                         changed = True
@@ -315,7 +314,9 @@ async def handle_request(msg):
                     isConnected = True
                     await myScanner.stop()
 
-                    XRPWifiAddress = wifi_ip if wifi_ip is not None else ""
+                    XRPWifiAddress = ""
+                    if is_wifi_xrp_port(selected_port):
+                        XRPWifiAddress = parse_wifi_xrp_ip(selected_port)
                     asyncio.create_task(XRPControl())
 
                     if changed:
@@ -534,23 +535,6 @@ async def sendXRPWifiCommand(cmd: bytes):
 
 def is_wifi_xrp_port(port_value: str) -> bool:
     return isinstance(port_value, str) and port_value.startswith(XRP_WIFI_PREFIX)
-
-
-def parse_or_normalize_wifi_ip(port_value: str) -> str | None:
-    if not isinstance(port_value, str):
-        return None
-
-    raw = port_value.strip()
-    if not raw:
-        return None
-
-    if is_wifi_xrp_port(raw):
-        return parse_wifi_xrp_ip(raw)
-
-    try:
-        return str(ipaddress.ip_address(raw))
-    except ValueError:
-        return None
 
 
 def parse_wifi_xrp_ip(port_value: str) -> str:
