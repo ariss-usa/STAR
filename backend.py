@@ -21,6 +21,8 @@ from bleak import *
 import os
 import websockets
 import json
+import ipaddress
+import socket
 from rtlsdr import RtlSdr
 from DisconnectMonitor import USBDisconnectWatcher
 import sys
@@ -56,6 +58,12 @@ isConnected = False
 disconnect = False
 isLookingForBluetooth = True
 XRPAddress = ""
+XRPWifiAddress = ""
+XRP_WIFI_PREFIX = "XRP_WIFI:"
+XRP_WIFI_PORT = 3540
+XRP_DISCOVERY_PORT = 3541
+XRP_DISCOVERY_REQUEST = b"STAR_XRP_DISCOVER"
+XRP_DISCOVERY_RESPONSE_PREFIX = "STAR_XRP_HERE:"
 devices = []
 myScanner = BleakScanner()
 feedbackEvent = asyncio.Event()
@@ -74,8 +82,8 @@ except:
     pass
 
 context = Context()
-socket = context.socket(REP)
-socket.bind("tcp://127.0.0.1:5555")
+rep_socket = context.socket(REP)
+rep_socket.bind("tcp://127.0.0.1:5555")
 
 push_update_socket = context.socket(PUSH)
 push_update_socket.bind("tcp://127.0.0.1:5556")
@@ -222,6 +230,7 @@ async def monitorBluetooth():
 async def handle_request(msg):
     global disconnectMonitor
     global XRPAddress
+    global XRPWifiAddress
     global disconnect
     global isConnected
     global isLookingForBluetooth
@@ -296,7 +305,9 @@ async def handle_request(msg):
             }
             """
             try:
-                if "XRP" in msg["port"]:
+                selected_port = msg.get("port", "")
+
+                if "XRP" in selected_port:
                     changed = False
                     if shared_state.robotType == shared_state.RobotType.MBOT or shared_state.robotType is None:
                         changed = True
@@ -304,13 +315,17 @@ async def handle_request(msg):
                     shared_state.robotType = shared_state.RobotType.XRP
                     isConnected = True
                     await myScanner.stop()
-                    #asyncio.gather(XRPControl())
+
+                    XRPWifiAddress = ""
+                    if is_wifi_xrp_port(selected_port):
+                        XRPWifiAddress = parse_wifi_xrp_ip(selected_port)
                     asyncio.create_task(XRPControl())
 
                     if changed:
                         update_robot(do_not_disturb)
                     return {"status": "ok", "robotType" : "XRP"}
                 else:
+                    XRPWifiAddress = ""
                     changed = False
                     if shared_state.robotType == shared_state.RobotType.XRP or shared_state.robotType is None:
                         changed = True
@@ -342,12 +357,14 @@ async def handle_request(msg):
                     return {"status": "ok"}
                 else:
                     disconnect = True
+                    XRPWifiAddress = ""
                     return {"status": "ok"}
             except Exception as e:
                 return {"status": "error", "err_msg": f"Error: {str(e)}"}   
         case "get_ports":
             ports = [str(port.device) for port in comports()]
             devices = myScanner.discovered_devices
+            wifi_candidates = discover_wifi_xrp_candidates()
             # ports = ["COM4"]
             # XRP = BLEDevice(address="28:CD:C1:16:DA:9A", name="XRProver", details="XRProver")
             for d in devices:
@@ -364,7 +381,7 @@ async def handle_request(msg):
 
             payload = {
                 "status": "ok",
-                "ports": ports
+                "ports": ports + wifi_candidates
             }
             return payload
         case "send_aprs":
@@ -396,25 +413,25 @@ async def handle_request(msg):
             return {"status": "ok"}
         case "end_program":
             try:
-                socket.send_json({"status": "ok"})
+                rep_socket.send_json({"status": "ok"})
                 aprsUpdater.stop()
                 context.destroy()
                 sys.exit(0)
             except Exception as e:
-                socket.send_json({"status": "error"})
+                rep_socket.send_json({"status": "error"})
                 print(f"[DEBUG] Error {str(e)}")
 
 async def zmq_loop():
     while True:
         try:
-            msg = await asyncio.get_running_loop().run_in_executor(None, socket.recv_json) # Run blocking recv_json() in separate thread
+            msg = await asyncio.get_running_loop().run_in_executor(None, rep_socket.recv_json) # Run blocking recv_json() in separate thread
             print(f"[ZMQ] Received: {msg}")
             print(f"cmd = {shared_state.cmdQueue}")
             response = await handle_request(msg)
             print(f"[ZMQ] Response: {response}")
-            socket.send_json(response)
+            rep_socket.send_json(response)
         except Exception as e:
-            socket.send_json({"status": "error", "detail": str(e)})
+            rep_socket.send_json({"status": "error", "detail": str(e)})
 async def main():
     read_config()
     await myScanner.start()
@@ -502,13 +519,88 @@ async def connect_to_ws():
 async def sendXRPCommand(client: BleakClient, cmd: Buffer):
     await client.write_gatt_char(rxCharacteristic, cmd, response=True)
 
-async def XRPControl():
-    global isFirstCommand, isConnected, disconnect, XRPAddress, push_update_socket
-    print("Trying to connect to XRP " + XRPAddress)
+async def sendXRPWifiCommand(cmd: bytes):
+    if not XRPWifiAddress:
+        raise RuntimeError("XRP WiFi address is not set")
 
-    async with BleakClient(XRPAddress) as client:
-        print("Connected to XRP " + XRPAddress)
-        await client.start_notify(txCharacteristic, callback=unlockCommandMutex)
+    reader, writer = await asyncio.wait_for(
+        asyncio.open_connection(XRPWifiAddress, XRP_WIFI_PORT),
+        timeout=2,
+    )
+    try:
+        writer.write(cmd + b"\n")
+        await writer.drain()
+    finally:
+        writer.close()
+        await writer.wait_closed()
+
+
+def is_wifi_xrp_port(port_value: str) -> bool:
+    return isinstance(port_value, str) and port_value.startswith(XRP_WIFI_PREFIX)
+
+
+def parse_wifi_xrp_ip(port_value: str) -> str:
+    ip = port_value[len(XRP_WIFI_PREFIX):].strip()
+    ipaddress.ip_address(ip)
+    return ip
+
+
+
+
+def discover_wifi_xrp_candidates() -> list[str]:
+    candidates = set()
+
+    discovery_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        discovery_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        discovery_socket.settimeout(0.25)
+        discovery_socket.sendto(XRP_DISCOVERY_REQUEST, ("255.255.255.255", XRP_DISCOVERY_PORT))
+
+        for _ in range(10):
+            try:
+                payload, addr = discovery_socket.recvfrom(256)
+            except socket.timeout:
+                break
+            except OSError:
+                break
+
+            sender_ip = addr[0]
+            text_payload = payload.decode("utf-8", errors="ignore").strip()
+            parsed_ip = None
+
+            if text_payload.startswith(XRP_DISCOVERY_RESPONSE_PREFIX):
+                remainder = text_payload[len(XRP_DISCOVERY_RESPONSE_PREFIX):]
+                parts = remainder.split(":")
+                if parts:
+                    try:
+                        parsed_ip = str(ipaddress.ip_address(parts[0].strip()))
+                    except ValueError:
+                        parsed_ip = None
+
+            if parsed_ip is None:
+                try:
+                    parsed_ip = str(ipaddress.ip_address(sender_ip))
+                except ValueError:
+                    continue
+
+            ip_obj = ipaddress.ip_address(parsed_ip)
+            if ip_obj.is_private:
+                candidates.add(parsed_ip)
+    except OSError:
+        pass
+    finally:
+        discovery_socket.close()
+
+    return [f"{XRP_WIFI_PREFIX}{ip}" for ip in sorted(candidates)]
+
+async def XRPControl():
+    global isFirstCommand, isConnected, disconnect, XRPAddress, XRPWifiAddress, push_update_socket
+    using_wifi = bool(XRPWifiAddress)
+    target = XRPWifiAddress if using_wifi else XRPAddress
+    print("Trying to connect to XRP " + target)
+
+    async def _process_commands(send_fn):
+        global isFirstCommand, disconnect
         while True:
             await asyncio.sleep(0.5)
 
@@ -531,13 +623,27 @@ async def XRPControl():
                         feedbackEvent.set()
                     else:
                         print(f"Sending {cmd}")
-                        await sendXRPCommand(client=client, cmd=cmd)
+                        await send_fn(cmd)
+                        if using_wifi:
+                            # No telemetry callback in WiFi mode yet; allow next command to proceed.
+                            feedbackEvent.set()
 
             if disconnect:
                 print("Disconnecting")
                 shared_state.cmdQueue.clear()
                 disconnect = False
-                await client.disconnect()
                 return
+
+    if using_wifi:
+        # Probe the socket once at pair time for a fast failure if target is unreachable.
+        await sendXRPWifiCommand(b"ping")
+        print("Connected to XRP over WiFi " + XRPWifiAddress)
+        await _process_commands(sendXRPWifiCommand)
+    else:
+        async with BleakClient(XRPAddress) as client:
+            print("Connected to XRP " + XRPAddress)
+            await client.start_notify(txCharacteristic, callback=unlockCommandMutex)
+            await _process_commands(lambda c: sendXRPCommand(client=client, cmd=c))
+            await client.disconnect()
 
 asyncio.run(main())
