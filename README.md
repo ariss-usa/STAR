@@ -43,6 +43,12 @@ The STAR framework includes the following built-in communication methods:
 > [!NOTE]  
 > If you have downloaded the `lite` package, make sure any required dependencies (e.g., `Direwolf`, `gen_packets`, `rtl_fm`, `gpredict`) are installed and configured according to the platform you’re using.
 
+For XRP robots, STAR now supports both Bluetooth and local WiFi pairing. Put the controller machine and XRP on the same WiFi network, then select a discovered `XRP_WIFI:<ip>` entry in the local robot list and pair. WiFi discovery uses a lightweight UDP broadcast discovery message (no subnet-wide ping sweep). Bluetooth XRP pairing continues to work as before.
+
+For WiFi control, also update `XRP_firmware/bluetoothController.py` on the robot with `WIFI_SSID` and `WIFI_PASSWORD` so the XRP starts a command server on port `3540`.
+
+When WiFi is enabled in firmware, BLE remains supported; if a BLE controller is connected, firmware gives BLE exclusive control and ignores WiFi commands until BLE disconnects.
+
 To control your mBot using this app, you simply need to plug the Bluetooth dongle into the device running the application, and turn on the mBot. The mBot's flashing blue light should turn to a solid blue light to indicate successful pairing. Click the pair dropdown &rarr; Select the Bluetooth dongle's COM port &rarr; click pair. To send commands, select a robot (select the COM port for local control) and enter power, direction, and time values, then hit the send button.
 
 To access remote mBots via the internet, enter your information in the config page, which can be accessed from the setup menu item. After this is done, remote robots will populate the left hand side dropdown. 
