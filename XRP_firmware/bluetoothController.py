@@ -105,10 +105,6 @@ def read_wifi_command(server):
     if server is None:
         return None
 
-    # If a BLE controller is connected, give BLE exclusive control.
-    if pestolink.is_connected():
-        return None
-
     conn = None
     try:
         conn, _ = server.accept()

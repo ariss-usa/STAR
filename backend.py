@@ -635,10 +635,17 @@ async def XRPControl():
                 return
 
     if using_wifi:
-        # Probe the socket once at pair time for a fast failure if target is unreachable.
-        await sendXRPWifiCommand(b"ping")
-        print("Connected to XRP over WiFi " + XRPWifiAddress)
-        await _process_commands(sendXRPWifiCommand)
+        try:
+            # Probe the socket once at pair time for a fast failure if target is unreachable.
+            await sendXRPWifiCommand(b"ping")
+            print("Connected to XRP over WiFi " + XRPWifiAddress)
+            await _process_commands(sendXRPWifiCommand)
+        except Exception as e:
+            print(f"[XRPControl WiFi ERROR] {e}")
+            push_update_socket.send_json({
+                "type": "wifi_error",
+                "err_msg": str(e)
+            })
     else:
         async with BleakClient(XRPAddress) as client:
             print("Connected to XRP " + XRPAddress)

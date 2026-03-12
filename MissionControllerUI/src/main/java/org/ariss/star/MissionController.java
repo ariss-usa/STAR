@@ -517,7 +517,9 @@ public class MissionController {
                 dispatcher.setOnSucceeded(e -> {
                     JsonObject response = dispatcher.getValue();
                     if (response.get("status").getAsString().equals("ok")){
-                        robotsManager.addLocalRobot(new RobotEntry(localRobotConnection.getValue()));
+                        RobotEntry localEntry = new RobotEntry(localRobotConnection.getValue());
+                        localEntry.robotType = response.get("robotType").getAsString();
+                        robotsManager.addLocalRobot(localEntry);
                         localRobotConnection.setDisable(true);
                         pairingStatus = true;
                         pairButton.setText("Disconnect");
