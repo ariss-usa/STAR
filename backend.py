@@ -67,6 +67,7 @@ XRP_DISCOVERY_RESPONSE_PREFIX = "STAR_XRP_HERE:"
 devices = []
 myScanner = BleakScanner()
 feedbackEvent = asyncio.Event()
+_wifi_writer: asyncio.StreamWriter | None = None
 
 async def unlockCommandMutex(sender, data):
     print(f"received {data}")
@@ -319,6 +320,13 @@ async def handle_request(msg):
                     XRPWifiAddress = ""
                     if is_wifi_xrp_port(selected_port):
                         XRPWifiAddress = parse_wifi_xrp_ip(selected_port)
+                        try:
+                            await sendXRPWifiCommand(b"ping")
+                        except Exception as e:
+                            XRPWifiAddress = ""
+                            isConnected = False
+                            shared_state.robotType = None
+                            return {"status": "error", "err_msg": f"WiFi connection failed: {str(e)}"}
                     asyncio.create_task(XRPControl())
 
                     if changed:
@@ -520,19 +528,22 @@ async def sendXRPCommand(client: BleakClient, cmd: Buffer):
     await client.write_gatt_char(rxCharacteristic, cmd, response=True)
 
 async def sendXRPWifiCommand(cmd: bytes):
+    global _wifi_writer
     if not XRPWifiAddress:
         raise RuntimeError("XRP WiFi address is not set")
 
-    reader, writer = await asyncio.wait_for(
-        asyncio.open_connection(XRPWifiAddress, XRP_WIFI_PORT),
-        timeout=2,
-    )
+    if _wifi_writer is None or _wifi_writer.is_closing():
+        _, _wifi_writer = await asyncio.wait_for(
+            asyncio.open_connection(XRPWifiAddress, XRP_WIFI_PORT),
+            timeout=2,
+        )
+
     try:
-        writer.write(cmd + b"\n")
-        await writer.drain()
-    finally:
-        writer.close()
-        await writer.wait_closed()
+        _wifi_writer.write(cmd + b"\n")
+        await _wifi_writer.drain()
+    except Exception:
+        _wifi_writer = None
+        raise
 
 
 def is_wifi_xrp_port(port_value: str) -> bool:
@@ -602,7 +613,7 @@ async def XRPControl():
     async def _process_commands(send_fn):
         global isFirstCommand, disconnect
         while True:
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(0.05)
 
             if shared_state.cmdQueue:
                 isFirstCommand = True
@@ -632,13 +643,17 @@ async def XRPControl():
                 print("Disconnecting")
                 shared_state.cmdQueue.clear()
                 disconnect = False
+                if using_wifi:
+                    global _wifi_writer
+                    if _wifi_writer and not _wifi_writer.is_closing():
+                        _wifi_writer.close()
+                        await _wifi_writer.wait_closed()
+                    _wifi_writer = None
                 return
 
     if using_wifi:
+        print("Connected to XRP over WiFi " + XRPWifiAddress)
         try:
-            # Probe the socket once at pair time for a fast failure if target is unreachable.
-            await sendXRPWifiCommand(b"ping")
-            print("Connected to XRP over WiFi " + XRPWifiAddress)
             await _process_commands(sendXRPWifiCommand)
         except Exception as e:
             print(f"[XRPControl WiFi ERROR] {e}")
