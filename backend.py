@@ -331,20 +331,6 @@ async def handle_request(msg):
                     XRPWifiAddress = ""
                     if is_wifi_xrp_port(selected_port):
                         XRPWifiAddress = parse_wifi_xrp_ip(selected_port)
-                        # Connectivity test: just verify a TCP connection can be opened
-                        try:
-                            _tr, _tw = await asyncio.wait_for(
-                                asyncio.open_connection(XRPWifiAddress, XRP_WIFI_PORT), timeout=2)
-                            _tw.close()
-                            try:
-                                await _tw.wait_closed()
-                            except Exception:
-                                pass
-                        except Exception as e:
-                            XRPWifiAddress = ""
-                            isConnected = False
-                            shared_state.robotType = None
-                            return {"status": "error", "err_msg": f"WiFi connection failed: {str(e)}"}
                     _current_xrp_task = asyncio.create_task(XRPControl())
 
                     if changed:
