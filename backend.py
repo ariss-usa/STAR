@@ -533,17 +533,20 @@ async def sendXRPCommand(client: BleakClient, cmd: Buffer):
 
 async def _wifi_ack_reader(reader: asyncio.StreamReader):
     global _wifi_reader, _wifi_writer
+    print("[WiFi] ack reader started")
     try:
         while True:
             data = await reader.readline()
             if data:
-                print(f"[WiFi ACK] {data}")
+                print(f"[WiFi ACK] {data.strip()}")
                 feedbackEvent.set()
             else:
-                break  # EOF — XRP closed the connection
+                print("[WiFi] ack reader: EOF — XRP closed connection")
+                break
     except Exception as e:
         print(f"[WiFi ACK reader error] {e}")
     finally:
+        print("[WiFi] ack reader exiting, cleaning up")
         feedbackEvent.set()  # unblock any pending feedbackEvent.wait()
         if _wifi_writer and not _wifi_writer.is_closing():
             _wifi_writer.close()
@@ -557,6 +560,7 @@ async def sendXRPWifiCommand(cmd: bytes):
         raise RuntimeError("WiFi not connected")
     _wifi_writer.write(cmd + b"\n")
     await _wifi_writer.drain()
+    print(f"[WiFi] sent and drained: {cmd}")
 
 
 def is_wifi_xrp_port(port_value: str) -> bool:
@@ -639,8 +643,10 @@ async def XRPControl():
                 for c in current_commands:
                     print(f"Currently executing {c}")
                     if not isFirstCommand:
+                        print("[WiFi] waiting for ack before next command...")
                         await feedbackEvent.wait()
                         feedbackEvent.clear()
+                        print("[WiFi] ack received, sending next command")
 
                     isFirstCommand = False
                     cmd = ("1 " + c["direction"][0] + " " + str(c["amount"])).encode("utf-8")

@@ -149,6 +149,7 @@ while True:
             data = wifi_conn.recv(128)
             if data:
                 cmd = data.decode("utf-8").strip()
+                print(f"WiFi recv: '{cmd}'")
                 if cmd and cmd != "ping":
                     wifi_cmd = cmd
             else:
@@ -175,6 +176,7 @@ while True:
         if not currentlyMoving:
             pestolink.send(b"Ready for next command")
             if wifi_conn is not None:
+                print("WiFi ack: sending (instant/servo)")
                 try:
                     wifi_conn.send(b"Ready for next command\n")
                 except OSError:
@@ -194,6 +196,7 @@ while True:
         pestolink.send(b"Ready for next command")
         # Mirror the BLE ack over WiFi so the backend knows the command is done
         if wifi_conn is not None:
+            print("WiFi ack: sending (drive complete)")
             try:
                 wifi_conn.send(b"Ready for next command\n")
             except OSError:
