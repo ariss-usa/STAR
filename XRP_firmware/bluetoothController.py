@@ -101,28 +101,6 @@ def read_ble_command():
         return None
 
 
-def read_wifi_command(server):
-    if server is None:
-        return None
-
-    conn = None
-    try:
-        conn, _ = server.accept()
-        conn.settimeout(0.2)
-        data = conn.recv(128)
-        if not data:
-            return None
-        cmd = data.decode("utf-8").strip()
-        if cmd == "ping":
-            return None
-        return cmd
-    except OSError:
-        return None
-    finally:
-        if conn is not None:
-            conn.close()
-
-
 def execute_command(raw_cmd):
     global currentlyMoving, active_cmd
 
@@ -147,19 +125,64 @@ def execute_command(raw_cmd):
 
 
 wifi_server, discovery_server, wifi_ip = setup_wifi_server()
+wifi_conn = None  # persistent WiFi connection
 
 # Start an infinite loop
 while True:
     service_discovery(discovery_server, wifi_ip)
 
+    # Accept a new WiFi connection only when we don't have one
+    if wifi_server is not None and wifi_conn is None:
+        try:
+            wifi_conn, _ = wifi_server.accept()
+            wifi_conn.settimeout(0)  # non-blocking reads
+            print("WiFi client connected")
+        except OSError:
+            pass
+
     ble_cmd = read_ble_command()
-    wifi_cmd = read_wifi_command(wifi_server)
+
+    # Read from the persistent WiFi connection
+    wifi_cmd = None
+    if wifi_conn is not None:
+        try:
+            data = wifi_conn.recv(128)
+            if data:
+                cmd = data.decode("utf-8").strip()
+                if cmd and cmd != "ping":
+                    wifi_cmd = cmd
+            else:
+                # Remote closed the connection
+                print("WiFi client disconnected")
+                wifi_conn.close()
+                wifi_conn = None
+        except OSError as e:
+            if e.args[0] != 11:  # 11 = EAGAIN (no data yet); anything else is a real error
+                print(f"WiFi recv error: {e}")
+                try:
+                    wifi_conn.close()
+                except OSError:
+                    pass
+                wifi_conn = None
 
     if ble_cmd is not None or wifi_cmd is not None:
         board.led_on()
         command_text = ble_cmd if ble_cmd is not None else wifi_cmd
         print("Executing command:", command_text)
         execute_command(command_text)
+        # Servo/instant commands finish synchronously (currentlyMoving stays False),
+        # so ack here — drive commands are handled by the speed-check below
+        if not currentlyMoving:
+            pestolink.send(b"Ready for next command")
+            if wifi_conn is not None:
+                try:
+                    wifi_conn.send(b"Ready for next command\n")
+                except OSError:
+                    try:
+                        wifi_conn.close()
+                    except OSError:
+                        pass
+                    wifi_conn = None
     elif not pestolink.is_connected() and wifi_server is None:
         board.led_off()
         servo_one.set_angle(60)
@@ -169,5 +192,15 @@ while True:
         currentlyMoving = False
         print(f"Finished command {active_cmd}, ready for next command")
         pestolink.send(b"Ready for next command")
+        # Mirror the BLE ack over WiFi so the backend knows the command is done
+        if wifi_conn is not None:
+            try:
+                wifi_conn.send(b"Ready for next command\n")
+            except OSError:
+                try:
+                    wifi_conn.close()
+                except OSError:
+                    pass
+                wifi_conn = None
 
     time.sleep(0.1)
