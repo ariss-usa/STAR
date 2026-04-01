@@ -194,7 +194,17 @@ public class MissionController {
                 // Watch the qsstv process and cleanup when it exits
                 qsstvWatcherThread = new Thread(() -> {
                     try {
-                        if (qsstv != null) qsstv.waitFor();
+                        int exitCode = qsstv != null ? qsstv.waitFor() : 1;
+                        // Exit code 1 means the user cancelled the frequency dialog — just reset UI
+                        if (exitCode == 1) {
+                            Platform.runLater(() -> {
+                                qsstv_checkbox.setSelected(false);
+                                recAPRSCheckBox.setDisable(false);
+                            });
+                            qsstv = null;
+                            qsstvWatcherThread = null;
+                            return;
+                        }
                     } catch (InterruptedException ignored) {}
                     runExternalCleanup();
                 });
