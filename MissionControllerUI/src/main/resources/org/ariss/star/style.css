@@ -77,7 +77,7 @@
 }
 #pairButton{
     -fx-content-display: right;
-    -fx-graphic: url(../images/bluetooth.png);
+    -fx-graphic: url(../images/connectivity.png);
 }
 #sdr{
     -fx-background-color: #1d2125;

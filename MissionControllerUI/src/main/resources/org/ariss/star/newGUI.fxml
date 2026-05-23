@@ -225,7 +225,7 @@
             </HBox>
             <HBox alignment="CENTER_RIGHT" prefHeight="138.0" prefWidth="330.0" GridPane.columnIndex="1">
                <children>
-                  <ComboBox fx:id="localRobotConnection" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="40.0" prefWidth="163.0" promptText="BT Connections" styleClass="combo-box">
+                  <ComboBox fx:id="localRobotConnection" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="40.0" prefWidth="163.0" promptText="Robot Connections" styleClass="combo-box">
                      <tooltip>
                         <Tooltip text="Pair with your local robot" />
                      </tooltip>
