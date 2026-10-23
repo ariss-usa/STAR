@@ -1,5 +1,5 @@
 # Space Telerobotics using Amateur Radio (STAR)
-STAR is a software application for developing and executing teleoperation tasks on the Makeblock mBot robotic platform. This application provides a complete system for interfacing with the mBot through multiple communication channels, enabling robust local and remote control.
+STAR is a software application for developing and executing teleoperation tasks on the XRP or the Makeblock mBot robotic platforms. This application provides a complete system for interfacing with the mBot through multiple communication channels, enabling robust local and remote control.
 
 <p align="center">
     <img src="./media/animation1.gif">
